@@ -1,8 +1,21 @@
-tmin(x) = eltype(x) <: AbstractTime ? minimum(x) : error("Element type must be of type Dates.AbstractTime")
-tmax(x) = eltype(x) <: AbstractTime ? maximum(x) : error("Element type must be of type Dates.AbstractTime")
-tmin(x::AbstractDimArray; query=TimeDim) = tmin(times(x; query))
-tmax(x::AbstractDimArray; query=TimeDim) = tmax(times(x; query))
+"""
+    tminimum(x)
 
+Get the minimum timestamp of `x`.
+"""
+function tminimum end
+
+"""
+    tmaximum(x)
+
+Get the maximum timestamp of `x`.
+"""
+function tmaximum end
+
+tminimum(x) = minimum(x)
+tmaximum(x) = maximum(x)
+tminimum(x::AbstractDimArray; query=nothing) = tminimum(times(x, query))
+tmaximum(x::AbstractDimArray; query=nothing) = tmaximum(times(x, query))
 
 timerange(times) = _extrema(times)
 
@@ -11,9 +24,6 @@ function _extrema(x::Array{T}) where {T <: Union{Date, DateTime, Int}}
     return reinterpret.(T, vextrema(reinterpret(Int, x)))
 end
 
-timerange(times::DimensionalData.Sampled) = timerange(parent(times))
-timerange(times::Dimension) = timerange(parent(times))
-timerange(x::AbstractDimArray) = timerange(times(x))
 timerange(x1, xs...) = common_timerange(x1, xs...)
 
 """

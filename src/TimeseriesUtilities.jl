@@ -33,13 +33,14 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 module TimeseriesUtilities
 
 using Dates
+using Dates: AbstractTime
 using DimensionalData
 using DimensionalData.Dimensions
 using DimensionalData.Lookups
 using VectorizedStatistics, NaNStatistics
 using Unitful
 
-export timerange, common_timerange
+export tminimum, tmaximum, timerange, common_timerange
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
