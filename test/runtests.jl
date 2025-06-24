@@ -1,6 +1,8 @@
-using TimeseriesUtilities
-using Test
+using TestItems, TestItemRunner
 
-@testset "TimeseriesUtilities.jl" begin
-    # Write your tests here.
+@run_package_tests
+
+@testitem "Aqua" begin
+    using Aqua
+    Aqua.test_all(TimeseriesUtilities)
 end
