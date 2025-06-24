@@ -1,0 +1,7 @@
+name = "TimeseriesUtilities"
+uuid = "31d49243-0742-49c1-b8d2-db113b74581e"
+authors = ["Beforerr <zzj956959688@gmail.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.10"
