@@ -3,7 +3,7 @@
 
 A collection of utilities to simplify common time series analysis.
     
-From data cleaning to arithmetic operations (e.g. linear algebra) to common time series operations (e.g. resampling, detrending).
+From data cleaning to arithmetic operations (e.g. linear algebra) to common time series operations (e.g. resampling, filtering).
 
 ## Statistics
 
@@ -30,6 +30,8 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 - [`tview`](@ref)
 - [`tmask`](@ref) and [`tmask!`](@ref)
 - [`tshift`](@ref)
+- [`tsplit`](@ref)
+- [`tfilter`](@ref)
 
 """
 module TimeseriesUtilities
