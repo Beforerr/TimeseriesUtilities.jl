@@ -19,6 +19,8 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 
 - [`tcross`](@ref)
 - [`tdot`](@ref)
+- [`tnorm`](@ref)
+- [`tsproj`](@ref), [`tproj`](@ref), [`toproj`](@ref)
 - [`tsubtract`](@ref)
 - [`tderiv`](@ref)
 
@@ -37,8 +39,13 @@ using Dates: AbstractTime
 using DimensionalData
 using DimensionalData.Dimensions
 using DimensionalData.Lookups
+using LinearAlgebra
+using LinearAlgebra: norm2
+using StaticArrays
 using VectorizedStatistics, NaNStatistics
 using Unitful
+
+const SV3 = SVector{3}
 
 export tminimum, tmaximum, timerange, common_timerange
 
@@ -60,7 +67,7 @@ include("operations.jl")
 include("groupby.jl")
 include("reduce.jl")
 include("stats.jl")
-include("methods.jl")
+include("algebra.jl")
 include("lazyoperations.jl")
 include("outliers.jl")
 include("utils.jl")
