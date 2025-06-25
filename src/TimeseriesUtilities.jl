@@ -5,7 +5,12 @@ A collection of utilities to simplify common time series analysis.
     
 From data cleaning to arithmetic operations (e.g. linear algebra) to common time series operations (e.g. resampling, filtering).
 
-## Statistics
+## Data Cleaning
+
+- [`find_outliers`](@ref), [`find_outliers_median`](@ref), [`find_outliers_mean`](@ref)
+- [`replace_outliers`](@ref), [`replace_outliers!`](@ref)
+
+## (Windowed) Statistics
 
 - [`tstat`](@ref)
 - [`tmean`](@ref)
@@ -14,6 +19,7 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 - [`tvar`](@ref)
 - [`tstd`](@ref)
 - [`tsem`](@ref)
+
 
 ## Arithmetic
 
@@ -26,13 +32,17 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 
 ## Time-Domain Operations
 
-- [`tclip`](@ref)
+- [`tselect`](@ref)
+- [`tclip`](@ref), [`tclips`](@ref)
 - [`tview`](@ref)
 - [`tmask`](@ref) and [`tmask!`](@ref)
 - [`tshift`](@ref)
 - [`tsplit`](@ref)
-- [`tfilter`](@ref)
+- [`tgroupby`](@ref)
 
+## Time-Frequency Domain Operations
+
+- [`tfilter`](@ref)
 """
 module TimeseriesUtilities
 
