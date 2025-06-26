@@ -4,7 +4,7 @@ authors = ["Beforerr <zzj956959688@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
-DSP = "717857b8-e6f2e6f2-59f4-9121-6e50c889abd2"
+DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
