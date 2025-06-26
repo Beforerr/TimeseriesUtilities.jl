@@ -73,3 +73,6 @@ for (sym, desc) in (
     doc = tstat_doc(sym, desc)
     @eval @doc $doc $tfunc(x, arg...; kw...) = tstat($nanfunc, x, arg...; kw...)
 end
+
+# https://github.com/JuliaLang/julia/issues/54542"
+tmean(vec::AbstractArray{DateTime}) = convert(DateTime, Millisecond(round(nanmean(Dates.value.(vec)))))

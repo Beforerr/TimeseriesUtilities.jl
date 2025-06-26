@@ -20,8 +20,7 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 - [`tstd`](@ref)
 - [`tsem`](@ref)
 
-
-## Arithmetic
+## Algebra
 
 - [`tcross`](@ref)
 - [`tdot`](@ref)
@@ -56,23 +55,32 @@ using LinearAlgebra: norm2
 using StaticArrays
 using VectorizedStatistics, NaNStatistics
 using Unitful
+using DataInterpolations
+using DSP
+using RollingWindowArrays
 
 const SV3 = SVector{3}
 
+export resolution, samplingrate
 export tminimum, tmaximum, timerange, common_timerange
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
 # Linear Algebra
 export proj, sproj, oproj
-export tdot, tcross, tnorm, tproj, tsproj, toproj
+export tdot, tcross, tnorm, tproj, tsproj, toproj, tnorm_combine
 export tgroupby
 # Statistics
 export tsum, tmean, tmedian, tstd, tsem, tvar
 # Derivatives
 export tderiv, tsubtract
 
+# Data cleaning
+export smooth
+export dropna, rectify
 export find_outliers, replace_outliers!, replace_outliers
+
+export tsplit
 
 include("timeseries.jl")
 include("operations.jl")

@@ -34,6 +34,9 @@ end
     @test_throws InexactError mean(t)
 
     # tmean
+    t0 = DateTime(2011)
+    ts = t0 .+ Millisecond.(0:10)
+    @test tmean(ts) == t0 + Millisecond(5)
     @test tmean(da1) == mean(da1)
     @test tmean(da1, Millisecond(2)) == [mean(da1[1:2]), mean(da1[3:4])]
     @test tmean(da2) == vec(mean(da2, dims = 1))

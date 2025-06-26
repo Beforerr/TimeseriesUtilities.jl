@@ -135,6 +135,22 @@ end
 
 replace_outliers!(A, args...; kw...) = replace_outliers!(A, eltype(A)(NaN), args...; kw...)
 
+"""
+    interpolate_outliers!(x, t, outliers)
+
+Interpolate outliers in `x` using interpolation of neighboring non-outlier values.
+"""
+function interpolate_outliers!(x, t, outliers; interp = nothing)
+    interp = something(interp, LinearInterpolation)
+    goods = findall(.!outliers)
+    interp_obj = interp(x[goods], t[goods])
+    for i in eachindex(x, outliers)
+        !outliers[i] && continue
+        x[i] = interp_obj(t[i])
+    end
+    return x
+end
+
 function replace_outliers_nearest!(x, outliers)
     goods = findall(.!outliers)
     for idx in eachindex(x, outliers)

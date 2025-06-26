@@ -38,7 +38,7 @@ function smooth(da, window::Integer; dims = Ti, suffix = "_smoothed", kwargs...)
 end
 
 """
-    tfilter(da, Wn1, Wn2=samplingrate(da) / 2; designmethod=Butterworth(2))
+    tfilter(da, Wn1, Wn2=samplingrate(da) / 2; designmethod=nothing)
 
 By default, the max frequency corresponding to the Nyquist frequency is used.
 
@@ -50,7 +50,8 @@ References
 Issues
 - DSP.jl and Unitful.jl: https://github.com/JuliaDSP/DSP.jl/issues/431
 """
-function tfilter(da::AbstractDimArray, Wn1, Wn2 = 0.999 * samplingrate(da) / 2; designmethod = Butterworth(2))
+function tfilter(da::AbstractDimArray, Wn1, Wn2 = 0.999 * samplingrate(da) / 2; designmethod = nothing)
+    designmethod = something(designmethod, Butterworth(2))
     fs = samplingrate(da)
     Wn1, Wn2, fs = (Wn1, Wn2, fs) ./ 1u"Hz" .|> NoUnits
     f = digitalfilter(Bandpass(Wn1, Wn2; fs), designmethod)
@@ -106,7 +107,7 @@ function rectify(ts::DimensionalData.Dimension; tol = 4, atol = nothing)
 end
 
 """Rectify the time step of a `DimArray` to be uniform."""
-function rectify_datetime(da; tol = 2, kwargs...)
+function rectify(da; tol = 2, kwargs...)
     times = dims(da, Ti)
     t0 = times[1]
     dtime = Quantity.(times.val .- t0)
