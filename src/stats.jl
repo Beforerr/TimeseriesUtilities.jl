@@ -35,7 +35,7 @@ function tstat(f, x, dt; dim = nothing, query = nothing)
     newdims = ntuple(ndims(x)) do i
         i == dim ? basetypeof(tdim)(idxs) : dims(x, i)
     end
-    return DimArray(out, newdims; metadata = metadata(x))
+    return rebuild(x, out, newdims)
     # alternative slower method
     # f.(groupby(x, Dim => gfunc); dim = dimnum(x, query))
 end
