@@ -39,6 +39,7 @@ end
     @test tmean(ts) == t0 + Millisecond(5)
     @test tmean(da1) == mean(da1)
     @test tmean(da1, Millisecond(2)) == [mean(da1[1:2]), mean(da1[3:4])]
+    @test tmean(da1, Millisecond(2)).dims[1][2] == Millisecond(2)
     @test tmean(da2) == vec(mean(da2, dims = 1))
     @test tmean(da2, Millisecond(2)) == [mean(parent(da2)[1:2, :], dims = 1); mean(parent(da2)[3:4, :], dims = 1)]
 
