@@ -82,6 +82,15 @@ export find_outliers, replace_outliers!, replace_outliers
 
 export tsplit
 
+"""
+    dimnum(x, query)
+
+Get the number(s) of Dimension(s) as ordered in the dimensions of an object.
+
+Extend the function for custom type `x`. By default, we fall back to `DimensionalData.dimnum`.
+"""
+function dimnum end
+
 include("timeseries.jl")
 include("operations.jl")
 include("groupby.jl")
