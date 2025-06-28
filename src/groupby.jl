@@ -33,18 +33,15 @@ function groupby_dynamic(x, every, period = every, start_by = :window)
     return group_idx, starts
 end
 
-function groupby_dynamic(x::Dimension, args...; kwargs...)
-    return groupby_dynamic(parent(lookup(x)), args...; kwargs...)
-end
 
 """
-    tgroupby(x::AbstractDimArray, every, period = every, start_by = :window)
+    tgroupby(x, every, period = every, start_by = :window)
 
-Returns a vector of `AbstractDimArray`s grouped by time intervals defined by `every` and `period`.
+Group `x` into windows based on `every` and `period`.
 """
-function tgroupby(x::AbstractDimArray, args...; kwargs...)
-    dim = dimnum(x, Ti)
-    times = dims(x, Ti)
+function tgroupby(x, args...; dim=nothing, query=nothing, kwargs...)
+    dim = @something dim dimnum(x, query)
+    times = dims(x, dim)
     group_idx, = groupby_dynamic(times, args...; kwargs...)
     return map(group_idx) do idx
         selectdim(x, dim, idx)

@@ -1,7 +1,5 @@
 dimquery(dim, query) = @something dim something(query, TimeDim)
 
-times(x::AbstractDimArray, args...) = parent(lookup(timedim(x, args...)))
-
 """
     window_bf_sizes(window)
 

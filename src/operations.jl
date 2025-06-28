@@ -25,7 +25,6 @@ Clip a `Dimension` or `DimArray` `A` to a time range `[t0, t1]`.
 For unordered dimensions, the dimension should be sorted before clipping (see [`tsort`](@ref)).
 """
 function tclip(A::AbstractDimArray, t0, t1; query=nothing)
-    query = something(query, TimeDim)
     Dim, T = dimtype_eltype(A, query)
     return A[Dim(T(t0) .. T(t1))]
 end
@@ -93,7 +92,8 @@ tmask(da, args...; kwargs...) = tmask!(deepcopy(da), args...; kwargs...)
 
 Shift the `dim` of `x` by `t0`.
 """
-function tshift(x, t0=nothing; dim=TimeDim, new_dim=nothing)
+function tshift(x, t0=nothing; query=nothing, dim=nothing, new_dim=nothing)
+    dim = @something dim dimnum(x, something(query, TimeDim))
     td = dims(x, dim)
     times = parent(lookup(td))
     t0 = @something t0 first(times)

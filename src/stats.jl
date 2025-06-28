@@ -24,12 +24,12 @@ See also: [`groupby_dynamic`](@ref)
 function tstat end
 
 function tstat(f, x; dim = nothing, query = nothing)
-    dim = @something dim dimnum(x, something(query, TimeDim))
+    dim = @something dim dimnum(x, query)
     return ndims(x) == 1 ? f(x) : f(x; dim)
 end
 
 function tstat(f, x, dt; dim = nothing, query = nothing)
-    dim = @something dim dimnum(x, something(query, TimeDim))
+    dim = @something dim dimnum(x, query)
     tdim = dims(x, dim)
     out, idxs = stat1d(f, parent(x), tdim, dt, dim)
     newdims = ntuple(ndims(x)) do i
@@ -41,7 +41,7 @@ function tstat(f, x, dt; dim = nothing, query = nothing)
 end
 
 function tstat(f, ds::DimStack, args...; query = nothing, dim = nothing)
-    dim = @something dim dimnum(ds, something(query, TimeDim))
+    dim = @something dim dimnum(ds, query)
     return maplayers(ds) do layer
         tstat(f, layer, args...; dim)
     end
@@ -49,9 +49,9 @@ end
 
 
 tstat_doc(sym, desc = sym) = """
-    $(Symbol(:t, sym))(x; dim=nothing, query=nothing)
+    $(Symbol(:t, sym))(x, [dt]; dim=nothing, query=nothing)
 
-Calculate the $desc of `x` along the `dim` dimension.
+Calculate the $desc of `x` along the `dim` dimension, optionally grouped by `dt`.
 
 It returns a value if `x` is a vector along the `dim` dimension, otherwise returns a `DimArray` with the specified dimension dropped.
 
