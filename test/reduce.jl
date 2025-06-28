@@ -1,3 +1,14 @@
+@testitem "resolution" begin
+    using Dates
+    using DimensionalData
+
+    @test resolution(Millisecond.(0:10000)) == Millisecond(1)
+
+    t = Ti(1:10000)
+    x = rand(t)
+    @test resolution(x) == 1
+end
+
 
 @testitem "tmin, tmax, timerange" begin
     using Chairmarks

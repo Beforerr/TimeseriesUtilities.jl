@@ -1,3 +1,24 @@
+# https://github.com/JuliaArrays/LazyArrays.jl/blob/master/src/lazyoperations.jl
+struct Diff{T,N,Arr} <: AbstractArray{T,N}
+    v::Arr
+    dim::Int
+end
+
+function Diff(v)
+    T = Base.eltype(v)
+    DT = Base.promote_op(-, T, T)
+    return Diff{DT,ndims(v),typeof(v)}(v, 1)
+end
+
+function Base.size(A::Diff)
+    return size(A.v) .- ntuple(==(A.dim), ndims(A))
+end
+
+function Base.getindex(A::Diff, i::Vararg{Int,N}) where {N}
+    i_next = ntuple(==(A.dim), N) .+ i
+    return A.v[i_next...] - A.v[i...]
+end
+
 """
     DiffQ(v, t; dims=1)
 
@@ -17,13 +38,12 @@ function DiffQ(v::AbstractArray{T1,N}, t::AbstractVector{T2}; dims=1) where {T1,
 end
 
 function Base.getindex(A::DiffQ{<:Any,N,D}, i::Vararg{Int,N}) where {N,D}
-    i_next = ntuple(j -> j == D ? i[j] + 1 : i[j], N)
+    i_next = ntuple(==(D), N) .+ i
     return (A.v[i_next...] - A.v[i...]) / (A.t[i_next[D]] - A.t[i[D]])
 end
 
 function Base.size(A::DiffQ{<:Any,N,D}) where {N,D}
-    s = size(A.v)
-    return ntuple(i -> i == D ? s[i] - 1 : s[i], N)
+    return size(A.v) .- ntuple(==(D), ndims(A))
 end
 
 tderiv(::Type{DiffQ}, data, times; dims=1) = DiffQ(data, times; dims)

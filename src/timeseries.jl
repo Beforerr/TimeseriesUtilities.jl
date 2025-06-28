@@ -1,11 +1,9 @@
-function resolution(times; tol = 2, f = stat_relerr(median))
-    dt = diff(times)
-    dt0 = eltype(dt)(1)
-    dt_m, relerr = f(dt ./ dt0)
+function resolution(times; tol = 2, f = median_relerr)
+    dt, relerr = f(Diff(times))
     if relerr > exp10(-tol - 1)
         @warn "Time resolution is is not approximately constant (relerr ≈ $relerr)"
     end
-    return round(Integer, dt_m) * dt0
+    return dt
 end
 
 resolution(da::AbstractDimArray; kwargs...) =
