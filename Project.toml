@@ -1,7 +1,7 @@
 name = "TimeseriesUtilities"
 uuid = "31d49243-0742-49c1-b8d2-db113b74581e"
 authors = ["Beforerr <zzj956959688@gmail.com> and contributors"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
@@ -23,7 +23,7 @@ DimensionalData = "0.29"
 LinearAlgebra = "1"
 NaNStatistics = "0.6"
 RollingWindowArrays = "1.0.1"
-StaticArrays = "1.9.13"
+StaticArrays = "1.9"
 Unitful = "1"
 VectorizedStatistics = "0.5"
 julia = "1.10"
