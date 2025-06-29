@@ -1,5 +1,16 @@
 dimquery(dim, query) = @something dim something(query, TimeDim)
 
+function stat_relerr(itr, f)
+    m = f(itr)
+    relerrs = abs.(extrema(itr) .- m) ./ m
+    relerr = maximum(relerrs)
+    return m, relerr
+end
+
+stat_relerr(f) = (x -> stat_relerr(x, f))
+mean_relerr(itr) = stat_relerr(itr, vmean)
+median_relerr(itr) = stat_relerr(itr, vmedian)
+
 """
     window_bf_sizes(window)
 
