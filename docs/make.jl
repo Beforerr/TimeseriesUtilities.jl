@@ -14,10 +14,13 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Tutorials" => [
+            "outliers.md"
+        ]
     ],
 )
 
 deploydocs(;
     repo="github.com/Beforerr/TimeseriesUtilities.jl",
-    devbranch="main",
+    push_preview = true
 )
