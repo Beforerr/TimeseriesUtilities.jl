@@ -45,7 +45,7 @@ end
     da = DimArray(values, (Ti(times),))
 
     # Test exact match
-    @test tselect(da, 5.0, 0.5) == tselect(da, 5.2, 0.5) == tselect(da, 4.8, 0.5) == 30.0
+    @test tselect(da, 5.9) == tselect(da, 5.0, 0.5) == tselect(da, 5.2, 0.5) == tselect(da, 4.8, 0.5) == 30.0
     # Test closest match at edge of range
     @test tselect(da, 5.5, 0.5) == tselect(da, 4.5, 0.5) == 30.0
 

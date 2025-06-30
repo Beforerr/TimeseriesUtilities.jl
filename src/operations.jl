@@ -62,7 +62,7 @@ function tmask!(da, its::AbstractArray; kw...)
     return da
 end
 
-function tselect!(da, t; query=nothing)
+function tselect(da, t; query=nothing)
     Dim, T = dimtype_eltype(da, query)
     return da[Dim(Near(T(t)))]
 end
