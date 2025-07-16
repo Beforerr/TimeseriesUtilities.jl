@@ -1,4 +1,4 @@
-@testitem "tcross, tdot, tsproj, tnorm" begin
+@testitem "tcross, tdot, tsproj, tnorm, tnorm_combine" begin
     using DimensionalData
     using LinearAlgebra
     t = Ti(1:10)
@@ -15,6 +15,7 @@
     @test tproj(A, B)[1, :] ≈ proj(A[1, :], B[1, :])
     @test toproj(A, B)[1, :] ≈ oproj(A[1, :], B[1, :])
     @test tnorm(A)[1] == norm(A[1, :])
+    @test tnorm_combine(A)[1, :] ≈ [A[1, :]; norm(A[1, :])]
 
     using Chairmarks
     @test @b(tcross($A, $B)).allocs ≤ 2

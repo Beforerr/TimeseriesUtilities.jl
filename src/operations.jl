@@ -62,7 +62,13 @@ function tmask!(da, its::AbstractArray; kw...)
     return da
 end
 
-function tselect(da, t; query=nothing)
+function tselect(times, t)
+    idx = issorted(times) ? searchsortednearest(times, t) :
+          searchsortednearest(sort(times), t)
+    times[idx]
+end
+
+function tselect(da::AbstractDimArray, t; query=nothing)
     Dim, T = dimtype_eltype(da, query)
     return da[Dim(Near(T(t)))]
 end
@@ -74,7 +80,7 @@ Select the value of `A` closest to time `t` within the time range `[t-δt, t+δt
 
 Similar to `DimensionalData.Dimensions.Lookups.At` but choose the closest value and return `missing` if the time range is empty.
 """
-function tselect(A, t, δt; query=nothing)
+function tselect(A::AbstractDimArray, t, δt; query=nothing)
     Dim, T = dimtype_eltype(A, query)
     tmp = @views A[Dim(T(t - δt) .. T(t + δt))]
     length(tmp) == 0 ? missing : tmp[Dim(Near(T(t)))]

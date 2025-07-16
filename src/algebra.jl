@@ -53,7 +53,7 @@ cross3(x, y) = cross(SV3(x), SV3(y))
 """
     tcross(x, y; dim = nothing, query=nothing)
 
-Compute the cross product of two (arrays of) vectors along the `dims` dimension.
+Compute the cross product of two (arrays of) vectors along the specified dimension `dim` or `query`.
 
 References:
 
@@ -67,7 +67,7 @@ function tcross(x, y; dim=nothing, query=nothing)
 end
 
 """
-    tdot(x, y; dim=TimeDim)
+    tdot(x, y; dim=nothing, query=nothing)
 
 Dot product of two arrays `x` and `y` along the `dim` dimension.
 """
@@ -76,24 +76,24 @@ function tdot(x, y; dim=nothing, query=nothing)
     return dot.(eachslice(x; dims), eachslice(y; dims))
 end
 
-function norm_combine(x; dims=nothing, query=nothing)
-    dims = dimquery(dims, query)
+function norm_combine(x, dims)
     return cat(x, norm.(eachslice(x; dims)); dims=setdiff(1:ndims(x), dims))
 end
 
 """
-    tnorm_combine(x; dims=timedim(x), name=:magnitude)
+    tnorm_combine(x; dim=nothing, name=:magnitude)
 
 Calculate the norm of each slice along `query` dimension and combine it with the original components.
 """
-function tnorm_combine(x; dims=timedim(x), name=:magnitude)
-    data = norm_combine(parent(x); dims=dimnum(x, dims))
+function tnorm_combine(x; dim=nothing, query=nothing, name=:magnitude)
+    dim = @something dim dimnum(x, query)
+    data = norm_combine(parent(x), dim)
 
     # Replace the original dimension with our new one that includes the magnitude
-    odim = otherdims(x, dims) |> only
+    odim = otherdims(x, dim) |> only
     odimType = basetypeof(odim)
     new_odim = odimType(vcat(odim.val, name))
-    new_dims = map(d -> d isa odimType ? new_odim : d, DD.dims(x))
+    new_dims = map(d -> d isa odimType ? new_odim : d, dims(x))
     return rebuild(x, data, new_dims)
 end
 
