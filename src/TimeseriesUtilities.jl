@@ -10,6 +10,11 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 - [`find_outliers`](@ref), [`find_outliers_median`](@ref), [`find_outliers_mean`](@ref)
 - [`replace_outliers`](@ref), [`replace_outliers!`](@ref)
 
+## Query
+
+- [`times`](@ref), [`time_grid`](@ref)
+- [`timerange`](@ref), [`common_timerange`](@ref)
+
 ## (Windowed) Statistics
 
 - [`tstat`](@ref)
@@ -62,7 +67,7 @@ using RollingWindowArrays
 const SV3 = SVector{3}
 
 export resolution, samplingrate
-export tminimum, tmaximum, timerange, common_timerange
+export tminimum, tmaximum, timerange, common_timerange, time_grid
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift

@@ -14,8 +14,8 @@ function tmaximum end
 
 tminimum(x) = minimum(x)
 tmaximum(x) = maximum(x)
-tminimum(x::AbstractDimArray; query=nothing) = tminimum(times(x, query))
-tmaximum(x::AbstractDimArray; query=nothing) = tmaximum(times(x, query))
+tminimum(x::AbstractDimArray; query = nothing) = tminimum(times(x, query))
+tmaximum(x::AbstractDimArray; query = nothing) = tmaximum(times(x, query))
 
 timerange(times) = _extrema(times)
 
@@ -33,7 +33,7 @@ Get the common time range (intersection) across multiple arrays.
 If there is no overlap, returns nothing.
 """
 function common_timerange(x1, xs...)
-    t0, t1= timerange(x1)
+    t0, t1 = timerange(x1)
     for x in xs
         _t0, _t1 = timerange(x)
         t0 = max(t0, _t0)
@@ -42,3 +42,47 @@ function common_timerange(x1, xs...)
     end
     return t0, t1
 end
+
+"""
+    time_grid(x, dt)
+
+Create a time grid from the minimum to maximum time in `x` with the step size `dt`.
+
+# Examples
+```julia
+# Create hourly time grid
+time_grid(x, Hour(1))
+time_grid(x, 1u"hr")
+
+# Create 1-s intervals
+time_grid(x, Second(1))
+time_grid(x, 1u"second")
+time_grid(x, 1u"Hz")
+```
+"""
+function time_grid(x, dt)
+    tmin, tmax = timerange(x)
+    return tmin:dt:tmax
+end
+
+function time_grid(x, dt::Unitful.Quantity)
+    tmin, tmax = timerange(x)
+    return if dimension(dt) == Unitful.𝐓
+        tmin:_2dates(dt):tmax
+    elseif dimension(dt) == Unitful.𝐓^-1
+        _dt = round(Nanosecond, 1 / dt)
+        tmin:_dt:tmax
+    else
+        tmin:dt:tmax
+    end
+end
+
+for (period, unit) in (
+        (Dates.Week, Unitful.wk), (Dates.Day, Unitful.d), (Dates.Hour, Unitful.hr),
+        (Dates.Minute, Unitful.minute), (Dates.Second, Unitful.s), (Dates.Millisecond, Unitful.ms),
+        (Dates.Microsecond, Unitful.μs), (Dates.Nanosecond, Unitful.ns),
+    )
+    @eval _2dates(::typeof($unit)) = $period
+end
+
+_2dates(x::Unitful.Quantity) = _2dates(Unitful.unit(x))(x)
