@@ -57,17 +57,22 @@ function tfilter(da::AbstractDimArray, Wn1, Wn2 = 0.999 * samplingrate(da) / 2; 
     return rebuild(da; data = res * (da |> eltype |> unit))
 end
 
+function _dropna(A; dim = nothing)
+    valid_idx = vec(all(!isnan, A; dims = other_dims(A, dim)))
+    return selectdim(A, dim, valid_idx)
+end
 
 """
-    dropna(A, query)
+    dropna(A; dim=nothing)
+    dropna(A::AbstractDimArray; dim=nothing, query=nothing)
 
-Remove slices containing NaN values along dimensions other than `query`.
+Remove slices containing NaN values along along the `dim` dimension.
 """
-function dropna(A, query = nothing)
-    query = something(query, TimeDim)
-    Dim, T = dimtype_eltype(A, query)
-    valid_idx = vec(all(!isnan, A; dims = otherdims(A, query)))
-    return A[Dim(valid_idx)]
+dropna(A; dim = nothing) = _dropna(A; dim)
+
+function dropna(A::AbstractDimArray; query = nothing, dim = nothing)
+    dim = @something dim dimnum(A, query)
+    _dropna(A; dim)
 end
 
 function dropna(ds::DimStack, query = nothing)
