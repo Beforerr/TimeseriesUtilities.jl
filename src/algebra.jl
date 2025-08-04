@@ -7,33 +7,48 @@ function tsubtract(x, f=nanmedian; dims=timedim(x))
     return x .- f(parent(x); dims=dimnum(x, dims))
 end
 
-"""
-    tderiv(data, times; dims = 1)
+function _deriv_tfunc(T1::Type, T2::Type)
+    (T1 <: Real) && (T2 <: Dates.AbstractTime) ? Unitful.Quantity : identity
+end
 
-Compute the time derivative of `data` with respect to `times`.
-"""
-function tderiv(data::AbstractArray{T,N}, times; dims=1) where {T,N}
-    # return diff(data; dims) ./ diff(times) # this allocates and is slow
-    Base.require_one_based_indexing(data)
-    1 <= dims <= N || throw(ArgumentError("dimension $dims out of range (1:$N)"))
+_deriv_tfunc(A, t) = _deriv_tfunc(eltype(A), eltype(t))
 
-    r = Base.axes(data)
-    r0 = ntuple(i -> i == dims ? UnitRange(1, last(r[i]) - 1) : UnitRange(r[i]), N)
-    r1 = ntuple(i -> i == dims ? UnitRange(2, last(r[i])) : UnitRange(r[i]), N)
-    rt0 = r0[dims]
-    rt1 = r1[dims]
+function _tderiv(A, times; dim=1)
+    # return diff(A; dims) ./ diff(times) # this allocates and is slow
+    Base.require_one_based_indexing(A)
+    N = ndims(A)
+    1 <= dim <= N || throw(ArgumentError("dimension $dim out of range (1:$N)"))
 
-    return (view(data, r1...) .- view(data, r0...)) ./ (view(times, rt1) .- view(times, rt0))
+    r = Base.axes(A)
+    r0 = ntuple(i -> i == dim ? UnitRange(1, last(r[i]) - 1) : UnitRange(r[i]), N)
+    r1 = ntuple(i -> i == dim ? UnitRange(2, last(r[i])) : UnitRange(r[i]), N)
+    rt0 = r0[dim]
+    rt1 = r1[dim]
+    tfunc = _deriv_tfunc(A, times)
+    return (view(A, r1...) .- view(A, r0...)) ./ tfunc.(view(times, rt1) .- view(times, rt0))
 end
 
 """
-    tderiv(data; dims = Ti)
+    tderiv(A, times; dim=1)
+    tderiv(A; dim = nothing, query = nothing)
 
-Compute the time derivative of `data`.
+Compute the time derivative of `A`. Set `lazy=true` for lazy evaluation.
 
 See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_modules/pyspedas/analysis/deriv_data.html)
 """
-tderiv(data; dims=Ti) = diff(data; dims) ./ diff(times(data))
+@inline function tderiv(args...; lazy=false, kw...)
+    f = lazy ? DiffQ : _tderiv
+    return f(args...; kw...)
+end
+
+function tderiv(A; dim = nothing, query = nothing, lazy=false)
+    dim = @something dim dimnum(A, query)
+    tdim = dims(A, dim)
+    f = lazy ? DiffQ : _tderiv
+    out = f(parent(A), unwrap(tdim); dim)
+    newdims = ntuple(i -> i == dim ? @view(tdim[1:end-1]) : dims(A, i), ndims(A))
+    return rebuild(A, out, newdims)
+end
 
 
 """

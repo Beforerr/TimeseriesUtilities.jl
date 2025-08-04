@@ -1,3 +1,10 @@
+"""
+    unwrap(x)
+
+Return the innermost object of the wrapped object `x` with similar behavior as `x` (e.g. same size, same type, etc.)
+"""
+unwrap(x) = x
+
 dimquery(dim, query) = @something dim something(query, TimeDim)
 
 function stat_relerr(itr, f)

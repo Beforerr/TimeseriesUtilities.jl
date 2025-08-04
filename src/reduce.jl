@@ -17,6 +17,29 @@ tmaximum(x) = maximum(x)
 tminimum(x::AbstractDimArray; query = nothing) = tminimum(times(x, query))
 tmaximum(x::AbstractDimArray; query = nothing) = tmaximum(times(x, query))
 
+"""    
+    timerange(times)
+    timerange(x1, xs...)
+
+Get the time range (minimum and maximum) of time series data.
+
+For a single argument, returns a tuple `(tmin, tmax)` containing the minimum and maximum times.
+For multiple arguments, returns the common time range (intersection) across all arrays - equivalent to `common_timerange(x1, xs...)`.
+
+# Examples
+```julia
+# Single time series
+times = [1, 2, 3, 4, 5]
+timerange(times)  # (1, 5)
+
+# Multiple time series - find common range
+x1_times = [1, 2, 3, 4]
+x2_times = [2, 3, 4, 5]
+timerange(x1_times, x2_times)  # (2, 4)
+```
+
+See also: [`common_timerange`](@ref), [`tminimum`](@ref), [`tmaximum`](@ref)
+"""
 timerange(times) = _extrema(times)
 
 _extrema(x) = extrema(x)
@@ -27,7 +50,7 @@ end
 timerange(x1, xs...) = common_timerange(x1, xs...)
 
 """
-    common_timerange(arrays)
+    common_timerange(x1, xs...)
 
 Get the common time range (intersection) across multiple arrays.
 If there is no overlap, returns nothing.

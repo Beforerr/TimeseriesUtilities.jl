@@ -50,6 +50,7 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 """
 module TimeseriesUtilities
 
+using Base: @propagate_inbounds
 using Dates
 using Dates: AbstractTime
 using DimensionalData
@@ -67,7 +68,7 @@ using RollingWindowArrays
 const SV3 = SVector{3}
 
 export resolution, samplingrate
-export tminimum, tmaximum, timerange, common_timerange, time_grid
+export times, tminimum, tmaximum, timerange, common_timerange, time_grid
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
