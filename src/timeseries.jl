@@ -6,9 +6,6 @@ function resolution(times; tol = 2, f = median_relerr)
     return dt
 end
 
-resolution(da::AbstractDimArray; kwargs...) =
-    resolution(times(da); kwargs...)
-
 samplingrate(da) = 1u"s" / resolution(da) * u"Hz" |> u"Hz"
 
 
