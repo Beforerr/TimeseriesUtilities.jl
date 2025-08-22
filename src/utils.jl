@@ -1,4 +1,27 @@
 """
+    tsplit(t0, t1, n::Int)
+    tsplit(t0, t1, dt)
+
+Split the range from `t0` to `t1` into `n` parts or `dt`-sized parts.
+"""
+function tsplit(t0, t1, n::Int)
+    return if n <= 1
+        [(t0, t1)]
+    else
+        dt = (t1 - t0) / n
+        map(1:n) do i
+            t0 + (i - 1) * dt, min(t0 + i * dt, t1)
+        end
+    end
+end
+
+function tsplit(t0, t1, dt)
+    n = ceil(Int, (t1 - t0) / dt)
+    return tsplit(t0, t1, n)
+end
+
+
+"""
     unwrap(x)
 
 Return the innermost object of the wrapped object `x` with similar behavior as `x` (e.g. same size, same type, etc.)
@@ -13,9 +36,6 @@ function stat_relerr(itr, f)
     relerr = maximum(relerrs)
     return m, relerr
 end
-
-stat_relerr(f) = (x -> stat_relerr(x, f))
-median_relerr(itr) = stat_relerr(itr, _median)
 
 """
     window_bf_sizes(window)
