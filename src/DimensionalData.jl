@@ -23,3 +23,5 @@ end
 
 # This is faster than `DimensionalData.format(rebuild(dim, x))` is the lookup trait keeps the same
 fast_rebuild_dim(dim, x) = rebuild(dim, rebuild(dim.val; data=x))
+
+resolution(da::AbstractDimArray; kwargs...) = resolution(times(da); kwargs...)

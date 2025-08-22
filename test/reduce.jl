@@ -2,11 +2,32 @@
     using Dates
     using DimensionalData
 
-    @test resolution(Millisecond.(0:10000)) == Millisecond(1)
+    # https://github.com/JuliaSIMD/VectorizedStatistics.jl/issues/44#issue-3326201976
+    t = Millisecond.(0:10000)
+    @test resolution(t) == Millisecond(1)
+    @test resolution(Millisecond.(0:20000)) == Millisecond(1)
 
-    t = Ti(1:10000)
-    x = rand(t)
-    @test resolution(x) == 1
+    tdim = Ti(t)
+    x = rand(tdim)
+    @test resolution(x) == Millisecond(1)
+
+    using Chairmarks
+    using TimeseriesUtilities: median, nanmedian, vmedian
+    t = Millisecond.(0:3:100000)
+    dt = diff(t)
+    
+    @info "Benchmarking median implementations:"
+    f1(dt) = median(reinterpret(Int, dt))
+    f2(dt) = vmedian(reinterpret(Int, dt))
+    f3(dt) = nanmedian(reinterpret(Int, dt))
+    b1, b2, b3 = @b f1(dt), f2(dt), f3(dt)
+    @test f1(dt) == f2(dt) == f3(dt)
+    # Find fastest implementation
+    times = [b1.time, b2.time, b3.time]
+    names = ["Statistics.median", "VectorizedStatistics.vmedian", "NaNStatistics.nanmedian"]
+    fastest_idx = argmin(times)
+    @info "Times: $(names .=> times)"
+    @info "Fastest median implementation: $(names[fastest_idx])"
 end
 
 
