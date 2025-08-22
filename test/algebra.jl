@@ -85,7 +85,8 @@ end
     @test tderiv(A_perf) == tderiv(A_perf; lazy=true)
     # @info "benchmarks" b1 b2
     @test @b(tderiv($A_perf)).allocs ≤ 3
-    @test @b(tderiv($A_perf; lazy=true)).allocs == 0
+    broken = VERSION < v"1.11"
+    @test @b(tderiv($A_perf; lazy=true)).allocs == 0 broken=broken
     @test @b(sum($tderiv($A_perf))).time > @b(sum($tderiv($A_perf; lazy=true))).time
 
     @info @b(tderiv($A_perf))
@@ -94,6 +95,6 @@ end
     using JET
     @test_opt ignored_modules = (Base,) tderiv(data, times)
     @test_call ignored_modules = (Base,) tderiv(data, times)
-    @test_opt ignored_modules = (Base,) tderiv(A)
+    @test_opt broken=broken ignored_modules = (Base,) tderiv(A)
     @test_call ignored_modules = (Base,) tderiv(A)
 end

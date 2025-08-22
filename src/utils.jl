@@ -15,7 +15,6 @@ function stat_relerr(itr, f)
 end
 
 stat_relerr(f) = (x -> stat_relerr(x, f))
-mean_relerr(itr) = stat_relerr(itr, vmean)
 median_relerr(itr) = stat_relerr(itr, _median)
 
 """
