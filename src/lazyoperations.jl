@@ -19,6 +19,50 @@ end
     return A.v[i_next...] - A.v[i...]
 end
 
+# dx[i] = v[i+n] - v[i]
+struct ForwardDiff{T, N, Arr} <: AbstractArray{T, N}
+    v::Arr
+    dim::Int
+    n::Int
+end
+
+function ForwardDiff(v, dim, n)
+    T = Base.eltype(v)
+    DT = Base.promote_op(-, T, T)
+    return ForwardDiff{DT, ndims(v), typeof(v)}(v, dim, n)
+end
+
+function Base.size(A::ForwardDiff)
+    return size(A.v) .- A.n .* ntuple(==(A.dim), ndims(A))
+end
+
+@propagate_inbounds function Base.getindex(A::ForwardDiff, i::Vararg{Int, N}) where {N}
+    i_next = A.n .* ntuple(==(A.dim), N) .+ i
+    return A.v[i_next...] - A.v[i...]
+end
+
+# dx[i] = v[i+n] - v[i-n]
+struct CentralDiff{T, N, Arr} <: AbstractArray{T, N}
+    v::Arr
+    dim::Int
+    n::Int
+end
+
+function CentralDiff(v, dim, n)
+    T = Base.eltype(v)
+    DT = Base.promote_op(-, T, T)
+    return CentralDiff{DT, ndims(v), typeof(v)}(v, dim, n)
+end
+
+function Base.size(A::CentralDiff)
+    return size(A.v) .- 2 .* A.n .* ntuple(==(A.dim), ndims(A))
+end
+
+@propagate_inbounds function Base.getindex(A::CentralDiff, i::Vararg{Int, N}) where {N}
+    i_next = 2 * A.n .* ntuple(==(A.dim), N) .+ i
+    return A.v[i_next...] - A.v[i...]
+end
+
 """
     DiffQ(v, t; dim=1)
 
