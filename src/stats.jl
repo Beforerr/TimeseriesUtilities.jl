@@ -33,7 +33,7 @@ function tstat(f, x, dt; dim = nothing, query = nothing)
     tdim = dims(x, dim)
     out, idxs = stat1d(f, parent(x), tdim, dt, dim)
     newdims = ntuple(ndims(x)) do i
-        i == dim ? basetypeof(tdim)(idxs) : dims(x, i)
+        i == dim ? fast_rebuild_dim(tdim, idxs) : dims(x, i)
     end
     return rebuild(x, out, newdims)
     # alternative slower method
