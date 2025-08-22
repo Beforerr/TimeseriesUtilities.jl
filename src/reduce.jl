@@ -14,8 +14,8 @@ function tmaximum end
 
 tminimum(x) = minimum(x)
 tmaximum(x) = maximum(x)
-tminimum(x::AbstractDimArray; query=nothing) = tminimum(times(x, query))
-tmaximum(x::AbstractDimArray; query=nothing) = tmaximum(times(x, query))
+tminimum(x::AbstractDimArray; query = nothing) = tminimum(times(x, query))
+tmaximum(x::AbstractDimArray; query = nothing) = tmaximum(times(x, query))
 targmin(x) = times(x)[argmin(x)]
 targmax(x) = times(x)[argmax(x)]
 
@@ -45,15 +45,20 @@ See also: [`common_timerange`](@ref), [`tminimum`](@ref), [`tmaximum`](@ref)
 timerange(times) = _extrema(times)
 
 _extrema(x) = extrema(x)
-function _extrema(x::AbstractArray{T}) where {T<:Union{Date,DateTime,Period,Int}}
+function _extrema(x::AbstractArray{T}) where {T <: Union{Date, DateTime, Period, Int}}
     return reinterpret.(T, vextrema(reinterpret(Int, x)))
 end
 
 _median(x) = median(x)
 
-function _median(x::AbstractArray{T}) where {T<:Union{Date,DateTime,Period}}
-    return T(round(Int, median(reinterpret(Int, x))))
+for f in (:median, :median!)
+    _f = Symbol(:_, f)
+    @eval $_f(x::AbstractArray{T}) where {T <: Union{Date, DateTime, Period, Int}} = T(round(Int, $f(reinterpret(Int, x))))
 end
+
+# function _median(x::AbstractArray{T}) where {T<:Union{Date,DateTime,Period}}
+#     return T(round(Int, median(reinterpret(Int, x))))
+# end
 
 timerange(x1, xs...) = common_timerange(x1, xs...)
 
@@ -109,10 +114,10 @@ function time_grid(x, dt::Unitful.Quantity)
 end
 
 for (period, unit) in (
-    (Dates.Week, Unitful.wk), (Dates.Day, Unitful.d), (Dates.Hour, Unitful.hr),
-    (Dates.Minute, Unitful.minute), (Dates.Second, Unitful.s), (Dates.Millisecond, Unitful.ms),
-    (Dates.Microsecond, Unitful.μs), (Dates.Nanosecond, Unitful.ns),
-)
+        (Dates.Week, Unitful.wk), (Dates.Day, Unitful.d), (Dates.Hour, Unitful.hr),
+        (Dates.Minute, Unitful.minute), (Dates.Second, Unitful.s), (Dates.Millisecond, Unitful.ms),
+        (Dates.Microsecond, Unitful.μs), (Dates.Nanosecond, Unitful.ns),
+    )
     @eval _2dates(::typeof($unit)) = $period
 end
 

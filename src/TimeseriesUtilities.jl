@@ -60,7 +60,7 @@ using LinearAlgebra
 using LinearAlgebra: norm2
 using StaticArrays
 using VectorizedStatistics, NaNStatistics
-using Statistics: median
+using Statistics: median, median!
 using Unitful
 using DataInterpolations
 using DSP

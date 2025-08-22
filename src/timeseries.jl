@@ -1,9 +1,12 @@
-function resolution(times; tol = 2, f = median_relerr)
-    dt, relerr = f(Diff(times))
-    if relerr > exp10(-tol - 1)
-        @warn "Time resolution is is not approximately constant (relerr ≈ $relerr)"
+function resolution(times; tol = 2, check = true, f = _median!)
+    dts = diff(times)
+    return if check
+        dt, relerr = stat_relerr(dts, f)
+        relerr > exp10(-tol - 1) && @warn "Time resolution is is not approximately constant (relerr ≈ $relerr)"
+        dt
+    else
+        f(dts)
     end
-    return dt
 end
 
 samplingrate(da) = 1u"s" / resolution(da) * u"Hz" |> u"Hz"
@@ -69,7 +72,7 @@ dropna(A; dim = nothing) = _dropna(A; dim)
 
 function dropna(A::AbstractDimArray; query = nothing, dim = nothing)
     dim = @something dim dimnum(A, query)
-    _dropna(A; dim)
+    return _dropna(A; dim)
 end
 
 function dropna(ds::DimStack, query = nothing)
@@ -115,19 +118,19 @@ function rectify(da; tol = 2, kwargs...)
     return set(da, Ti => new_times .+ t0)
 end
 
-"""
-    tsplit(da::AbstractDimArray, dim=Ti)
+# """
+#     tsplit(da::AbstractDimArray, dim=Ti)
 
-Splits up data along dimension `dim`.
-"""
-function tsplit(da::AbstractDimArray, dim = Ti; new_names = labels(da))
-    odims = otherdims(da, dim)
-    rows = eachslice(da; dims = odims)
-    das = map(rows, new_names) do row, name
-        rename(modify_meta(row; long_name = name), name)
-    end
-    return DimStack(das...)
-end
+# Splits up data along dimension `dim`.
+# """
+# function tsplit(da::AbstractDimArray, dim = Ti; new_names = labels(da))
+#     odims = otherdims(da, dim)
+#     rows = eachslice(da; dims = odims)
+#     das = map(rows, new_names) do row, name
+#         rename(modify_meta(row; long_name = name), name)
+#     end
+#     return DimStack(das...)
+# end
 
 for f in (:smooth, :tfilter)
     @eval $f(args...; kwargs...) = da -> $f(da, args...; kwargs...)
