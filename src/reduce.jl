@@ -16,6 +16,8 @@ tminimum(x) = minimum(x)
 tmaximum(x) = maximum(x)
 tminimum(x::AbstractDimArray; query=nothing) = tminimum(times(x, query))
 tmaximum(x::AbstractDimArray; query=nothing) = tmaximum(times(x, query))
+targmin(x) = times(x)[argmin(x)]
+targmax(x) = times(x)[argmax(x)]
 
 """    
     timerange(times)

@@ -69,7 +69,8 @@ using RollingWindowArrays
 const SV3 = SVector{3}
 
 export resolution, samplingrate
-export times, tminimum, tmaximum, timerange, common_timerange, time_grid
+export times, tminimum, tmaximum, targmin, targmax
+export timerange, common_timerange, time_grid
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift

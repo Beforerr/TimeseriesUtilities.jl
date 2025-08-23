@@ -12,22 +12,29 @@
     @test resolution(x) == Millisecond(1)
 
     using Chairmarks
-    using TimeseriesUtilities: median, nanmedian, vmedian
+    import VectorizedStatistics
+    import TimeseriesUtilities.NaNStatistics, Statistics
     t = Millisecond.(0:3:100000)
     dt = diff(t)
-    
-    @info "Benchmarking median implementations:"
-    f1(dt) = median(reinterpret(Int, dt))
-    f2(dt) = vmedian(reinterpret(Int, dt))
-    f3(dt) = nanmedian(reinterpret(Int, dt))
-    b1, b2, b3 = @b f1(dt), f2(dt), f3(dt)
-    @test f1(dt) == f2(dt) == f3(dt)
-    # Find fastest implementation
-    times = [b1.time, b2.time, b3.time]
-    names = ["Statistics.median", "VectorizedStatistics.vmedian", "NaNStatistics.nanmedian"]
-    fastest_idx = argmin(times)
-    @info "Times: $(names .=> times)"
-    @info "Fastest median implementation: $(names[fastest_idx])"
+
+    for f in (:extrema, :median)
+        @info "Benchmarking $f implementations:"
+        f2_sym = Symbol("v$f")
+        f3_sym = Symbol("nan$f")
+        @eval begin
+            f1 = ts -> Statistics.$f(reinterpret(Int, ts))
+            f2 = ts -> VectorizedStatistics.$f2_sym(reinterpret(Int, ts))
+            f3 = ts -> NaNStatistics.$f3_sym(reinterpret(Int, ts))
+        end
+        b1, b2, b3 = @b f1(dt), f2(dt), f3(dt)
+        @test f1(dt) == f2(dt) == f3(dt)
+        # Find fastest implementation
+        times = (b1.time, b2.time, b3.time)
+        names = ("Statistics.$f", "VectorizedStatistics.$f2_sym", "NaNStatistics.$f3_sym")
+        fastest_idx = argmin(times)
+        @info "Times: $(names .=> times)"
+        @info "Fastest $f implementation: $(names[fastest_idx])"
+    end
 end
 
 
@@ -41,6 +48,8 @@ end
     @test tminimum(x) == minimum(t)
     @test tmaximum(x) == maximum(t)
     @test timerange(x) == extrema(t)
+    @test targmin(x) == t[argmin(x)]
+    @test targmax(x) == t[argmax(x)]
 
     verbose = false
 
