@@ -42,12 +42,7 @@ timerange(x1_times, x2_times)  # (2, 4)
 
 See also: [`common_timerange`](@ref), [`tminimum`](@ref), [`tmaximum`](@ref)
 """
-timerange(times) = _extrema(times)
-
-_extrema(x) = extrema(x)
-function _extrema(x::AbstractArray{T}) where {T <: Union{Date, DateTime, Period, Int}}
-    return reinterpret.(T, vextrema(reinterpret(Int, x)))
-end
+timerange(times) = extrema(times)
 
 _median(x) = median(x)
 

@@ -68,3 +68,20 @@ function searchsortednearest(a, x; by = identity, lt = isless, rev = false, dist
     end
     return i
 end
+
+using HybridArrays
+
+rawview(x) = x
+
+function rawview(x::AbstractArray{T}) where T
+    return isbitstype(T) && sizeof(T) == sizeof(Int64) ? reinterpret(Int64, x) : x
+end
+
+rawview(x::AbstractTime) = Dates.value(x)
+
+function hybridify(A, dims)
+    sizes = ntuple(ndims(A)) do i
+        i in dims ? StaticArrays.Dynamic() : size(A, i)
+    end
+    HybridArray{Tuple{sizes...}}(A)
+end
