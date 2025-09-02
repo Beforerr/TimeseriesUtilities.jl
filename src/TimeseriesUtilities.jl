@@ -43,6 +43,7 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 - [`tshift`](@ref)
 - [`tsplit`](@ref)
 - [`tgroupby`](@ref)
+- Resampling: [`tinterp`](@ref), [`tsync`](@ref)
 
 ## Time-Frequency Domain Operations
 
@@ -71,6 +72,7 @@ const SV3 = SVector{3}
 export resolution, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
 export timerange, common_timerange, time_grid
+export tinterp, tsync
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
@@ -90,6 +92,8 @@ export find_outliers, replace_outliers!, replace_outliers
 
 export tsplit
 
+const Int64Like = Union{Date, DateTime, Period, Int64}
+
 """
     dimnum(x, query)
 
@@ -106,6 +110,7 @@ include("reduce.jl")
 include("stats.jl")
 include("algebra.jl")
 include("lazyoperations.jl")
+include("interp.jl")
 include("outliers.jl")
 include("utils.jl")
 include("DimensionalData.jl")
