@@ -40,9 +40,15 @@ function tinterp(A, t; query = nothing, dim = nothing, kws...)
     end
 end
 
+function tresample(A, dt; query = nothing, dim = nothing, kws...)
+    dim = @something dim dimnum(A, query)
+    old_times = unwrap(dims(A, dim))
+    return tinterp(A, time_grid(old_times, dt); dim, kws...)
+end
+
 """
     tinterp(A, B::AbstractDimArray; kws...)
 
 Interpolate `A` to times in `B`
 """
-tinterp(A, B::AbstractDimArray; kws...) = tinterp(A, lookup(dims(B, TimeDim)); kws...)
+tinterp(A, B::AbstractDimArray; kws...) = tinterp(A, times(B); kws...)

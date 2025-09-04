@@ -74,6 +74,39 @@ function common_timerange(x1, xs...)
     return t0, t1
 end
 
+function _find_continuous_timeranges(times, max_dt)
+    # Initialize variables
+    ranges = NTuple{2, eltype(times)}[]
+    range_start = times[1]
+
+    for i in 2:length(times)
+        current_time = times[i]
+        prev_time = times[i - 1]
+        # If gap is too large, end the current range and start a new one
+        if current_time - prev_time > max_dt
+            push!(ranges, (range_start, prev_time))
+            range_start = current_time
+        end
+    end
+    # Add the last range
+    push!(ranges, (range_start, times[end]))
+    return ranges
+end
+
+"""
+    find_continuous_timeranges(x, max_dt)
+
+Find continuous time ranges for `x` (e.g. times or `DimArray`). `max_dt` is the maximum time gap between consecutive times.
+"""
+function find_continuous_timeranges(x, max_dt)
+    isempty(x) && return []
+    ts = eltype(x) <: AbstractTime ? x : times(x)
+    return issorted(ts) ?
+           _find_continuous_timeranges(ts, max_dt) :
+           _find_continuous_timeranges(sort(ts), max_dt)
+end
+
+
 """
     time_grid(x, dt)
 
