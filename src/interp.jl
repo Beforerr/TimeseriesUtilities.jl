@@ -27,7 +27,7 @@ tinterp(time_series, new_times; interp = CubicSpline)
 function tinterp(A, old_times, new_times; interp = nothing, dim, kws...)
     interp = something(interp, LinearInterpolation)
     return if ndims(A) == 1
-        Tinterp(A, old_times, interp)(new_times)
+        Tinterp(A, old_times, interp).(new_times)
     else
         u = eachslice(hybridify(A, dim); dims = dim) # hybridify to reduce memory allocation
         interp = Tinterp(u, old_times, interp; kws...)
@@ -35,13 +35,30 @@ function tinterp(A, old_times, new_times; interp = nothing, dim, kws...)
     end
 end
 
-# workaround for `Time` type: https://github.com/SciML/DataInterpolations.jl/issues/436
-struct Tinterp{F}
+"""
+    tresample(A, old_times, freq; kw...)
+
+Resample time series `A` onto a regular time grid with the specified frequency `freq`.
+
+See also: [`tinterp`](@ref), [`time_grid`](@ref)
+"""
+tresample(A, old_times, freq; kw...) = tinterp(A, old_times, time_grid(old_times, freq); kw...)
+
+"""
+    Tinterp{T, F} <: Function
+
+A function-like wrapper for time series interpolation that handles time type conversions.
+
+# Notes
+It is a workaround for `Time` type: https://github.com/SciML/DataInterpolations.jl/issues/436
+"""
+struct Tinterp{T, F}
     interp::F
+    tType::Type{T}
 end
 
-Tinterp(u, t, interp; kws...) = Tinterp(interp(u, rawview(t); kws...))
-(ti::Tinterp)(t) = ti.interp(rawview(t))
+Tinterp(u, t, interp; kws...) = Tinterp(interp(u, rawview(t); kws...), eltype(t))
+(ti::Tinterp{T})(t) where {T} = ti.interp(rawview(T(t)))
 
 # This is much slower than `hybridify` and consumes more memory
 function _tinterp_mapslices(A::AbstractArray, t, ts, interp, dim; kws...)
