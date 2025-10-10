@@ -91,8 +91,9 @@ function tdot(x, y; dim=nothing, query=nothing)
     return dot.(eachslice(x; dims), eachslice(y; dims))
 end
 
-function norm_combine(x, dims)
-    return cat(x, norm.(eachslice(x; dims)); dims=setdiff(1:ndims(x), dims))
+@inline function norm_combine(x::AbstractMatrix, dims)
+    nn = norm.(eachslice(x; dims))
+    return dims == 1 ?  hcat(x, nn) : vcat(x, nn')
 end
 
 """
