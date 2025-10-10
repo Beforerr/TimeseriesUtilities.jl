@@ -11,10 +11,10 @@ Group `x` into windows based on `every` and `period`.
 """
 function groupby_dynamic(x, every, period = every, start_by = :window)
     min, max = timerange(x)
-    n = Base.min(floor(Int, (max - min) / every) + 1, length(x))
+    current_start = ifelse(start_by == :window, _floor(min, every), min)
+    n = Base.min(floor(Int, (max - current_start) / every) + 1, length(x))
     group_idx = Vector{UnitRange{Int}}(undef, n)
     starts = Vector{eltype(x)}(undef, n)
-    current_start = ifelse(start_by == :window, _floor(min, every), min)
     i = 0
     while current_start <= max
         window_end = current_start + period

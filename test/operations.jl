@@ -62,3 +62,46 @@ end
     @test_opt tselect(da, 5.0, 0.5)
     @test_call tselect(da, 5.0, 0.5)
 end
+
+@testitem "tsplit" begin
+    using Dates
+
+    # Test tsplit with integer n
+    result = tsplit(1.0, 10.0, 3)
+    @test length(result) == 3
+    @test result[1] == (1.0, 4.0)
+    @test result[2] == (4.0, 7.0) 
+    @test result[3] == (7.0, 10.0)
+
+    # Test tsplit with step size dt
+    result = tsplit(0.0, 10.0, 2.0)
+    @test length(result) == 5
+    @test result[1] == (0.0, 2.0)
+    @test result[5] == (8.0, 10.0)
+
+    # Test tsplit with DateTime and Month period
+    result = tsplit(DateTime("2021-01-01"), DateTime("2021-03-01"), Month)
+    @test length(result) == 2
+    @test result[1] == (DateTime("2021-01-01"), DateTime("2021-02-01"))
+    @test result[2] == (DateTime("2021-02-01"), DateTime("2021-03-01"))
+
+    # Test tsplit with DateTime and Day period  
+    result = tsplit(DateTime("2021-01-01"), DateTime("2021-01-05"), Day)
+    @test length(result) == 4
+    @test result[1] == (DateTime("2021-01-01"), DateTime("2021-01-02"))
+    @test result[2] == (DateTime("2021-01-02"), DateTime("2021-01-03"))
+    @test result[3] == (DateTime("2021-01-03"), DateTime("2021-01-04"))
+    @test result[4] == (DateTime("2021-01-04"), DateTime("2021-01-05"))
+
+    # Test tsplit with DateTime and Hour period
+    result = tsplit(DateTime("2021-01-01T00:00:00"), DateTime("2021-01-01T03:00:00"), Hour)
+    @test length(result) == 3
+    @test result[1] == (DateTime("2021-01-01T00:00:00"), DateTime("2021-01-01T01:00:00"))
+    @test result[2] == (DateTime("2021-01-01T01:00:00"), DateTime("2021-01-01T02:00:00"))
+    @test result[3] == (DateTime("2021-01-01T02:00:00"), DateTime("2021-01-01T03:00:00"))
+
+    using JET
+    @test_call tsplit(1.0, 10.0, 3)
+    @test_call tsplit(0.0, 10.0, 2.0) 
+    @test_call tsplit(DateTime("2021-01-01"), DateTime("2021-03-01"), Month)
+end

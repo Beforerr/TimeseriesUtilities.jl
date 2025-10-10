@@ -1,8 +1,9 @@
 """
     tsplit(t0, t1, n::Int)
     tsplit(t0, t1, dt)
+    tsplit(t0, t1, dtType::Type{<:Period})
 
-Split the range from `t0` to `t1` into `n` parts or `dt`-sized parts.
+Split the range from `t0` to `t1` into `n` parts, `dt`-sized parts, or by period type (e.g., Month, Day).
 """
 function tsplit(t0, t1, n::Int)
     return if n <= 1
@@ -16,10 +17,21 @@ function tsplit(t0, t1, n::Int)
 end
 
 function tsplit(t0, t1, dt)
-    n = ceil(Int, (t1 - t0) / dt)
-    return tsplit(t0, t1, n)
+    T = promote_type(typeof(t0), typeof(t1))
+    periods = NTuple{2, T}[]
+    current = t0
+    
+    while current < t1
+        next_period = current + dt
+        push!(periods, (current, min(next_period, t1)))
+        current = next_period
+    end
+    
+    return periods
 end
 
+tsplit(t0, t1, dtType::Type{<:Period}) = tsplit(t0, t1, dtType(1))
+tsplit((t0, t1), arg) = tsplit(t0, t1, arg)
 
 """
     unwrap(x)
@@ -73,8 +85,9 @@ using HybridArrays
 
 rawview(x) = x
 
-function rawview(x::AbstractArray{T}) where T
-    return isbitstype(T) && sizeof(T) == sizeof(Int64) ? reinterpret(Int64, x) : x
+function rawview(x::AbstractArray{T}) where T <: AbstractTime
+    rawType = Base.promote_op(Dates.value, T)
+    return isbitstype(T) && sizeof(T) == sizeof(rawType) ? reinterpret(rawType, x) : x
 end
 
 rawview(x::AbstractTime) = Dates.value(x)
