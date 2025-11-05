@@ -1,13 +1,13 @@
 unwrap(x::AbstractDimArray) = parent(x)
 unwrap(x::Dimension) = parent(lookup(x))
 
-dimnum(x, query) = DimensionalData.dimnum(x, something(query, TimeDim))
+dimnum(x, query) = DimensionalData.dimnum(x, @something(query, TimeDim))
 
 """
 Returns the time indices of `x`.
 """
-times(x::AbstractDimArray, args...) = parent(lookup(timedim(x, args...)))
-times(x::AbstractDimStack, args...) = parent(lookup(timedim(x, args...)))
+times(x::AbstractDimArray, args...) = lookup(timedim(x, args...))
+times(x::AbstractDimStack, args...) = lookup(timedim(x, args...))
 
 function timedim(x, query = nothing)
     query = something(query, TimeDim)

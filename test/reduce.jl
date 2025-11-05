@@ -105,3 +105,44 @@ end
     @test length(grid_single) == 1
     @test first(grid_single) == last(grid_single)
 end
+
+@testitem "find_continuous_timeranges" begin
+    using Dates
+    using DimensionalData
+    using TimeseriesUtilities
+
+    # Create time series with gaps
+    times = [
+        DateTime(2023, 1, 1, 0, 0, 0),
+        DateTime(2023, 1, 1, 1, 0, 0),
+        DateTime(2023, 1, 1, 2, 0, 0),  # First continuous range ends here
+        DateTime(2023, 1, 1, 6, 0, 0),  # Gap of 4 hours
+        DateTime(2023, 1, 1, 7, 0, 0),
+        DateTime(2023, 1, 1, 8, 0, 0),  # Second continuous range ends here
+        DateTime(2023, 1, 1, 12, 0, 0), # Gap of 4 hours
+        DateTime(2023, 1, 1, 13, 0, 0)  # Third continuous range
+    ]
+
+    # Find continuous ranges with max gap of 2 hours
+    ranges = find_continuous_timeranges(times, Hour(2))
+
+    # Should find 3 continuous ranges
+    @test length(ranges) == 3
+
+    # Check first range
+    @test ranges[1][1] == DateTime(2023, 1, 1, 0, 0, 0)
+    @test ranges[1][2] == DateTime(2023, 1, 1, 2, 0, 0)
+
+    # Check second range
+    @test ranges[2][1] == DateTime(2023, 1, 1, 6, 0, 0)
+    @test ranges[2][2] == DateTime(2023, 1, 1, 8, 0, 0)
+
+    # Check third range
+    @test ranges[3][1] == DateTime(2023, 1, 1, 12, 0, 0)
+    @test ranges[3][2] == DateTime(2023, 1, 1, 13, 0, 0)
+
+    # Test with DimArray
+    da = DimArray(rand(length(times)), (Ti(times),))
+    ranges_da = find_continuous_timeranges(da, Hour(2))
+    @test ranges_da == ranges
+end

@@ -86,8 +86,10 @@ using HybridArrays
 rawview(x) = x
 
 function rawview(x::AbstractArray{T}) where T <: AbstractTime
-    rawType = Base.promote_op(Dates.value, T)
-    return isbitstype(T) && sizeof(T) == sizeof(rawType) ? reinterpret(rawType, x) : x
+    return Dates.value.(x)
+    # reinterpret seems to be much slower
+    # rawType = Base.promote_op(Dates.value, T)
+    # return isbitstype(T) && sizeof(T) == sizeof(rawType) ? reinterpret(rawType, x) : x
 end
 
 rawview(x::AbstractTime) = Dates.value(x)

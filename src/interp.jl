@@ -5,6 +5,9 @@
 # https://discourse.julialang.org/t/interpolating-along-a-single-dimension-of-a-multi-dimensional-array-for-particular-points/29308/3
 using DataInterpolations
 
+_extrapolation(x) = x
+_extrapolation(x::Bool) = x ? DataInterpolations.ExtrapolationType.Linear : DataInterpolations.ExtrapolationType.None
+
 """
     tinterp(A, old_times, new_times; interp=LinearInterpolation)
 
@@ -24,13 +27,14 @@ new_times = DateTime("2023-01-01"):Hour(1):DateTime("2023-01-02")
 tinterp(time_series, new_times; interp = CubicSpline)
 ```
 """
-function tinterp(A, old_times, new_times; interp = nothing, dim, kws...)
-    interp = something(interp, LinearInterpolation)
+@inline function tinterp(A, old_times, new_times; interp = nothing, dim, extrapolate = false, kws...)
+    interp = @something interp LinearInterpolation
+    extrapolation = _extrapolation(extrapolate)
     return if ndims(A) == 1
-        Tinterp(A, old_times, interp).(new_times)
+        Tinterp(A, old_times, interp; extrapolation).(new_times)
     else
         u = eachslice(hybridify(A, dim); dims = dim) # hybridify to reduce memory allocation
-        interp = Tinterp(u, old_times, interp; kws...)
+        interp = Tinterp(u, old_times, interp; extrapolation, kws...)
         stack(interp, new_times; dims = dim)
     end
 end
@@ -131,16 +135,16 @@ function interpolate_nans(u, t::AbstractArray{<:AbstractTime}; kwargs...)
 end
 
 """
-    tinterp_nans(da::AbstractDimArray; query=timeDimType, kwargs...)
+    tinterp_nans(da::AbstractDimArray; query=nothing, kwargs...)
 
 Interpolate only the NaN values in `da` along the specified dimensions `query`.
 Non-NaN values are preserved exactly as they are.
 
 See also [`interpolate_nans`](@ref)
 """
-function tinterp_nans(da::AbstractDimArray; query = timeDimType, kwargs...)
+function tinterp_nans(da::AbstractDimArray; query = nothing, kwargs...)
     u = parent(da)
-    dim = timedim(da; query)
+    dim = timedim(da, query)
     t = parent(lookup(dim))
     new_data = mapslices(u; dims = dimnum(da, dim)) do slice
         interpolate_nans(slice, t; kwargs...)
