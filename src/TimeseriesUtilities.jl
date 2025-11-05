@@ -71,8 +71,8 @@ const SV3 = SVector{3}
 
 export resolution, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
-export timerange, common_timerange, time_grid
-export tinterp, tsync, tresample
+export timerange, common_timerange, time_grid, find_continuous_timeranges
+export tinterp, tsync, tresample, tinterp_nans
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
