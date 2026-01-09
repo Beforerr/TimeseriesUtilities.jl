@@ -100,17 +100,16 @@ Non-mutable version of `tmask!`. See also [`tmask!`](@ref).
 tmask(da, args...; kwargs...) = tmask!(deepcopy(da), args...; kwargs...)
 
 """
-    tshift(x; dim=TimeDim, t0=nothing, new_dim=nothing)
+    tshift(x, t0 = nothing; dim=nothing)
 
 Shift the `dim` of `x` by `t0`.
 """
-function tshift(x, t0 = nothing; query = nothing, dim = nothing, new_dim = nothing)
-    dim = @something dim dimnum(x, something(query, TimeDim))
+function tshift(x, t0 = nothing; query = nothing, dim = nothing)
+    dim = @something dim dimnum(x, query)
     td = dims(x, dim)
-    times = parent(lookup(td))
-    t0 = @something t0 first(times)
-    new_dim = @something new_dim Dim{Symbol("Time after ", t0)}
-    return set(x, dim => new_dim(times .- t0))
+    times = axiskeys(x, dim)
+    times′ = times .- (@something t0 first(times))
+    return set(x, td => times′)
 end
 
 for f in (:tclip, :tview, :tmask!, :tmask)

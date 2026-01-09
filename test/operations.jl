@@ -70,7 +70,7 @@ end
     result = tsplit(1.0, 10.0, 3)
     @test length(result) == 3
     @test result[1] == (1.0, 4.0)
-    @test result[2] == (4.0, 7.0) 
+    @test result[2] == (4.0, 7.0)
     @test result[3] == (7.0, 10.0)
 
     # Test tsplit with step size dt
@@ -85,7 +85,7 @@ end
     @test result[1] == (DateTime("2021-01-01"), DateTime("2021-02-01"))
     @test result[2] == (DateTime("2021-02-01"), DateTime("2021-03-01"))
 
-    # Test tsplit with DateTime and Day period  
+    # Test tsplit with DateTime and Day period
     result = tsplit(DateTime("2021-01-01"), DateTime("2021-01-05"), Day)
     @test length(result) == 4
     @test result[1] == (DateTime("2021-01-01"), DateTime("2021-01-02"))
@@ -102,6 +102,41 @@ end
 
     using JET
     @test_call tsplit(1.0, 10.0, 3)
-    @test_call tsplit(0.0, 10.0, 2.0) 
+    @test_call tsplit(0.0, 10.0, 2.0)
     @test_call tsplit(DateTime("2021-01-01"), DateTime("2021-03-01"), Month)
+end
+
+@testitem "tshift" begin
+    times = [1.0, 2.0, 3.0, 4.0, 5.0]
+    values = [10.0, 20.0, 30.0, 40.0, 50.0]
+
+    @testset "DimensionalData" begin
+        using DimensionalData
+        da = DimArray(values, (Ti(times),))
+
+        # Test shift by 2.0
+        result = tshift(da, 2.0)
+        @test parent(dims(result, Ti)) == [-1.0, 0.0, 1.0, 2.0, 3.0]
+
+        # Test default shift with 2D array
+        y = Y(1:3)
+        da2d = rand(Ti(times), y)
+        result2d = tshift(da2d)
+        @test parent(dims(result2d, Ti)) == times .- 1.0
+    end
+
+    @testset "AxisKeys" begin
+        using AxisKeys
+        ka = KeyedArray(values; time = times)
+
+        # Test shift by 2.0
+        result = tshift(ka, 2.0)
+        @test axiskeys(result, 1) == [-1.0, 0.0, 1.0, 2.0, 3.0]
+
+        # Test with 2D array
+        ka2d = KeyedArray(rand(5, 3); time = times, space = 1:3)
+        result2d = tshift(ka2d)
+        @test axiskeys(result2d, 1) == times .- 1.0
+        @test axiskeys(result2d, 2) == 1:3
+    end
 end
