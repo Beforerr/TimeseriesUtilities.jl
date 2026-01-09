@@ -1,6 +1,6 @@
 name = "TimeseriesUtilities"
 uuid = "31d49243-0742-49c1-b8d2-db113b74581e"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Beforerr <zzj956959688@gmail.com> and contributors"]
 
 [deps]
