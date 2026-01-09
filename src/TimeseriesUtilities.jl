@@ -94,15 +94,7 @@ export tsplit
 
 const Int64Like = Union{Date, DateTime, Period, Int64}
 
-"""
-    dimnum(x, query)
-
-Get the number(s) of Dimension(s) as ordered in the dimensions of an object.
-
-Extend the function for custom type `x`. By default, we fall back to `DimensionalData.dimnum`.
-"""
-function dimnum end
-
+include("api.jl")
 include("timeseries.jl")
 include("operations.jl")
 include("groupby.jl")

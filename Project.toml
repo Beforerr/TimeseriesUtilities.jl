@@ -18,12 +18,15 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 VectorizedStatistics = "3b853605-1c98-4422-8364-4bd93ee0529e"
 
 [weakdeps]
+AxisKeys = "94b1ba4f-4ee9-5380-92f1-94cde586c3c5"
 SpaceDataModel = "0b37b92c-f0c5-4a52-bd5c-390dec20857c"
 
 [extensions]
+TimeseriesUtilitiesAxisKeysExt = "AxisKeys"
 TimeseriesUtilitiesSpaceDataModelExt = "SpaceDataModel"
 
 [compat]
+AxisKeys = "0.2"
 DSP = "0.7, 0.8"
 DataInterpolations = "7, 8"
 Dates = "1"
