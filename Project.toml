@@ -3,6 +3,9 @@ uuid = "31d49243-0742-49c1-b8d2-db113b74581e"
 version = "0.1.5"
 authors = ["Beforerr <zzj956959688@gmail.com> and contributors"]
 
+[workspace]
+projects = ["docs", "test"]
+
 [deps]
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
