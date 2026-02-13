@@ -60,7 +60,7 @@ using DimensionalData.Lookups
 using LinearAlgebra
 using LinearAlgebra: norm2
 using StaticArrays
-using VectorizedStatistics, NaNStatistics
+using NaNStatistics
 using Statistics: median, median!
 using Unitful
 using DataInterpolations
