@@ -13,7 +13,8 @@ samplingrate(da) = 1u"s" / resolution(da) * u"Hz" |> u"Hz"
 
 
 """
-    smooth(da::AbstractDimArray, window; dim=Ti, suffix="_smoothed", kwargs...)
+    smooth(data, window::Integer; dim=1, kwargs...)
+    smooth(data, times, window; dim=1, kwargs...)
 
 Smooths a time series by computing a moving average over a sliding window.
 
@@ -22,22 +23,21 @@ The size of the sliding `window` can be either:
   - `Integer`: Number of samples directly
 
 # Arguments
-- `dims=Ti`: Dimension along which to perform smoothing (default: time dimension)
-- `suffix="_smoothed"`: Suffix to append to the variable name in output
+- `dim=1`: Dimension along which to perform smoothing
 - `kwargs...`: Additional arguments passed to `RollingWindowArrays.rolling`
 """
-smooth(da, window; kwargs...) = smooth(da, Integer(div(window, resolution(da))); kwargs...)
-
-function smooth(da, window::Integer; dims = Ti, suffix = "_smoothed", kwargs...)
-    new_da = mapslices(da; dims) do slice
+function smooth(data::AbstractArray, window::Integer; dim = 1, kwargs...)
+    return mapslices(data; dims = dim) do slice
         nanmean.(RollingWindowArrays.rolling(slice, window; kwargs...))
     end
-    return rebuild(new_da; name = Symbol(da.name, suffix))
 end
 
-"""
-    tfilter(da, Wn1, Wn2=samplingrate(da) / 2; designmethod=nothing)
+smooth(data, times, window; kwargs...) = smooth(data, Integer(div(window, resolution(times))); kwargs...)
 
+"""
+    tfilter(data, fs, Wn1, Wn2=0.999*fs/2; designmethod=nothing)
+
+Apply a bandpass filter to `data` with sampling rate `fs`.
 By default, the max frequency corresponding to the Nyquist frequency is used.
 
 References
@@ -48,47 +48,30 @@ References
 Issues
 - DSP.jl and Unitful.jl: https://github.com/JuliaDSP/DSP.jl/issues/431
 """
-function tfilter(da::AbstractDimArray, Wn1, Wn2 = 0.999 * samplingrate(da) / 2; designmethod = nothing)
+function tfilter(data::AbstractArray, fs, Wn1, Wn2 = 0.999 * fs / 2; designmethod = nothing)
     designmethod = something(designmethod, Butterworth(2))
-    fs = samplingrate(da)
     Wn1, Wn2, fs = (Wn1, Wn2, fs) ./ 1u"Hz" .|> NoUnits
     f = digitalfilter(Bandpass(Wn1, Wn2; fs), designmethod)
-    res = filtfilt(f, ustrip(parent(da)))
-    return rebuild(da; data = res * (da |> eltype |> unit))
+    res = filtfilt(f, ustrip(data))
+    return res * (eltype(data) |> unit)
 end
 
-function _dropna(A; dim = nothing)
+"""
+    dropna(A; dim)
+
+Remove slices containing NaN values along the `dim` dimension.
+"""
+function dropna(A; dim = nothing)
     valid_idx = vec(all(!isnan, A; dims = other_dims(A, dim)))
     return selectdim(A, dim, valid_idx)
 end
 
 """
-    dropna(A; dim=nothing)
-    dropna(A::AbstractDimArray; dim=nothing, query=nothing)
+    rectify(ts::AbstractVector; tol=4, atol=nothing)
 
-Remove slices containing NaN values along along the `dim` dimension.
+Rectify a time vector to have uniform step size.
 """
-dropna(A; dim = nothing) = _dropna(A; dim)
-
-function dropna(A::AbstractDimArray; query = nothing, dim = nothing)
-    dim = @something dim dimnum(A, query)
-    return _dropna(A; dim)
-end
-
-function dropna(ds::DimStack, query = nothing)
-    query = something(query, TimeDim)
-    Dim, T = dimtype_eltype(ds, query)
-    dims = otherdims(ds, query)
-
-    valid_idx = mapreduce(.*, values(ds)) do A
-        vec(all(!isnan, A; dims))
-    end
-
-    return ds[Dim(valid_idx)]
-end
-
-
-function rectify(ts::DimensionalData.Dimension; tol = 4, atol = nothing)
+function rectify(ts::AbstractVector; tol = 4, atol = nothing)
     u = unit(eltype(ts))
     ts = collect(ts)
     stp = ts |> diff |> mean
@@ -108,29 +91,6 @@ function rectify(ts::DimensionalData.Dimension; tol = 4, atol = nothing)
     end
     return ts
 end
-
-"""Rectify the time step of a `DimArray` to be uniform."""
-function rectify(da; tol = 2, kwargs...)
-    times = dims(da, Ti)
-    t0 = times[1]
-    dtime = Quantity.(times.val .- t0)
-    new_times = rectify(Ti(dtime); tol)
-    return set(da, Ti => new_times .+ t0)
-end
-
-# """
-#     tsplit(da::AbstractDimArray, dim=Ti)
-
-# Splits up data along dimension `dim`.
-# """
-# function tsplit(da::AbstractDimArray, dim = Ti; new_names = labels(da))
-#     odims = otherdims(da, dim)
-#     rows = eachslice(da; dims = odims)
-#     das = map(rows, new_names) do row, name
-#         rename(modify_meta(row; long_name = name), name)
-#     end
-#     return DimStack(das...)
-# end
 
 for f in (:smooth, :tfilter)
     @eval $f(args...; kwargs...) = da -> $f(da, args...; kwargs...)

@@ -1,115 +1,138 @@
-using DimensionalData.Lookups: Unordered
+# Generic operations on (data, times) pairs
+# DimensionalData-specific overloads are in DimensionalData.jl
 
-dimtype_eltype(d) = (basetypeof(d), eltype(d))
-dimtype_eltype(A, query) = dimtype_eltype(dims(A, query))
-dimtype_eltype(A, ::Nothing) = dimtype_eltype(A, TimeDim)
+# --- Generic helpers ---
 
-"""
-    tsort(A; query=nothing, rev=false)
-
-Sort a `DimArray` `A` along the `query` dimension.
-"""
-function tsort(A; query = nothing, rev = false)
-    tdim = timedim(A, query)
-
-    return if issorted(tdim; rev)
-        DimensionalData.order(tdim) isa Unordered ?
-            set(A, tdim => rev ? ReverseOrdered : ForwardOrdered) : A
+"""Find indices where t0 <= times <= t1"""
+function _time_indices(ts, t0, t1)
+    if issorted(ts)
+        i0 = searchsortedfirst(ts, t0)
+        i1 = searchsortedlast(ts, t1)
+        return i0:i1
     else
-        time = parent(lookup(tdim))
-        order = rev ? ReverseOrdered : ForwardOrdered
-        sel = rebuild(tdim, sortperm(time; rev))
-        set(A[sel], tdim => order)
+        return findall(t -> t0 <= t <= t1, ts)
     end
 end
 
-"""
-    tclip(A, t0, t1; query=nothing, sort=false)
+# --- tsort ---
 
-Clip a `Dimension` or `DimArray` `A` to a time range `[t0, t1]`.
+"""
+    tsort(data, ts; dim=1, rev=false)
+    tsort(A; query=nothing, rev=false)
+
+Sort data along the time dimension. The generic form takes a data array and time vector.
+"""
+function tsort(data::AbstractArray, ts::AbstractVector; dim = 1, rev = false)
+    perm = sortperm(ts; rev)
+    return selectdim(data, dim, perm), ts[perm]
+end
+
+# --- tclip ---
+
+"""
+    tclip(data, ts, t0, t1; dim=1)
+    tclip(A, t0, t1; query=nothing)
+
+Clip data to a time range `[t0, t1]`. The generic form takes a data array and time vector.
 
 For unordered dimensions, the dimension should be sorted before clipping (see [`tsort`](@ref)).
 """
-function tclip(A::AbstractDimArray, t0, t1; query = nothing)
-    Dim, T = dimtype_eltype(A, query)
-    return A[Dim(T(t0) .. T(t1))]
+function tclip(data::AbstractArray, ts::AbstractVector, t0, t1; dim = 1)
+    idx = _time_indices(ts, t0, t1)
+    return selectdim(data, dim, idx), ts[idx]
 end
 
+# --- tview ---
+
 """
+    tview(data, ts, t0, t1; dim=1)
     tview(d, t0, t1)
 
-View a dimension or `DimArray` in time range `[t0, t1]`.
+View data in time range `[t0, t1]`. The generic form takes a data array and time vector.
 """
+function tview(data::AbstractArray, ts::AbstractVector, t0, t1; dim = 1)
+    idx = _time_indices(ts, t0, t1)
+    return Base.selectdim(Base.view(data, ntuple(Returns(Colon()), ndims(data))...), dim, idx), view(ts, idx)
+end
+
+# Fallback for plain vector of times
 tview(d, t0, t1) = @view d[DateTime(t0) .. DateTime(t1)]
-function tview(da::AbstractDimArray, t0, t1; query = nothing)
-    Dim, T = dimtype_eltype(da, query)
-    return @view da[Dim(T(t0) .. T(t1))]
-end
 
-# Type-stable
-function _tmask!(da, t0, t1, Dim, T)
-    nan = NaN * oneunit(eltype(da))
-    da[Dim(T(t0) .. T(t1))] .= nan
-    return da
-end
+# --- tmask! ---
 
 """
+    tmask!(data, ts, t0, t1; dim=1)
     tmask!(da, t0, t1)
     tmask!(da, it::Interval)
     tmask!(da, its)
 
 Mask all data values within the specified time range(s) `(t0, t1)` / `it` / `its` with NaN.
 """
-tmask!(da, t0, t1; query = TimeDim) = _tmask!(da, t0, t1, dimtype_eltype(da, query)...)
-function tmask!(da, its::AbstractArray; kw...)
-    for it in its
-        tmask!(da, it; kw...)
-    end
-    return da
+function tmask!(data::AbstractArray, ts::AbstractVector, t0, t1; dim = 1)
+    idx = _time_indices(ts, t0, t1)
+    nan = NaN * oneunit(eltype(data))
+    selectdim(data, dim, idx) .= nan
+    return data
 end
 
+function tmask!(data::AbstractArray, ts::AbstractVector, its::AbstractArray; kw...)
+    for it in its
+        tmask!(data, ts, it...; kw...)
+    end
+    return data
+end
+
+"""
+    tmask(data, ts, args...; kwargs...)
+
+Non-mutable version of `tmask!`. See also [`tmask!`](@ref).
+"""
+tmask(da, args...; kwargs...) = tmask!(deepcopy(da), args...; kwargs...)
+
+# --- tselect ---
+
+"""
+    tselect(times, t)
+    tselect(data, ts, t; dim=1)
+    tselect(data, ts, t, δt; dim=1)
+
+Select the value of data closest to time `t`, optionally within the time range `[t-δt, t+δt]`.
+Returns `missing` if the time range is empty (when `δt` is specified).
+"""
 function tselect(times, t)
     idx = issorted(times) ? searchsortednearest(times, t) :
         searchsortednearest(sort(times), t)
     return times[idx]
 end
 
-function tselect(da::AbstractDimArray, t; query = nothing)
-    Dim, T = dimtype_eltype(da, query)
-    return da[Dim(Near(T(t)))]
+function tselect(data::AbstractArray, ts::AbstractVector, t; dim = 1)
+    idx = searchsortednearest(issorted(ts) ? ts : sort(ts), t)
+    return selectdim(data, dim, idx)
 end
 
-"""
-    tselect(A, t, [δt]; query=nothing)
-
-Select the value of `A` closest to time `t` within the time range `[t-δt, t+δt]`.
-
-Similar to `DimensionalData.Dimensions.Lookups.At` but choose the closest value and return `missing` if the time range is empty.
-"""
-function tselect(A::AbstractDimArray, t, δt; query = nothing)
-    Dim, T = dimtype_eltype(A, query)
-    tmp = @views A[Dim(T(t - δt) .. T(t + δt))]
-    return length(tmp) == 0 ? missing : tmp[Dim(Near(T(t)))]
+function tselect(data::AbstractArray, ts::AbstractVector, t, δt; dim = 1)
+    idx = _time_indices(ts, t - δt, t + δt)
+    if isempty(idx)
+        return missing
+    else
+        sub_ts = ts[idx]
+        nearest = searchsortednearest(sub_ts, t)
+        return selectdim(data, dim, idx[nearest])
+    end
 end
 
-"""
-    tmask(da, args...; kwargs...)
-
-Non-mutable version of `tmask!`. See also [`tmask!`](@ref).
-"""
-tmask(da, args...; kwargs...) = tmask!(deepcopy(da), args...; kwargs...)
+# --- tshift ---
 
 """
-    tshift(x, t0 = nothing; dim=nothing)
+    tshift(data, ts, t0=nothing; dim=1)
+    tshift(x, t0=nothing; dim=nothing)
 
-Shift the `dim` of `x` by `t0`.
+Shift the time dimension of data by `t0`. If `t0` is not specified, shifts to start at zero.
+The generic form returns `(data, new_times)`.
 """
-function tshift(x, t0 = nothing; query = nothing, dim = nothing)
-    dim = @something dim dimnum(x, query)
-    td = dims(x, dim)
-    times = axiskeys(x, dim)
-    times′ = times .- (@something t0 first(times))
-    return set(x, td => times′)
+function tshift(data::AbstractArray, ts::AbstractVector, t0 = nothing; dim = 1)
+    new_ts = ts .- (@something t0 first(ts))
+    return data, new_ts
 end
 
 for f in (:tclip, :tview, :tmask!, :tmask)

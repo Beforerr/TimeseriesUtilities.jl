@@ -35,15 +35,14 @@ end
 
 
 """
-    tgroupby(x, every, period = every, start_by = :window)
+    tgroupby(data, times, every, args...; dim=1, kwargs...)
 
-Group `x` into windows based on `every` and `period`.
+Group `data` into windows based on `every` and `period` using `times` for grouping.
+Returns a vector of array slices.
 """
-function tgroupby(x, args...; dim=nothing, query=nothing, kwargs...)
-    dim = @something dim dimnum(x, query)
-    times = dims(x, dim)
-    group_idx, = groupby_dynamic(times, args...; kwargs...)
+function tgroupby(data::AbstractArray, ts::AbstractVector, args...; dim = 1, kwargs...)
+    group_idx, = groupby_dynamic(ts, args...; kwargs...)
     return map(group_idx) do idx
-        selectdim(x, dim, idx)
+        selectdim(data, dim, idx)
     end
 end

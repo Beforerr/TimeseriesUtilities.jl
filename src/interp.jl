@@ -135,37 +135,15 @@ function interpolate_nans(u, t::AbstractArray{<:AbstractTime}; kwargs...)
 end
 
 """
-    tinterp_nans(da::AbstractDimArray; query=nothing, kwargs...)
+    tinterp_nans(data, times; dim=1, kwargs...)
 
-Interpolate only the NaN values in `da` along the specified dimensions `query`.
+Interpolate only the NaN values in `data` along the specified dimension `dim`.
 Non-NaN values are preserved exactly as they are.
 
 See also [`interpolate_nans`](@ref)
 """
-function tinterp_nans(da::AbstractDimArray; query = nothing, kwargs...)
-    u = parent(da)
-    dim = timedim(da, query)
-    t = parent(lookup(dim))
-    new_data = mapslices(u; dims = dimnum(da, dim)) do slice
-        interpolate_nans(slice, t; kwargs...)
+function tinterp_nans(data::AbstractArray, times; dim = 1, kwargs...)
+    return mapslices(data; dims = dim) do slice
+        interpolate_nans(slice, times; kwargs...)
     end
-    return rebuild(da; data = new_data)
-end
-
-function workload_interp_setup(n = 4)
-    # Create arrays with different time ranges
-    times1 = DateTime(2020, 1, 1) + Day.(0:(n - 1))
-    times2 = DateTime(2020, 1, 2) + Day.(0:(n - 1))
-    times3 = DateTime(2020, 1, 1, 12) + Day.(0:(n - 2))
-
-    # Create DimArrays with different data and time dimensions
-    da1 = DimArray(1:n, (Ti(times1),))
-    da2 = DimArray(10:(10 + n - 1), (Ti(times2),))
-    da3 = DimArray(hcat(5:(5 + n - 2), 8:2:(8 + 2n - 4)), (Ti(times3), Y([1, 2])))
-    return da1, da2, da3
-end
-
-function workload_interp()
-    da1, da2, da3 = workload_interp_setup()
-    return tsync(da1, da2, da3)
 end

@@ -1,4 +1,4 @@
-# Reference: 
+# Reference:
 # - [NaNStatistics.jl](https://github.com/brenhinkeller/NaNStatistics.jl)
 # - [VectorizedStatistics.jl](https://github.com/JuliaSIMD/VectorizedStatistics.jl)
 # - [Average of Dates · Issue · JuliaLang/julia](https://github.com/JuliaLang/julia/issues/54542)
@@ -15,7 +15,7 @@ end
 
 
 """
-    tstat(f, x, [dt]; dim = nothing)
+    tstat(f, x, [dt]; dim=1)
 
 Calculate the statistic `f` of `x` along the `dim` dimension, optionally grouped by `dt`.
 
@@ -23,28 +23,13 @@ See also: [`groupby_dynamic`](@ref)
 """
 function tstat end
 
-function tstat(f, x; dim = nothing, query = nothing)
-    dim = @something dim dimnum(x, query)
+function tstat(f, x; dim = 1)
     return ndims(x) == 1 ? f(x) : f(x; dim)
 end
 
-function tstat(f, x, dt; dim = nothing, query = nothing)
-    dim = @something dim dimnum(x, query)
-    tdim = dims(x, dim)
-    out, idxs = stat1d(f, parent(x), tdim, dt, dim)
-    newdims = ntuple(ndims(x)) do i
-        i == dim ? fast_rebuild_dim(tdim, idxs) : dims(x, i)
-    end
-    return rebuild(x, out, newdims)
-    # alternative slower method
-    # f.(groupby(x, Dim => gfunc); dim = dimnum(x, query))
-end
-
-function tstat(f, ds::DimStack, args...; query = nothing, dim = nothing)
-    dim = @something dim dimnum(ds, query)
-    return maplayers(ds) do layer
-        tstat(f, layer, args...; dim)
-    end
+function tstat(f, x, index, dt; dim = 1)
+    out, idxs = stat1d(f, x, index, dt, dim)
+    return out, idxs
 end
 
 
@@ -53,9 +38,9 @@ tstat_doc(sym, desc = sym) = """
 
 Calculate the $desc of `x` along the `dim` dimension, optionally grouped by `dt`.
 
-It returns a value if `x` is a vector along the `dim` dimension, otherwise returns a `DimArray` with the specified dimension dropped.
+It returns a value if `x` is a vector along the `dim` dimension, otherwise returns an array with the specified dimension reduced.
 
-If `dim` is not specified, it defaults to the `query` dimension (dimension of type `TimeDim` by default).
+If `dim` is not specified, it defaults to `1` (or the `query` dimension when using DimensionalData).
 """
 
 

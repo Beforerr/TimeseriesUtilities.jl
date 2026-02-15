@@ -14,10 +14,6 @@ function tmaximum end
 
 tminimum(x) = minimum(x)
 tmaximum(x) = maximum(x)
-tminimum(x::AbstractDimArray; query = nothing) = tminimum(times(x, query))
-tmaximum(x::AbstractDimArray; query = nothing) = tmaximum(times(x, query))
-targmin(x) = times(x)[argmin(x)]
-targmax(x) = times(x)[argmax(x)]
 
 """    
     timerange(times)
@@ -100,8 +96,8 @@ Find continuous time ranges for `x`, where `max_dt` is the maximum time gap betw
 function find_continuous_timeranges(x, max_dt)
     ts = eltype(x) <: AbstractTime ? x : times(x)
     return issorted(ts) ?
-           _find_continuous_timeranges(ts, max_dt) :
-           _find_continuous_timeranges(sort(ts), max_dt)
+        _find_continuous_timeranges(ts, max_dt) :
+        _find_continuous_timeranges(sort(ts), max_dt)
 end
 
 

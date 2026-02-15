@@ -20,13 +20,13 @@ function tsplit(t0, t1, dt)
     T = promote_type(typeof(t0), typeof(t1))
     periods = NTuple{2, T}[]
     current = t0
-    
+
     while current < t1
         next_period = current + dt
         push!(periods, (current, min(next_period, t1)))
         current = next_period
     end
-    
+
     return periods
 end
 
@@ -40,7 +40,7 @@ Return the innermost object of the wrapped object `x` with similar behavior as `
 """
 unwrap(x) = x
 
-dimquery(dim, query) = @something dim something(query, TimeDim)
+dimquery(dim, query) = @something dim something(query, 1)
 
 function stat_relerr(itr, f)
     m = f(itr)
@@ -85,7 +85,7 @@ using HybridArrays
 
 rawview(x) = x
 
-function rawview(x::AbstractArray{T}) where T <: AbstractTime
+function rawview(x::AbstractArray{T}) where {T <: AbstractTime}
     return Dates.value.(x)
     # reinterpret seems to be much slower
     # rawType = Base.promote_op(Dates.value, T)
@@ -98,5 +98,5 @@ function hybridify(A, dims)
     sizes = ntuple(ndims(A)) do i
         i in dims ? StaticArrays.Dynamic() : size(A, i)
     end
-    HybridArray{Tuple{sizes...}}(A)
+    return HybridArray{Tuple{sizes...}}(A)
 end

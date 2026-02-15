@@ -2,7 +2,7 @@ module TimeseriesUtilitiesAxisKeysExt
 
 import TimeseriesUtilities as TU
 import AxisKeys
-import TimeseriesUtilities: unwrap, dimnum, set, dims, axiskeys
+import TimeseriesUtilities: unwrap, dimnum, set, dims, axiskeys, rebuild, tshift
 using AxisKeys: KeyedArray
 
 TU.unwrap(x::KeyedArray) = AxisKeys.keyless_unname(x)
@@ -17,6 +17,14 @@ function TU.set(x::KeyedArray, pair::Pair)
         i == dn ? new_keys : axiskeys(x, i)
     end
     return KeyedArray(parent(x), new_axiskeys)
+end
+
+function TU.tshift(x::KeyedArray, t0 = nothing; query = nothing, dim = nothing)
+    d = @something dim dimnum(x, query)
+    td = dims(x, d)
+    ts = axiskeys(x, d)
+    ts′ = ts .- (@something t0 first(ts))
+    return set(x, td => ts′)
 end
 
 end
