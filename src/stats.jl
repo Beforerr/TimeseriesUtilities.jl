@@ -33,19 +33,13 @@ function tstat(f, x, dt; dim = nothing, query = nothing)
     tdim = dims(x, dim)
     out, idxs = stat1d(f, parent(x), tdim, dt, dim)
     newdims = ntuple(ndims(x)) do i
-        i == dim ? fast_rebuild_dim(tdim, idxs) : dims(x, i)
+        i == dim ? rebuild(tdim, idxs) : dims(x, i)
     end
     return rebuild(x, out, newdims)
     # alternative slower method
     # f.(groupby(x, Dim => gfunc); dim = dimnum(x, query))
 end
 
-function tstat(f, ds::DimStack, args...; query = nothing, dim = nothing)
-    dim = @something dim dimnum(ds, query)
-    return maplayers(ds) do layer
-        tstat(f, layer, args...; dim)
-    end
-end
 
 
 tstat_doc(sym, desc = sym) = """
