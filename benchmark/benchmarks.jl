@@ -1,13 +1,24 @@
-# Benchmark
-using Chairmarks
+using BenchmarkTools
 using DimensionalData
+using TimeseriesUtilities
 using TimeseriesUtilities: tinterp, tsync, workload_interp_setup
 
-da_bench = DimArray(rand(1000, 3), (Ti(1:1000), Y(1:3)))
-t_bench = rand(1:1000, 32)
-@info "tinterp" @b(tinterp(da_bench, t_bench))
-# 6.458 μs (42 allocs: 2.250 KiB)
+const SUITE = BenchmarkGroup()
 
-da1, da2, da3 = workload_interp_setup(128)
-@info "tsync" @b(tsync(da1, da2, da3))
-# 10.542 μs (78 allocs: 7.844 KiB)
+const da_bench = DimArray(rand(1000, 3), (Ti(1:1000), Y(1:3)))
+const t_bench = rand(1:1000, 32)
+
+SUITE["tinterp"] = @benchmarkable tinterp($da_bench, $t_bench)
+
+const da1_bench, da2_bench, da3_bench = workload_interp_setup(128)
+
+SUITE["tsync"] = @benchmarkable tsync($da1_bench, $da2_bench, $da3_bench)
+
+const smooth_data_bench = rand(1000, 3)
+const smooth_times_bench = cumsum(rand(1000))
+const smooth_dimarray_bench = DimArray(smooth_data_bench, (Ti(smooth_times_bench), Y(1:3)))
+
+SUITE["smooth"] = BenchmarkGroup()
+SUITE["smooth"]["sample_window"] = @benchmarkable smooth($smooth_data_bench, 25; dim = 1)
+SUITE["smooth"]["time_window"] = @benchmarkable smooth($smooth_data_bench, $smooth_times_bench, 0.1; dim = 1)
+SUITE["smooth"]["dimarray_time_window"] = @benchmarkable smooth($smooth_dimarray_bench, 0.1)

@@ -28,6 +28,13 @@ fast_rebuild_dim(dim, x) = rebuild(dim, rebuild(dim.val; data = x))
 
 resolution(da::AbstractDimArray; kwargs...) = resolution(times(da); kwargs...)
 
+function smooth(da::AbstractDimArray, window; dim = nothing, kwargs...)
+    dnum = dimnum(da, dim)
+    tdim = DimensionalData.dims(da, dnum)
+    data = smooth(parent(da), parent(tdim), window; dim = dnum, kwargs...)
+    return rebuild(da; data)
+end
+
 function tinterp(A, t; query = nothing, dim = nothing, kws...)
     dim = @something dim dimnum(A, query)
     out = tinterp(parent(A), unwrap(dims(A, dim)), t; dim, kws...)
