@@ -65,7 +65,6 @@ using Statistics: median, median!
 using Unitful
 using DataInterpolations
 using DSP
-using RollingWindowArrays
 
 const SV3 = SVector{3}
 
@@ -95,6 +94,7 @@ export tsplit
 const Int64Like = Union{Date, DateTime, Period, Int64}
 
 include("api.jl")
+include("sliding.jl")
 include("timeseries.jl")
 include("operations.jl")
 include("groupby.jl")

@@ -13,27 +13,41 @@ samplingrate(da) = 1u"s" / resolution(da) * u"Hz" |> u"Hz"
 
 
 """
-    smooth(da::AbstractDimArray, window; dim=Ti, suffix="_smoothed", kwargs...)
+    smooth(data, times, window; dim=ndims(data))
+    smooth(data, window; dim=ndims(data))
 
 Smooths a time series by computing a moving average over a sliding window.
+Edge windows are truncated, so the output has the same size as the input.
 
-The size of the sliding `window` can be either:
-  - `Quantity`: A time duration that will be converted to number of samples based on data resolution
-  - `Integer`: Number of samples directly
+Each window covers the half-open interval `[coord - before, coord + after)`.
+A scalar `window` is interpreted as a coordinate span along the smoothed axis.
 
 # Arguments
-- `dims=Ti`: Dimension along which to perform smoothing (default: time dimension)
-- `suffix="_smoothed"`: Suffix to append to the variable name in output
-- `kwargs...`: Additional arguments passed to `RollingWindowArrays.rolling`
+- `dim=ndims(data)`: Dimension along which to perform smoothing
+- `op=nanmean`: Function used to aggregate each window
 """
-smooth(da, window; kwargs...) = smooth(da, Integer(div(window, resolution(da))); kwargs...)
-
-function smooth(da, window::Integer; dims = Ti, suffix = "_smoothed", kwargs...)
-    new_da = mapslices(da; dims) do slice
-        nanmean.(RollingWindowArrays.rolling(slice, window; kwargs...))
+function smooth(data, coords, window; dim = ndims(data), op = nanmean)
+    length(coords) == size(data, dim) || throw(DimensionMismatch("length(coords) must match size(data, dim)"))
+    issorted(coords) || throw(ArgumentError("coords must be sorted"))
+    before, after = _window_offsets(window)
+    return mapslices(data; dims = dim) do slice
+        op.(SlidingWindow(slice, coords, before, after))
     end
-    return rebuild(new_da; name = Symbol(da.name, suffix))
 end
+
+function smooth(data, window; dim = ndims(data), kw...)
+    return smooth(data, axes(data, dim), window; dim, kw...)
+end
+
+
+function _window_offsets(window::Tuple)
+    @assert length(window) == 2
+    return window[1], window[2]
+end
+
+_window_offsets(window) = _half(window), _half(window)
+_half(window) = window / 2
+_half(window::Period) = Millisecond(window) / 2
 
 """
     tfilter(da, Wn1, Wn2=samplingrate(da) / 2; designmethod=nothing)
