@@ -47,9 +47,9 @@ function find_outliers(A, method, args...; dim = 1, kw...)
     end
 end
 
-function find_outliers(A::AbstractDimArray, args...; dim = nothing, query = TimeDim, kw...)
-    dim = something(dim, dimnum(A, query))
-    return find_outliers(parent(A), args...; dim, kw...)
+function find_outliers(A::AbstractDimArray, args...; dim = nothing, kw...)
+    d = dimnum(A, dim)
+    return find_outliers(parent(A), args...; dim = d, kw...)
 end
 
 

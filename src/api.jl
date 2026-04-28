@@ -5,13 +5,13 @@
 import DimensionalData as DD
 
 """
-    dimnum(x, query)
+    dimnum(x, dim)
 
-Get the number(s) of Dimension(s) as ordered in the dimensions of an object.
-
-Extend the function for custom type `x`. By default, we fall back to `DimensionalData.dimnum`.
+Get the number(s) of Dimension(s) as ordered in the dimensions of `x`.
 """
 function dimnum end
+
+dimnum(x, dim::Integer) = dim
 
 function set end
 

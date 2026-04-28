@@ -36,6 +36,37 @@
     @test_call tview(result, 1.0, 2.0)
 end
 
+
+@testitem "tclips, tviews" begin
+    using DimensionalData
+
+    da1 = DimArray([10.0, 20.0, 30.0, 40.0, 50.0], (Ti([1.0, 2.0, 3.0, 4.0, 5.0]),))
+    da2 = DimArray([1.0, 2.0, 3.0, 4.0, 5.0], (Ti([2.0, 3.0, 4.0, 5.0, 6.0]),))
+    da3 = DimArray([100.0], (Ti([11.0]),))
+
+    # common range is [2.0, 5.0]
+    c1, c2 = tclips(da1, da2)
+    @test dims(c1, Ti).val == [2.0, 3.0, 4.0, 5.0]
+    @test dims(c2, Ti).val == [2.0, 3.0, 4.0, 5.0]
+    @test c1 == [20.0, 30.0, 40.0, 50.0]
+
+    # explicit trange overrides
+    c1e, c2e = tclips(da1, da2; trange = (3.0, 4.0))
+    @test dims(c1e, Ti).val == [3.0, 4.0]
+
+    # tviews — same logic, view semantics
+    v1, v2 = tviews(da1, da2)
+    @test dims(v1, Ti).val == [2.0, 3.0, 4.0, 5.0]
+    @test dims(v2, Ti).val == [2.0, 3.0, 4.0, 5.0]
+
+    @test_throws ArgumentError tclips(da1, da3)
+
+    using JET
+    @test_opt tclips(da1, da2)
+    @test_call tclips(da1, da2)
+end
+
+
 @testitem "tselect" begin
     using DimensionalData
 
@@ -61,6 +92,33 @@ end
     using JET
     @test_opt tselect(da, 5.0, 0.5)
     @test_call tselect(da, 5.0, 0.5)
+end
+
+@testitem "tmask!, tmask" begin
+    using DimensionalData
+
+    times = [1.0, 2.0, 3.0, 4.0, 5.0]
+    da = DimArray([10.0, 20.0, 30.0, 40.0, 50.0], (Ti(times),))
+
+    # tmask! (mutating)
+    da_mut = copy(da)
+    tmask!(da_mut, 2.0, 4.0)
+    @test isequal(da_mut, [10.0, NaN, NaN, NaN, 50.0])
+    # original unchanged
+    @test da[Ti(At(2.0))] == 20.0
+
+    # tmask (non-mutating copy)
+    masked = tmask(da, 2.0, 4.0)
+    @test da[Ti(At(2.0))] == 20.0
+    @test isequal(masked, [10.0, NaN, NaN, NaN, 50.0])
+
+    # array of intervals
+    da_multi = tmask(da, [(1.0, 2.0), (4.0, 5.0)])
+    @test isequal(da_multi, [NaN, NaN, 30.0, NaN, NaN])
+
+    using JET
+    @test_opt tmask!(copy(da), 2.0, 4.0)
+    @test_call tmask!(copy(da), 2.0, 4.0)
 end
 
 @testitem "tsplit" begin

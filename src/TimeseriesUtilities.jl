@@ -17,13 +17,8 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 
 ## (Windowed) Statistics
 
-- [`tstat`](@ref)
-- [`tmean`](@ref)
-- [`tmedian`](@ref)
-- [`tsum`](@ref)
-- [`tvar`](@ref)
-- [`tstd`](@ref)
-- [`tsem`](@ref)
+- [`tstat`](@ref), [`tmean`](@ref), [`tmedian`](@ref)
+- [`tsum`](@ref), [`tvar`](@ref), [`tstd`](@ref), [`tsem`](@ref)
 
 ## Algebra
 
@@ -85,8 +80,8 @@ export tsum, tmean, tmedian, tstd, tsem, tvar
 export tderiv, tsubtract
 
 # Data cleaning
-export smooth
-export dropna, rectify
+export smooth, tfilter
+export dropna
 export find_outliers, replace_outliers!, replace_outliers
 
 export tsplit
@@ -106,5 +101,6 @@ include("interp.jl")
 include("outliers.jl")
 include("utils.jl")
 include("DimensionalData.jl")
+include("TimeseriesUtilitiesDSPExt.jl")
 
 end

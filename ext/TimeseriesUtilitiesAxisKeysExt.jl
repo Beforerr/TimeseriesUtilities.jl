@@ -6,7 +6,8 @@ import TimeseriesUtilities: unwrap, dimnum, set, dims, axiskeys
 using AxisKeys: KeyedArray
 
 TU.unwrap(x::KeyedArray) = AxisKeys.keyless_unname(x)
-TU.dimnum(x::KeyedArray, query) = AxisKeys.dim(x, @something(query, :time))
+TU.dimnum(x::KeyedArray, ::Nothing) = AxisKeys.dim(x, :time)
+TU.dimnum(x::KeyedArray, dim) = AxisKeys.dim(x, dim)
 TU.axiskeys(x::KeyedArray, dim) = AxisKeys.axiskeys(x, dim)
 TU.dims(x::KeyedArray, dim) = AxisKeys.dimnames(x, dim)
 

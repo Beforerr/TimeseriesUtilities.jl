@@ -82,12 +82,12 @@ end
     # Test performance (should have minimal allocations)
     using Chairmarks
     A_perf = rand(Ti(1.0:100.0), Y(1:50))
-    @test tderiv(A_perf) == tderiv(A_perf; lazy=true)
+    @test tderiv(A_perf) == tderiv(A_perf; lazy = true)
     # @info "benchmarks" b1 b2
     @test @b(tderiv($A_perf)).allocs ≤ 3
     broken = VERSION < v"1.11"
-    @test @b(tderiv($A_perf; lazy=true)).allocs == 0 broken=broken
-    @info @b(sum($tderiv($A_perf))).time > @b(sum($tderiv($A_perf; lazy=true))).time
+    @test @b(tderiv($A_perf; lazy = true)).allocs == 0 broken = broken
+    @info @b(sum($tderiv($A_perf))).time > @b(sum($tderiv($A_perf; lazy = true))).time
     # From 1.12.4 sum(tderiv(A_perf)) seems to be faster than the lazy version
     @info @b(tderiv($A_perf))
 
@@ -95,6 +95,6 @@ end
     using JET
     @test_opt ignored_modules = (Base,) tderiv(data, times)
     @test_call ignored_modules = (Base,) tderiv(data, times)
-    @test_opt broken=broken ignored_modules = (Base,) tderiv(A)
+    @test_opt broken = broken ignored_modules = (Base,) tderiv(A)
     @test_call ignored_modules = (Base,) tderiv(A)
 end
