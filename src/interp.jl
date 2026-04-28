@@ -134,24 +134,6 @@ function interpolate_nans(u, t::AbstractArray{<:AbstractTime}; kwargs...)
     return interpolate_nans(u, Dates.value.(t); kwargs...)
 end
 
-"""
-    tinterp_nans(da::AbstractDimArray; query=nothing, kwargs...)
-
-Interpolate only the NaN values in `da` along the specified dimensions `query`.
-Non-NaN values are preserved exactly as they are.
-
-See also [`interpolate_nans`](@ref)
-"""
-function tinterp_nans(da::AbstractDimArray; query = nothing, kwargs...)
-    u = parent(da)
-    dim = timedim(da, query)
-    t = parent(lookup(dim))
-    new_data = mapslices(u; dims = dimnum(da, dim)) do slice
-        interpolate_nans(slice, t; kwargs...)
-    end
-    return rebuild(da; data = new_data)
-end
-
 function workload_interp_setup(n = 4)
     # Create arrays with different time ranges
     times1 = DateTime(2020, 1, 1) + Day.(0:(n - 1))

@@ -39,11 +39,11 @@ end
 
 Group `x` into windows based on `every` and `period`.
 """
-function tgroupby(x, args...; dim=nothing, query=nothing, kwargs...)
-    dim = @something dim dimnum(x, query)
-    times = dims(x, dim)
+function tgroupby(x, args...; dim=nothing, kwargs...)
+    d = dimnum(x, dim)
+    times = dims(x, d)
     group_idx, = groupby_dynamic(times, args...; kwargs...)
     return map(group_idx) do idx
-        selectdim(x, dim, idx)
+        selectdim(x, d, idx)
     end
 end

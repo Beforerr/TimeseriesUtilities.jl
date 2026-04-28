@@ -23,39 +23,37 @@ See also: [`groupby_dynamic`](@ref)
 """
 function tstat end
 
-function tstat(f, x; dim = nothing, query = nothing)
-    dim = @something dim dimnum(x, query)
-    return ndims(x) == 1 ? f(x) : f(x; dim)
+function tstat(f, x; dim = nothing)
+    d = dimnum(x, dim)
+    return ndims(x) == 1 ? f(x) : f(x; dim = d)
 end
 
-function tstat(f, x, dt; dim = nothing, query = nothing)
-    dim = @something dim dimnum(x, query)
-    tdim = dims(x, dim)
-    out, idxs = stat1d(f, parent(x), tdim, dt, dim)
+function tstat(f, x, dt; dim = nothing)
+    d = dimnum(x, dim)
+    tdim = dims(x, d)
+    out, idxs = stat1d(f, parent(x), tdim, dt, d)
     newdims = ntuple(ndims(x)) do i
-        i == dim ? fast_rebuild_dim(tdim, idxs) : dims(x, i)
+        i == d ? fast_rebuild_dim(tdim, idxs) : dims(x, i)
     end
     return rebuild(x, out, newdims)
-    # alternative slower method
-    # f.(groupby(x, Dim => gfunc); dim = dimnum(x, query))
 end
 
-function tstat(f, ds::DimStack, args...; query = nothing, dim = nothing)
-    dim = @something dim dimnum(ds, query)
+function tstat(f, ds::DimStack, args...; dim = nothing)
+    d = dimnum(ds, dim)
     return maplayers(ds) do layer
-        tstat(f, layer, args...; dim)
+        tstat(f, layer, args...; dim = d)
     end
 end
 
 
 tstat_doc(sym, desc = sym) = """
-    $(Symbol(:t, sym))(x, [dt]; dim=nothing, query=nothing)
+    $(Symbol(:t, sym))(x, [dt]; dim=nothing)
 
 Calculate the $desc of `x` along the `dim` dimension, optionally grouped by `dt`.
 
 It returns a value if `x` is a vector along the `dim` dimension, otherwise returns a `DimArray` with the specified dimension dropped.
 
-If `dim` is not specified, it defaults to the `query` dimension (dimension of type `TimeDim` by default).
+`dim` accepts an integer index, a dimension type/instance, or `nothing` (defaults to the time dimension).
 """
 
 
