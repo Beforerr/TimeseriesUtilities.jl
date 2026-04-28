@@ -8,9 +8,9 @@ function tsubtract(x, op = nanmedian; dim = nothing)
     return x .- op(parent(x); dims)
 end
 
-function _deriv_tfunc(T1::Type, T2::Type)
-    return (T1 <: Real) && (T2 <: Dates.AbstractTime) ? Unitful.Quantity : identity
-end
+_seconds(dt::Period) = dt / Second(1)
+_deriv_tfunc(T1::Type, T2::Type) = identity
+_deriv_tfunc(::Type{T1}, ::Type{T2}) where {T1 <: Real, T2 <: Dates.TimeType} = _seconds
 
 _deriv_tfunc(A, t) = _deriv_tfunc(eltype(A), eltype(t))
 
@@ -41,16 +41,6 @@ See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_mod
     f = lazy ? DiffQ : _tderiv
     return f(args...; kw...)
 end
-
-function tderiv(A; dim = nothing, lazy = false)
-    d = dimnum(A, dim)
-    tdim = dims(A, d)
-    f = lazy ? DiffQ : _tderiv
-    out = f(parent(A), unwrap(tdim); dim = d)
-    newdims = ntuple(i -> i == d ? @view(tdim[1:(end - 1)]) : dims(A, i), ndims(A))
-    return rebuild(A, out, newdims)
-end
-
 
 """
     tnorm(A; dim=nothing)
@@ -96,16 +86,9 @@ end
 
 Calculate the norm of each slice along `dim` and combine it with the original components.
 """
-function tnorm_combine(x; dim = nothing, name = :magnitude)
+function tnorm_combine(x::AbstractMatrix; dim = nothing, name = :magnitude)
     d = dimnum(x, dim)
-    data = norm_combine(parent(x), d)
-
-    # Replace the original dimension with our new one that includes the magnitude
-    odim = otherdims(x, d) |> only
-    odimType = basetypeof(odim)
-    new_odim = odimType(vcat(odim.val, name))
-    new_dims = map(dd -> dd isa odimType ? new_odim : dd, dims(x))
-    return rebuild(x, data, new_dims)
+    return norm_combine(x, d)
 end
 
 

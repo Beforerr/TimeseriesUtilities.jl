@@ -9,9 +9,6 @@ function resolution(times; tol = 2, check = true, f = _median)
     end
 end
 
-samplingrate(da) = 1u"s" / resolution(da) * u"Hz" |> u"Hz"
-
-
 """
     smooth(data, times, window; dim=ndims(data))
     smooth(data, window; dim=ndims(data))

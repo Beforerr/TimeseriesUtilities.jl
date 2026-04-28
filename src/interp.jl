@@ -71,7 +71,7 @@ new_times = DateTime("2023-01-01"):Hour(1):DateTime("2023-01-02")
 tinterp(time_series, new_times; interp = CubicSpline)
 ```
 """
-@inline function tinterp(A, old_times, new_times; interp = LinearInterpolation, dim, kws...)
+@inline function tinterp(A, old_times, new_times; interp = LinearInterpolation, dim = ndims(A), kws...)
     return if ndims(A) == 1
         interp(A, old_times; kws...).(new_times)
     else
@@ -79,6 +79,12 @@ tinterp(time_series, new_times; interp = CubicSpline)
         f = interp(u, old_times; kws...)
         stack(f, new_times; dims = dim)
     end
+end
+
+function tinterp(A, t; dim = nothing, kws...)
+    d = dimnum(A, dim)
+    out = tinterp(unwrap(A), axiskeys(A, d), t; dim = d, kws...)
+    return t isa AbstractArray ? rebuild_axis(A, out, d, t) : out
 end
 
 """
@@ -90,20 +96,22 @@ See also: [`tinterp`](@ref), [`time_grid`](@ref)
 """
 tresample(A, old_times, freq; kw...) = tinterp(A, old_times, time_grid(old_times, freq); kw...)
 
+function tresample(A, dt; dim = nothing, kws...)
+    d = dimnum(A, dim)
+    return tinterp(A, time_grid(axiskeys(A, d), dt); dim = d, kws...)
+end
+
 
 """
     tsync(A, Bs...)
 
 Synchronize multiple time series to have the same time points.
 
-This function aligns the time series `Bs...` to match the time points of `A` by:
+This function aligns time series `Bs...` to match time points of `A` by:
 
- 1. Finding the common time range between all input time series
- 2. Extracting the subset of `A` within this common range
+ 1. Finding common time range between all time series
+ 2. Extracting subset of `A` within common range
  3. Interpolating each series in `Bs...` to match the time points of the subset of `A`
-
-Returns a tuple containing the synchronized time series, with the first element being
-the subset of `A` and subsequent elements being the interpolated versions of `Bs...`.
 
 # Examples
 
@@ -113,13 +121,15 @@ A_sync, B_sync, C_sync = tsync(A, B, C)
 
 See also: [`tinterp`](@ref), [`common_timerange`](@ref)
 """
-@views function tsync(A, Bs...)
+function tsync(A, Bs...)
     tr = common_timerange(A, Bs...)
     @assert !isnothing(tr) "No common time range found"
-    A_tsync = A[Ti(Between(tr...))]
-    return ntuple(1 + length(Bs)) do i
-        i == 1 ? A_tsync : tinterp(Bs[i - 1], A_tsync)
+    A_tsync = tclip(A, tr...)
+    tstamps = times(A_tsync)
+    Bs_syncs = map(Bs) do B
+        tinterp(B, tstamps)
     end
+    return A_tsync, Bs_syncs...
 end
 
 """
@@ -152,22 +162,4 @@ end
 
 function interpolate_nans(u, t::AbstractArray{<:AbstractTime}; kwargs...)
     return interpolate_nans(u, Dates.value.(t); kwargs...)
-end
-
-function workload_interp_setup(n = 4)
-    # Create arrays with different time ranges
-    times1 = DateTime(2020, 1, 1) + Day.(0:(n - 1))
-    times2 = DateTime(2020, 1, 2) + Day.(0:(n - 1))
-    times3 = DateTime(2020, 1, 1, 12) + Day.(0:(n - 2))
-
-    # Create DimArrays with different data and time dimensions
-    da1 = DimArray(1:n, (Ti(times1),))
-    da2 = DimArray(10:(10 + n - 1), (Ti(times2),))
-    da3 = DimArray(hcat(5:(5 + n - 2), 8:2:(8 + 2n - 4)), (Ti(times3), Y([1, 2])))
-    return da1, da2, da3
-end
-
-function workload_interp()
-    da1, da2, da3 = workload_interp_setup()
-    return tsync(da1, da2, da3)
 end

@@ -11,12 +11,26 @@
     @test result[Ti(3)] == da[Ti(1)]
 
     # tclip
-    @test_throws "Cannot use an interval or `Between` with `Unordered`" tclip(da, 1.0, 2.0) == da[2:3, :]
+    @test_throws ArgumentError tclip(da, 1.0, 2.0) == da[2:3, :]
     @test tclip(result, 1.0, 2.0) == parent(da[2:3, :])
 
     # tview
-    @test_throws "Cannot use an interval or `Between` with `Unordered`" tview(da, 1.0, 2.0)
+    @test_throws ArgumentError tview(da, 1.0, 2.0)
     @test tview(result, 1.0, 2.0) == parent(da[2:3, :])
+
+    ds = DimStack((
+        a = DimArray([30.0, 10.0, 20.0], (t,)),
+        b = DimArray([30.0 300.0 3000.0; 10.0 100.0 1000.0; 20.0 200.0 2000.0], (t, y)),
+    ))
+    sorted_ds = tsort(ds)
+    @test dims(sorted_ds, Ti).val == sort(times)
+    @test sorted_ds.a == [10.0, 20.0, 30.0]
+    @test_throws ArgumentError tclip(ds, 1.0, 2.0)
+    clipped_ds = tclip(sorted_ds, 1.0, 2.0)
+    @test dims(clipped_ds, Ti).val == [1.0, 2.0]
+    @test clipped_ds.a == [10.0, 20.0]
+    @test clipped_ds.b == [10.0 100.0 1000.0; 20.0 200.0 2000.0]
+    @test tview(sorted_ds, 1.0, 2.0).a == clipped_ds.a
 
     # Benchmark
     using Chairmarks
@@ -28,12 +42,74 @@
     verbose && @info tclip_bench, tview_bench
 
     using JET
-    @test_opt broken = true tsort(da) # TODO: `set` is not type-stable
+    @test_opt tsort(da)
     @test_call tsort(da)
     @test_opt tclip(result, 1.0, 2.0)
     @test_call tclip(result, 1.0, 2.0)
     @test_opt tview(result, 1.0, 2.0)
     @test_call tview(result, 1.0, 2.0)
+end
+
+@testitem "DimStack dropna" begin
+    using DimensionalData
+
+    t = Ti(1:4)
+    y = Y([:x, :y])
+    ds = DimStack((
+        a = DimArray([1.0, NaN, 3.0, 4.0], (t,)),
+        b = DimArray([1.0 5.0; 2.0 NaN; 3.0 7.0; 4.0 8.0], (t, y)),
+    ))
+
+    result = dropna(ds)
+    @test dims(result, Ti).val == [1, 3, 4]
+    @test result.a == [1.0, 3.0, 4.0]
+    @test result.b == [1.0 5.0; 3.0 7.0; 4.0 8.0]
+end
+
+@testitem "AxisKeys time operations" begin
+    using AxisKeys
+    using Chairmarks
+
+    times = [3.0, 1.0, 2.0, 5.0, 4.0]
+    values = [30.0, 10.0, 20.0, 50.0, 40.0]
+    ka = KeyedArray(values; time = times)
+
+    sorted = tsort(ka)
+    @test axiskeys(sorted, 1) == sort(times)
+    @test sorted == [10.0, 20.0, 30.0, 40.0, 50.0]
+
+    @test_throws ArgumentError tclip(ka, 2.0, 4.0)
+    clipped = tclip(sorted, 2.0, 4.0)
+    @test clipped == [20.0, 30.0, 40.0]
+    @test axiskeys(clipped, 1) == [2.0, 3.0, 4.0]
+
+    viewed = tview(sorted, 2.0, 4.0)
+    @test viewed == clipped
+    @test (@b tview($sorted, 2.0, 4.0)).allocs ≤ 1
+    @test axiskeys(viewed, 1) == axiskeys(clipped, 1)
+
+    @test tselect(sorted, 3.4) == 30.0
+    @test tselect(ka, 3.4) == 30.0
+    @test tselect(sorted, 3.4, 0.5) == 30.0
+    @test ismissing(tselect(sorted, 1.5, 0.25))
+
+    masked = tmask(sorted, 2.0, 4.0)
+    @test isequal(masked, [10.0, NaN, NaN, NaN, 50.0])
+    @test axiskeys(masked, 1) == axiskeys(sorted, 1)
+
+    ka2 = KeyedArray(reshape(1.0:15.0, 5, 3); time = [1.0, 2.0, 3.0, 4.0, 5.0], space = [:x, :y, :z])
+    @test tview(ka2, 2.0, 4.0) == ka2[2:4, :]
+    @test (@b tview($ka2, 2.0, 4.0)).allocs ≤ 1
+    @test tselect(ka2, 2.2) == ka2[2, :]
+    @test axiskeys(tclip(ka2, 2.0, 4.0), 1) == [2.0, 3.0, 4.0]
+    @test axiskeys(tclip(ka2, 2.0, 4.0), 2) == [:x, :y, :z]
+
+    ka3 = KeyedArray([100.0, 200.0, 300.0]; time = [3.0, 4.0, 5.0])
+    c1, c2 = tclips(sorted, ka3)
+    @test axiskeys(c1, 1) == axiskeys(c2, 1) == [3.0, 4.0, 5.0]
+    v1, v2 = tviews(sorted, ka3)
+    @test v1 == c1
+    @test v2 == c2
 end
 
 
@@ -73,9 +149,10 @@ end
     # Test with numeric time dimension
     times = [1.0, 3.0, 5.0, 7.0, 9.0]
 
-    @test tselect(times, 5.0) == 5.0
-    @test tselect(times, 6.0) == 5.0
-    @test tselect(times, 4.0) == 3.0
+    @test_throws MethodError tsort(times)
+    @test_throws MethodError tclip(times, 3.0, 7.0)
+    @test_throws MethodError tview(times, 3.0, 7.0)
+    @test_throws MethodError tselect(times, 5.0)
 
     values = [10.0, 20.0, 30.0, 40.0, 50.0]
     da = DimArray(values, (Ti(times),))

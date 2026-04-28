@@ -2,16 +2,12 @@
 # AxisKeys.jl: https://github.com/mcabbott/AxisKeys.jl
 # DimensionalData.jl: https://github.com/rafaqz/DimensionalData.jl
 
-import DimensionalData as DD
-
 """
     dimnum(x, dim)
 
-Get the number(s) of Dimension(s) as ordered in the dimensions of `x`.
+Get the ordinal of the dimension `dim` in `x`.
 """
-function dimnum end
-
-dimnum(x, dim::Integer) = dim
+dimnum(x, dim) = @something dim ndims(x)
 
 function set end
 
@@ -19,10 +15,21 @@ function axiskeys end
 
 function dims end
 
-function axiskeys(x::AbstractDimArray, dim)
-    return unwrap(DD.dims(x, dim))
-end
+rebuild_axis(x, data, dim, keys) = data
 
-for f in (:set, :dims)
-    @eval $f(args...; kwargs...) = DD.$f(args...; kwargs...)
-end
+sorted_axis(sorted, dim; rev = false) = sorted
+
+"""
+    times(x)
+
+Get time coordinate of `x`.
+"""
+times(x) = x
+
+function samplingrate end
+
+function _deriv_tfunc end
+
+function tinterp_nans end
+
+function workload_interp_setup end

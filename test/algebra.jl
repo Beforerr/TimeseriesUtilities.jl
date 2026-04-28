@@ -35,7 +35,7 @@ end
 @testitem "tderiv" begin
     using DimensionalData
     using Dates
-    using TimeseriesUtilities.Unitful
+    using Unitful
 
     # Test with simple arrays and numeric times
     data = (1:5) .^ 2
@@ -69,12 +69,12 @@ end
     @test result_dd[1, 1] == 3.0  # derivative at first point
     @test result_dd[2, 1] == 5.0  # derivative at second point
 
-    # Test with Date times (should return Unitful quantities)
+    # Test with Date times (returns values per second)
     date_times = [Date(2020, 1, 1), Date(2020, 1, 2), Date(2020, 1, 3)]
     data_dates = [1.0, 4.0, 9.0]
     result_dates = tderiv(data_dates, date_times)
-    @test result_dates[1] == 3.0u"d^-1"
-    @test result_dates[2] == 5.0u"d^-1"
+    @test result_dates[1] == 3.0 / 86400
+    @test result_dates[2] == 5.0 / 86400
 
     # Test error handling
     @test_throws ArgumentError tderiv([1, 2, 3], [1, 2, 3]; dim = 2)  # dimension out of range

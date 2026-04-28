@@ -49,15 +49,10 @@ module TimeseriesUtilities
 using Base: @propagate_inbounds
 using Dates
 using Dates: AbstractTime
-using DimensionalData
-using DimensionalData.Dimensions
-using DimensionalData.Lookups
 using LinearAlgebra
-using LinearAlgebra: norm2
 using StaticArrays
 using NaNStatistics
 using Statistics: median, median!
-using Unitful
 
 const SV3 = SVector{3}
 
@@ -84,8 +79,6 @@ export find_outliers, replace_outliers!, replace_outliers
 
 export tsplit
 
-const Int64Like = Union{Date, DateTime, Period, Int64}
-
 include("api.jl")
 include("sliding.jl")
 include("timeseries.jl")
@@ -98,7 +91,6 @@ include("lazyoperations.jl")
 include("interp.jl")
 include("outliers.jl")
 include("utils.jl")
-include("DimensionalData.jl")
 
 """
     tfilter(data, Wn1, Wn2=nothing; designmethod=nothing)

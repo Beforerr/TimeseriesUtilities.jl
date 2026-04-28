@@ -41,7 +41,7 @@ Group `x` into windows based on `every` and `period`.
 """
 function tgroupby(x, args...; dim=nothing, kwargs...)
     d = dimnum(x, dim)
-    times = dims(x, d)
+    times = axiskeys(x, d)
     group_idx, = groupby_dynamic(times, args...; kwargs...)
     return map(group_idx) do idx
         selectdim(x, d, idx)
