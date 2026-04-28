@@ -1,6 +1,7 @@
 @testitem "tfilter" begin
     using DimensionalData
     using TimeseriesUtilities.Unitful
+    using DSP
 
     fs = 100u"Hz"
     n = 512
