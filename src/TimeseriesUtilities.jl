@@ -58,7 +58,6 @@ using StaticArrays
 using NaNStatistics
 using Statistics: median, median!
 using Unitful
-using DSP
 
 const SV3 = SVector{3}
 
@@ -100,7 +99,22 @@ include("interp.jl")
 include("outliers.jl")
 include("utils.jl")
 include("DimensionalData.jl")
-include("TimeseriesUtilitiesDSPExt.jl")
+
+"""
+    tfilter(data, Wn1, Wn2=nothing; designmethod=nothing)
+
+Bandpass filter `data` between `Wn1` and `Wn2`. The upper cutoff defaults to the Nyquist frequency.
+
+References
+- https://docs.juliadsp.org/stable/filters/
+- https://www.mathworks.com/help/signal/ref/filtfilt.html
+- https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.filtfilt.html
+
+Issues
+- DSP.jl and Unitful.jl: https://github.com/JuliaDSP/DSP.jl/issues/431
+"""
+function tfilter end
+
 include("compat.jl")
 
 end
