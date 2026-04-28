@@ -1,20 +1,64 @@
-# https://docs.sciml.ai/DataInterpolations/stable
 # https://github.com/brendanjohnharris/TimeseriesTools.jl/blob/main/ext/DataInterpolationsExt.jl
 # https://github.com/JuliaMath/Interpolations.jl
-# https://github.com/rafaqz/DimensionalData.jl/pull/609
 # https://discourse.julialang.org/t/interpolating-along-a-single-dimension-of-a-multi-dimensional-array-for-particular-points/29308/3
-using DataInterpolations
 
-_extrapolation(x) = x
-_extrapolation(x::Bool) = x ? DataInterpolations.ExtrapolationType.Linear : DataInterpolations.ExtrapolationType.None
+struct LinearInterpolation{U, T, E}
+    u::U
+    t::T
+    extrapolation::E
+end
+
+function check_interp_args(u, t)
+    issorted(t) || throw(ArgumentError("t must be sorted"))
+    length(u) == length(t) || throw(DimensionMismatch("u and t must have the same length"))
+    return !isempty(t) || throw(ArgumentError("at least one interpolation point is required"))
+end
+
+function LinearInterpolation(u, t; extrapolation = false, check = true)
+    check && check_interp_args(u, t)
+    return LinearInterpolation(u, t, extrapolation)
+end
+
+function _interp_segment(t, x, extrapolation)
+    n = length(t)
+    if n == 1
+        (x == only(t) || extrapolation) && return 1
+        throw(DomainError(x, "interpolation point is outside the time range"))
+    end
+
+    i = searchsortedlast(t, x)
+    return if i == 0
+        extrapolation ? 1 : throw(DomainError(x, "interpolation point is before the time range"))
+    elseif i >= n
+        if x == t[end]
+            return n - 1
+        end
+        extrapolation ? n - 1 : throw(DomainError(x, "interpolation point is after the time range"))
+    else
+        i
+    end
+end
+
+function (interp::LinearInterpolation)(x)
+    if length(interp.t) == 1
+        (x == only(interp.t) || interp.extrapolation) && return only(interp.u)
+        throw(DomainError(x, "interpolation point is outside the time range"))
+    end
+    i = _interp_segment(interp.t, x, interp.extrapolation)
+    t0 = interp.t[i]
+    t1 = interp.t[i + 1]
+    u0 = interp.u[i]
+    u1 = interp.u[i + 1]
+    return u0 + (x - t0) / (t1 - t0) * (u1 - u0)
+end
 
 """
     tinterp(A, old_times, new_times; interp=LinearInterpolation)
 
-Interpolate time series `A` at new time points `new_times` using `interp` (default: `LinearInterpolation`) method.
-Returns interpolated value for single time point or DimArray for multiple time points.
+Interpolate time series `A` at new time points `new_times`.
 
-See [`DataInterpolations.jl`](https://github.com/SciML/DataInterpolations.jl) for available interpolation methods.
+The `interp` constructor must accept `(u, t; kws...)` and return a callable object.
+Its syntax is compatible with `DataInterpolations.jl`.
 
 # Examples
 
@@ -27,15 +71,13 @@ new_times = DateTime("2023-01-01"):Hour(1):DateTime("2023-01-02")
 tinterp(time_series, new_times; interp = CubicSpline)
 ```
 """
-@inline function tinterp(A, old_times, new_times; interp = nothing, dim, extrapolate = false, kws...)
-    interp = @something interp LinearInterpolation
-    extrapolation = _extrapolation(extrapolate)
+@inline function tinterp(A, old_times, new_times; interp = LinearInterpolation, dim, kws...)
     return if ndims(A) == 1
-        Tinterp(A, old_times, interp; extrapolation).(new_times)
+        interp(A, old_times; kws...).(new_times)
     else
         u = eachslice(hybridify(A, dim); dims = dim) # hybridify to reduce memory allocation
-        interp = Tinterp(u, old_times, interp; extrapolation, kws...)
-        stack(interp, new_times; dims = dim)
+        f = interp(u, old_times; kws...)
+        stack(f, new_times; dims = dim)
     end
 end
 
@@ -48,28 +90,6 @@ See also: [`tinterp`](@ref), [`time_grid`](@ref)
 """
 tresample(A, old_times, freq; kw...) = tinterp(A, old_times, time_grid(old_times, freq); kw...)
 
-"""
-    Tinterp{T, F} <: Function
-
-A function-like wrapper for time series interpolation that handles time type conversions.
-
-# Notes
-It is a workaround for `Time` type: https://github.com/SciML/DataInterpolations.jl/issues/436
-"""
-struct Tinterp{T, F}
-    interp::F
-    tType::Type{T}
-end
-
-Tinterp(u, t, interp; kws...) = Tinterp(interp(u, rawview(t); kws...), eltype(t))
-(ti::Tinterp{T})(t) where {T} = ti.interp(rawview(T(t)))
-
-# This is much slower than `hybridify` and consumes more memory
-function _tinterp_mapslices(A::AbstractArray, t, ts, interp, dim; kws...)
-    return mapslices(A; dims = dim) do slice
-        Tinterp(slice, t, interp; kws...).(ts)
-    end
-end
 
 """
     tsync(A, Bs...)
@@ -123,7 +143,7 @@ function interpolate_nans(u, t; interp = LinearInterpolation)
 
         # Interpolate only at NaN positions
         new_u = deepcopy(u)
-        new_u[nan_indices] = interp_obj(t[nan_indices])
+        new_u[nan_indices] = interp_obj.(t[nan_indices])
         return new_u
     else
         return u

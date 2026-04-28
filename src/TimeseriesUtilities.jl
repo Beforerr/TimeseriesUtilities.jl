@@ -58,7 +58,6 @@ using StaticArrays
 using NaNStatistics
 using Statistics: median, median!
 using Unitful
-using DataInterpolations
 using DSP
 
 const SV3 = SVector{3}
@@ -102,5 +101,6 @@ include("outliers.jl")
 include("utils.jl")
 include("DimensionalData.jl")
 include("TimeseriesUtilitiesDSPExt.jl")
+include("compat.jl")
 
 end

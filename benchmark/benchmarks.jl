@@ -1,4 +1,5 @@
 using BenchmarkTools
+import DataInterpolations
 using DimensionalData
 using TimeseriesUtilities
 using TimeseriesUtilities: tinterp, tsync, workload_interp_setup
@@ -8,7 +9,9 @@ const SUITE = BenchmarkGroup()
 const da_bench = DimArray(rand(1000, 3), (Ti(1:1000), Y(1:3)))
 const t_bench = rand(1:1000, 32)
 
-SUITE["tinterp"] = @benchmarkable tinterp($da_bench, $t_bench)
+SUITE["tinterp"] = BenchmarkGroup()
+SUITE["tinterp"]["internal_linear"] = @benchmarkable tinterp($da_bench, $t_bench; interp = TimeseriesUtilities.LinearInterpolation)
+SUITE["tinterp"]["data_interpolations_linear"] = @benchmarkable tinterp($da_bench, $t_bench; interp = DataInterpolations.LinearInterpolation)
 
 const da1_bench, da2_bench, da3_bench = workload_interp_setup(128)
 
