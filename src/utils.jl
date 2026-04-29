@@ -33,13 +33,6 @@ end
 tsplit(t0, t1, dtType::Type{<:Period}) = tsplit(t0, t1, dtType(1))
 tsplit((t0, t1), arg) = tsplit(t0, t1, arg)
 
-"""
-    unwrap(x)
-
-Return the innermost object of the wrapped object `x` with similar behavior as `x` (e.g. same size, same type, etc.)
-"""
-unwrap(x) = x
-
 function stat_relerr(itr, f)
     m = f(itr)
     relerrs = abs.(extrema(itr) .- m) ./ m

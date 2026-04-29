@@ -26,3 +26,10 @@ Get time coordinate of `x`.
 times(x) = x
 
 function samplingrate end
+
+"""
+    unwrap(x)
+
+Return the innermost object (array) of wrapped `x` with similar behavior (e.g. same size, same type, etc.)
+"""
+unwrap(x) = x
