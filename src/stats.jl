@@ -1,16 +1,15 @@
 # Reference: 
-# - [NaNStatistics.jl](https://github.com/brenhinkeller/NaNStatistics.jl)
-# - [VectorizedStatistics.jl](https://github.com/JuliaSIMD/VectorizedStatistics.jl)
-# - [Average of Dates · Issue · JuliaLang/julia](https://github.com/JuliaLang/julia/issues/54542)
+# - https://github.com/brenhinkeller/NaNStatistics.jl
+# - https://github.com/JuliaSIMD/VectorizedStatistics.jl
 
 @inline function stat1d(f, x, index, dt, dim)
-    group_idx, idxs = groupby_dynamic(index, dt)
+    group_idx, coords = groupby_dynamic(index, dt)
     out = mapslices(x; dims = dim) do slice
         map(group_idx) do idx
             f(view(slice, idx))
         end
     end
-    return out, idxs
+    return out, coords
 end
 
 
@@ -37,13 +36,10 @@ end
 tstat_doc(sym, desc = sym) = """
     $(Symbol(:t, sym))(x, [dt]; dim=nothing)
 
-Calculate the $desc of `x` along the `dim` dimension, optionally grouped by `dt`.
+Calculate the $desc of `x` along dimension `dim`, optionally grouped by `dt`.
 
-It returns a value if `x` is a vector along the `dim` dimension, otherwise returns a `DimArray` with the specified dimension dropped.
-
-`dim` accepts an integer index, a dimension type/instance, or `nothing` (defaults to the time dimension).
+`dim` accepts integer index, dimension type/instance, or `nothing` (defaults to the time dimension).
 """
-
 
 for (sym, desc) in (
         (:sum, "sum"),

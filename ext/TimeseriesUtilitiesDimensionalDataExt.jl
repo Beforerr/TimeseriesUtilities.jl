@@ -72,14 +72,16 @@ end
 @inline function sorted_axis(sorted::AbstractDimStack, D; rev = false)
     olddims = DD.dims(sorted)
     olddim = olddims[D]
-    newdim = rebuild(olddim, _ordered_lookup(lookup(olddim), Val(rev)))
+    newdim = rebuild(olddim; val = _ordered_lookup(lookup(olddim), Val(rev)))
     newdims = Base.setindex(olddims, newdim, D)
     return rebuild(sorted; dims = newdims)
 end
 
 @inline function rebuild_axis(x::AbstractDimArray, data, dim, keys)
     olddims = DD.dims(x)
-    newdims = Base.setindex(olddims, rebuild(olddims[dim], keys), dim)
+    olddim = olddims[dim]
+    newdim = DD.rebuild(olddim; val = DD.rebuild(lookup(olddim); data = keys))
+    newdims = Base.setindex(olddims, newdim, dim)
     return rebuild(x, data, newdims)
 end
 
