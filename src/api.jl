@@ -11,7 +11,7 @@ dimnum(x, dim) = @something dim ndims(x)
 
 function set end
 
-function axiskeys end
+axiskeys(x, dim) = axes(x, dim)
 
 function dims end
 

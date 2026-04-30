@@ -17,17 +17,14 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 
 ## (Windowed) Statistics
 
-- [`tstat`](@ref), [`tmean`](@ref), [`tmedian`](@ref)
-- [`tsum`](@ref), [`tvar`](@ref), [`tstd`](@ref), [`tsem`](@ref)
+- Base: [`tstat`](@ref) - `tstat(f, x, [dt]; dim)`
+- NaNStatistics wrappers: [`tmean`](@ref), [`tmedian`](@ref), [`tsum`](@ref), [`tvar`](@ref), [`tstd`](@ref), [`tsem`](@ref)
 
 ## Algebra
 
-- [`tcross`](@ref)
-- [`tdot`](@ref)
-- [`tnorm`](@ref)
+- [`tcross`](@ref), [`tdot`](@ref), [`tnorm`](@ref)
 - [`tsproj`](@ref), [`tproj`](@ref), [`toproj`](@ref)
-- [`tsubtract`](@ref)
-- [`tderiv`](@ref)
+- [`tsubtract`](@ref), [`tderiv`](@ref)
 
 ## Time-Domain Operations
 
