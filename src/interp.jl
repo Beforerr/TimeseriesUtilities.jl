@@ -131,34 +131,31 @@ function tsync(A, Bs...)
     return A_tsync, Bs_syncs...
 end
 
+
 """
-    interpolate_nans(da; interp=LinearInterpolation)
+    tinterp_nans(A; dim = nothing, kwargs...)
 
-Interpolate only the NaN values in `da` along the specified dimension `dims`.
-Non-NaN values are preserved exactly as they are.
-
-The default interpolation method `interp` is `LinearInterpolation`.
+Interpolate only the NaN values in `A` along dimension `dim`.
 """
-function interpolate_nans(u, t; interp = LinearInterpolation)
-    # For 1D arrays, directly interpolate the NaN values
-    nan_indices = findall(isnan, u)
-
-    if !isempty(nan_indices) && length(nan_indices) < length(u)
-        # Find valid (non-NaN) data points
-        valid_indices = findall(!isnan, u)
-        valid_t = t[valid_indices]
-        valid_u = u[valid_indices]
-        interp_obj = interp(valid_u, valid_t)
-
-        # Interpolate only at NaN positions
-        new_u = deepcopy(u)
-        new_u[nan_indices] = interp_obj.(t[nan_indices])
-        return new_u
-    else
-        return u
+function tinterp_nans(A; dim = nothing, kwargs...)
+    dims = dimnum(A, dim)
+    t = axiskeys(A, dims)
+    out = mapslices(parent(A); dims) do slice
+        interpolate_nans!(slice, t; kwargs...)
     end
+    return rebuild_axis(A, out, dims, t)
 end
 
-function interpolate_nans(u, t::AbstractArray{<:AbstractTime}; kwargs...)
-    return interpolate_nans(u, Dates.value.(t); kwargs...)
+# Interpolate only the NaN values in `u` along `t`.
+function interpolate_nans!(u, t; interp = LinearInterpolation)
+    # For 1D arrays, directly interpolate the NaN values
+    nan_indices = findall(isnan, u)
+    if !isempty(nan_indices) && length(nan_indices) < length(u)
+        valid_indices = findall(!isnan, u)
+        interp_obj = @views interp(u[valid_indices], t[valid_indices])
+        for idx in nan_indices
+            u[idx] = interp_obj(t[idx])
+        end
+    end
+    return u
 end

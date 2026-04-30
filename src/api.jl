@@ -11,7 +11,7 @@ dimnum(x, dim) = @something dim ndims(x)
 
 function set end
 
-axiskeys(x, dim) = axes(x, dim)
+function axiskeys end
 
 function dims end
 
@@ -27,8 +27,6 @@ Get time coordinate of `x`.
 times(x) = x
 
 function samplingrate end
-
-function _deriv_tfunc end
 
 function tinterp_nans end
 

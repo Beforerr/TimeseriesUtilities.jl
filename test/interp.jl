@@ -109,7 +109,7 @@ end
     @test_call tsync(da1, da2, da3)
 end
 
-@testitem "tinterp_nans function" begin
+@testitem "tinterp_nans" begin
     using Dates, DimensionalData
     using TimeseriesUtilities
 
@@ -121,12 +121,16 @@ end
     # Interpolate NaN values
     result = tinterp_nans(da)
 
-    # Check that non-NaN values are preserved
-    @test result[1] == 1.0
-    @test result[4] == 4.0
-    @test result[5] == 5.0
+    @test result == [1.0, 2.0, 3.0, 4.0, 5.0]
+    @test result isa DimArray
+    @test dims(result, Ti).val == times
+    @test isnan(data[2])
 
-    # Check that NaN values are interpolated (linear interpolation between 1.0 and 4.0)
-    @test result[2] ≈ 2.0
-    @test result[3] ≈ 3.0
+    data2 = [1.0 10.0; NaN NaN; NaN 30.0; 4.0 40.0; 5.0 50.0]
+    da2 = DimArray(data2, (Ti(times), Y([:a, :b])))
+    result2 = tinterp_nans(da2)
+    @test result2 ≈ [1.0 10.0; 2.0 20.0; 3.0 30.0; 4.0 40.0; 5.0 50.0]
+    @test dims(result2, Ti).val == times
+    @test dims(result2, Y).val == [:a, :b]
+    @test isnan(data2[2, 1])
 end
