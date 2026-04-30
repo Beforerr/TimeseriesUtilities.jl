@@ -23,12 +23,13 @@ A scalar `window` is interpreted as a coordinate span along the smoothed axis.
 - `dim=ndims(data)`: Dimension along which to perform smoothing
 - `op=nanmean`: Function used to aggregate each window
 """
-function smooth(data, coords, window; dim = ndims(data), op = nanmean)
+@inline function smooth(data, coords, window; dim = ndims(data), op = nanmean)
     length(coords) == size(data, dim) || throw(DimensionMismatch("length(coords) must match size(data, dim)"))
     issorted(coords) || throw(ArgumentError("coords must be sorted"))
     before, after = _window_offsets(window)
+    windows = PointWindows(coords, before, after)
     return mapslices(data; dims = dim) do slice
-        op.(SlidingWindow(slice, coords, before, after))
+        op.(WindowedView{1}(slice, coords, windows))
     end
 end
 
