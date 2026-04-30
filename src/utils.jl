@@ -79,22 +79,28 @@ function searchsortednearest(a, x; by = identity, lt = isless, rev = false, dist
     return i
 end
 
-using HybridArrays
-
-rawview(x) = x
-
-function rawview(x::AbstractArray{T}) where {T <: AbstractTime}
-    return Dates.value.(x)
-    # reinterpret seems to be much slower
-    # rawType = Base.promote_op(Dates.value, T)
-    # return isbitstype(T) && sizeof(T) == sizeof(rawType) ? reinterpret(rawType, x) : x
+# Lazy iterator that yields SArray slices along `dim` without heap-allocating views.
+# ntuple(Val(n)) unrolls at compile time, so all intermediates are stack-allocated.
+# Inspired by HybridArrays.jl
+struct LazyStaticSlices{T, N, S <: SArray, dim, A <: AbstractArray{T, N}} <: AbstractVector{S}
+    data::A
 end
 
-rawview(x::AbstractTime) = Dates.value(x)
+function LazyStaticSlices(A::AbstractArray{T, N}, dim::Int) where {T, N}
+    other = ntuple(i -> size(A, i < dim ? i : i + 1), N - 1)
+    S = SArray{Tuple{other...}, T, N - 1, prod(other)}
+    return LazyStaticSlices{T, N, S, dim, typeof(A)}(A)
+end
 
-function hybridify(A, dims)
-    sizes = ntuple(ndims(A)) do i
-        i in dims ? StaticArrays.Dynamic() : size(A, i)
-    end
-    return HybridArray{Tuple{sizes...}}(A)
+Base.length(s::LazyStaticSlices{T, N, S, d}) where {T, N, S, d} = size(s.data, d)
+
+@inline function Base.getindex(s::LazyStaticSlices{T, N, S, d}, k::Int) where {T, N, S, d}
+    slice_sz = size(S)
+    return S(ntuple(Val(length(S))) do p
+        ci = CartesianIndices(slice_sz)[p]
+        full_idx = ntuple(Val(N)) do j
+            j < d ? ci[j] : j == d ? k : ci[j - 1]
+        end
+        @inbounds s.data[full_idx...]
+    end)
 end

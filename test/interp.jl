@@ -106,7 +106,7 @@ end
 
     using JET
     @test_opt broken = true tsync(da1, da2, da3) # runtime dispatch
-    @test_call broken = true tsync(da1, da2, da3) # runtime dispatch
+    @test_call tsync(da1, da2, da3)
 end
 
 @testitem "tinterp_nans function" begin
