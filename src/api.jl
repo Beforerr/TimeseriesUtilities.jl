@@ -9,13 +9,12 @@ Get the ordinal of the dimension `dim` in `x`.
 """
 dimnum(x, dim) = @something dim ndims(x)
 
-function set end
-
 function axiskeys end
 
 function dims end
 
 rebuild_axis(x, data, dim, keys) = data
+rebuild_axis(x, dim, keys) = rebuild_axis(x, parent(x), dim, keys)
 
 sorted_axis(sorted, dim; rev = false) = sorted
 

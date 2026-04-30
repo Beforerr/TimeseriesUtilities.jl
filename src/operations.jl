@@ -125,8 +125,7 @@ Shift the `dim` of `x` by `t0`.
 """
 function tshift(x, t0 = nothing; dim = nothing)
     d = dimnum(x, dim)
-    td = dims(x, d)
     times = axiskeys(x, d)
     times′ = times .- (@something t0 first(times))
-    return set(x, td => times′)
+    return rebuild_axis(x, d, times′)
 end
