@@ -37,9 +37,12 @@ Compute the time derivative of `A`. Set `lazy=true` for lazy evaluation.
 
 See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_modules/pyspedas/analysis/deriv_data.html)
 """
-@inline function tderiv(args...; lazy = false, kw...)
+@inline function tderiv(A, times = nothing; lazy = false, dim = nothing, kw...)
+    dim = dimnum(A, dim)
     f = lazy ? DiffQ : _tderiv
-    return f(args...; kw...)
+    times = @something times axiskeys(A, dim)
+    out = f(parent(A), times; dim)
+    return rebuild_axis(A, out, dim, @view times[1:end-1])
 end
 
 """
