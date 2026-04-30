@@ -78,6 +78,7 @@ export tsplit
 
 include("api.jl")
 include("sliding.jl")
+include("timerange.jl"); export ContinuousTimeRanges
 include("timeseries.jl")
 include("operations.jl")
 include("groupby.jl")
