@@ -3,27 +3,23 @@
 
 Get the minimum timestamp of `x`.
 """
-function tminimum end
+tminimum(x) = minimum(times(x))
 
 """
     tmaximum(x)
 
 Get the maximum timestamp of `x`.
 """
-function tmaximum end
+tmaximum(x) = maximum(times(x))
 
-tminimum(x) = minimum(x)
-tmaximum(x) = maximum(x)
-tminimum(x::AbstractDimArray; dim = nothing) = tminimum(times(x, dim))
-tmaximum(x::AbstractDimArray; dim = nothing) = tmaximum(times(x, dim))
 targmin(x) = times(x)[argmin(x)]
 targmax(x) = times(x)[argmax(x)]
 
 """    
-    timerange(times)
+    timerange(x)
     timerange(x1, xs...)
 
-Get the time range (minimum and maximum) of time series data.
+Get the time range of time series data `x`.
 
 For a single argument, returns a tuple `(tmin, tmax)` containing the minimum and maximum times.
 For multiple arguments, returns the common time range (intersection) across all arrays - equivalent to `common_timerange(x1, xs...)`.
@@ -42,7 +38,7 @@ timerange(x1_times, x2_times)  # (2, 4)
 
 See also: [`common_timerange`](@ref), [`tminimum`](@ref), [`tmaximum`](@ref)
 """
-timerange(times) = extrema(times)
+timerange(x) = extrema(times(x))
 
 _median(x) = median(x)
 
@@ -98,7 +94,7 @@ end
 Find continuous time ranges for `x`, where `max_dt` is the maximum time gap between consecutive times.
 """
 function find_continuous_timeranges(x, max_dt)
-    ts = eltype(x) <: AbstractTime ? x : times(x)
+    ts = times(x)
     return issorted(ts) ?
            _find_continuous_timeranges(ts, max_dt) :
            _find_continuous_timeranges(sort(ts), max_dt)
@@ -126,25 +122,3 @@ function time_grid(x, dt)
     tmin, tmax = timerange(x)
     return tmin:dt:tmax
 end
-
-function time_grid(x, dt::Unitful.Quantity)
-    tmin, tmax = timerange(x)
-    return if dimension(dt) == Unitful.𝐓
-        tmin:_2dates(dt):tmax
-    elseif dimension(dt) == Unitful.𝐓^-1
-        _dt = round(Nanosecond, 1 / dt)
-        tmin:_dt:tmax
-    else
-        tmin:dt:tmax
-    end
-end
-
-for (period, unit) in (
-        (Dates.Week, Unitful.wk), (Dates.Day, Unitful.d), (Dates.Hour, Unitful.hr),
-        (Dates.Minute, Unitful.minute), (Dates.Second, Unitful.s), (Dates.Millisecond, Unitful.ms),
-        (Dates.Microsecond, Unitful.μs), (Dates.Nanosecond, Unitful.ns),
-    )
-    @eval _2dates(::typeof($unit)) = $period
-end
-
-_2dates(x::Unitful.Quantity) = _2dates(Unitful.unit(x))(x)

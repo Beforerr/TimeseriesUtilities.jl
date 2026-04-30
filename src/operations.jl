@@ -1,26 +1,15 @@
-using DimensionalData.Lookups: Unordered
-
-dimtype_eltype(d) = (basetypeof(d), eltype(d))
-dimtype_eltype(A, ::Nothing) = dimtype_eltype(A, TimeDim)
-dimtype_eltype(A, dim) = dimtype_eltype(dims(A, dim))
-
 """
     tsort(A; dim=nothing, rev=false)
 
-Sort a `DimArray` `A` along the `dim` dimension.
+Sort `A` along dimension `dim`.
 """
 function tsort(A; dim = nothing, rev = false)
-    tdim = timedim(A, dim)
-
-    return if issorted(tdim; rev)
-        DimensionalData.order(tdim) isa Unordered ?
-            set(A, tdim => rev ? ReverseOrdered : ForwardOrdered) : A
-    else
-        time = parent(lookup(tdim))
-        order = rev ? ReverseOrdered : ForwardOrdered
-        sel = rebuild(tdim, sortperm(time; rev))
-        set(A[sel], tdim => order)
-    end
+    d = dimnum(A, dim)
+    keys = axiskeys(A, d)
+    return issorted(keys; rev) ? A : begin
+            sorted = A[_selectors(A, d, sortperm(keys; rev))...]
+            sorted_axis(sorted, d; rev)
+        end
 end
 
 """
@@ -31,8 +20,9 @@ Clip `A` to time range `[t0, t1]` along dimension `dim`.
 `dim` should be sorted before clipping (see [`tsort`](@ref)).
 """
 function tclip(A, t0, t1; dim = nothing)
-    Dim, T = dimtype_eltype(A, dim)
-    return A[Dim(T(t0) .. T(t1))]
+    d = dimnum(A, dim)
+    idx = _search_range(axiskeys(A, d), t0, t1)
+    return A[_selectors(A, d, idx)...]
 end
 
 """
@@ -41,9 +31,22 @@ end
 View `A` in time range `[t0, t1]` along dimension `dim`.
 """
 function tview(A, t0, t1; dim = nothing)
-    Dim, T = dimtype_eltype(A, dim)
-    return @view A[Dim(T(t0) .. T(t1))]
+    d = dimnum(A, dim)
+    idx = _search_range(axiskeys(A, d), t0, t1)
+    return @view A[_selectors(A, d, idx)...]
 end
+
+function _selectors(A, d, selector)
+    return ntuple(i -> i == d ? selector : Colon(), ndims(A))
+end
+
+function _search_range(keys, t0, t1)
+    issorted(keys) || throw(ArgumentError("axis keys must be sorted before clipping"))
+    i0 = searchsortedfirst(keys, t0)
+    i1 = searchsortedlast(keys, t1)
+    return i0:i1
+end
+
 
 """
     tclips(xs...; trange=common_timerange(xs...))
@@ -90,9 +93,16 @@ Non-mutable version of `tmask!`. See also [`tmask!`](@ref).
 """
 tmask(A, args...; kwargs...) = tmask!(copy(A), args...; kwargs...)
 
-function tselect(times, t)
-    sorted = issorted(times) ? times : sort(times)
-    return sorted[searchsortednearest(sorted, t)]
+function tselect(A, t; dim = nothing)
+    d = dimnum(A, dim)
+    keys = axiskeys(A, d)
+    i = if issorted(keys)
+        searchsortednearest(keys, t)
+    else
+        order = sortperm(keys)
+        order[searchsortednearest(view(keys, order), t)]
+    end
+    return A[_selectors(A, d, i)...]
 end
 
 """

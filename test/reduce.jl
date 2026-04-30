@@ -43,7 +43,7 @@ end
 @testitem "time_grid" begin
     using Dates
     using DimensionalData
-    using TimeseriesUtilities.Unitful
+    using Unitful
 
     # Test with DateTime data
     start_time = DateTime(2023, 1, 1, 0, 0, 0)
@@ -81,6 +81,7 @@ end
 end
 
 @testitem "find_continuous_timeranges" begin
+    using AxisKeys
     using Dates
     using DimensionalData
     using TimeseriesUtilities
@@ -119,4 +120,21 @@ end
     da = DimArray(rand(length(times)), (Ti(times),))
     ranges_da = find_continuous_timeranges(da, Hour(2))
     @test ranges_da == ranges
+
+    ka = KeyedArray(rand(length(times)); time = times)
+    ranges_ka = find_continuous_timeranges(ka, Hour(2))
+    @test ranges_ka == ranges
+end
+
+@testitem "AxisKeys tgroupby" begin
+    using AxisKeys
+    using TimeseriesUtilities
+
+    ka = KeyedArray(10.0:10.0:50.0; time = 1.0:5.0)
+    groups = tgroupby(ka, 2.0)
+
+    @test length(groups) == 3
+    @test groups[1] == [10.0]
+    @test axiskeys(groups[2], 1) == [2.0, 3.0]
+    @test axiskeys(groups[3], 1) == [4.0, 5.0]
 end

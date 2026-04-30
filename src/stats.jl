@@ -30,21 +30,9 @@ end
 
 function tstat(f, x, dt; dim = nothing)
     d = dimnum(x, dim)
-    tdim = dims(x, d)
-    out, idxs = stat1d(f, parent(x), tdim, dt, d)
-    newdims = ntuple(ndims(x)) do i
-        i == d ? fast_rebuild_dim(tdim, idxs) : dims(x, i)
-    end
-    return rebuild(x, out, newdims)
+    out, s = stat1d(f, unwrap(x), axiskeys(x, d), dt, d)
+    return rebuild_axis(x, out, d, s)
 end
-
-function tstat(f, ds::DimStack, args...; dim = nothing)
-    d = dimnum(ds, dim)
-    return maplayers(ds) do layer
-        tstat(f, layer, args...; dim = d)
-    end
-end
-
 
 tstat_doc(sym, desc = sym) = """
     $(Symbol(:t, sym))(x, [dt]; dim=nothing)

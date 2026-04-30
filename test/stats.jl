@@ -37,6 +37,7 @@ end
     t0 = DateTime(2011)
     ts = t0 .+ Millisecond.(0:10)
     @test tmean(ts) == t0 + Millisecond(5)
+    @test_throws MethodError tmean([1.0, 2.0, 3.0], 1.0)
     @test tmean(da1) == mean(da1)
     @test tmean(da1, Millisecond(2)) == [mean(da1[1:2]), mean(da1[3:4])]
     @test tmean(da1, Millisecond(2)).dims[1][2] == Millisecond(2)
@@ -63,4 +64,40 @@ end
     verbose && @info "tmean" @b(tmean($da_bench1))
     da_bench = DimArray(rand(1000, 3), (Ti(1:1000), Y(1:3)))
     verbose && @info "tmean" @b(tmean($da_bench, 10))
+end
+
+@testitem "AxisKeys timeseries statistics" begin
+    using AxisKeys
+    using Dates
+    using Statistics
+    using TimeseriesUtilities.NaNStatistics
+
+    times = Millisecond.(0:3)
+    ka1 = KeyedArray([1.0, 2.0, 3.0, 4.0]; time = times)
+    ka2 = KeyedArray(
+        [1.0 10.0; 2.0 20.0; 3.0 30.0; 4.0 40.0];
+        time = times,
+        component = [1, 2],
+    )
+
+    grouped1 = tmean(ka1, Millisecond(2))
+    @test grouped1 == [1.5, 3.5]
+    @test axiskeys(grouped1, 1) == Millisecond.([0, 2])
+    @test AxisKeys.dimnames(grouped1, 1) == :time
+
+    grouped2 = tmean(ka2, Millisecond(2))
+    @test grouped2 == [1.5 15.0; 3.5 35.0]
+    @test axiskeys(grouped2, 1) == Millisecond.([0, 2])
+    @test axiskeys(grouped2, 2) == [1, 2]
+    @test AxisKeys.dimnames(grouped2, 1) == :time
+    @test AxisKeys.dimnames(grouped2, 2) == :component
+
+    by_component = tmean(ka2, 1; dim = :component)
+    @test by_component == [1.0 10.0; 2.0 20.0; 3.0 30.0; 4.0 40.0]
+    @test axiskeys(by_component, 1) == times
+    @test axiskeys(by_component, 2) == [1, 2]
+
+    @test tmedian(ka1, Millisecond(2)) == [1.5, 3.5]
+    @test tsum(ka2, Millisecond(2)) == [3.0 30.0; 7.0 70.0]
+    @test tsem(ka1) == nansem(ka1)
 end

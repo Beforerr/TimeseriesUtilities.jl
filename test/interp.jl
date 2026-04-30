@@ -25,6 +25,9 @@
     res = tinterp(da3, t2)
     @test dims(res, Ti).val == t2
     @test res ≈ [1.25 4.25; 2.75 5.75]
+
+    @test tinterp([0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.5, 1.5]) ≈ [0.5, 1.5]
+    @test tresample([0.0, 1.0, 2.0], [0.0, 1.0, 2.0], 1.0) ≈ [0.0, 1.0, 2.0]
 end
 
 @testitem "DataInterpolations compatibility" begin
@@ -44,11 +47,45 @@ end
     @test tinterp(da, before; interp = Tinterp(LinearInterpolation), extrapolation = ExtrapolationType.Linear) ≈ -1.0
 end
 
-@testitem "tsync function" begin
-    using Dates, DimensionalData
-    using TimeseriesUtilities: workload_interp
+@testitem "AxisKeys tinterp" begin
+    using AxisKeys
+    using Dates
+    using TimeseriesUtilities
 
-    a_sync, b_sync, c_sync = workload_interp()
+    times = [DateTime(2020, 1, 1), DateTime(2020, 1, 2), DateTime(2020, 1, 3)]
+    ka = KeyedArray(0.0:2.0; time = times)
+
+    t1 = DateTime(2020, 1, 1, 12)
+    @test tinterp(ka, t1) ≈ 0.5
+
+    t2 = [DateTime(2020, 1, 1, 6), DateTime(2020, 1, 2, 18)]
+    res = tinterp(ka, t2)
+    @test res ≈ [0.25, 1.75]
+    @test axiskeys(res, 1) == t2
+    @test AxisKeys.dimnames(res, 1) == :time
+
+    ka2 = KeyedArray(
+        [1.0 4.0; 2.0 5.0; 3.0 6.0];
+        time = times,
+        component = [10, 20],
+    )
+    res2 = tinterp(ka2, t2)
+    @test res2 ≈ [1.25 4.25; 2.75 5.75]
+    @test axiskeys(res2, 1) == t2
+    @test axiskeys(res2, 2) == [10, 20]
+    @test AxisKeys.dimnames(res2, 2) == :component
+
+    resampled = tresample(ka, Hour(12))
+    @test axiskeys(resampled, 1) == DateTime(2020, 1, 1):Hour(12):DateTime(2020, 1, 3)
+    @test resampled ≈ 0.0:0.5:2.0
+end
+
+@testitem "tsync" begin
+    using Dates, DimensionalData
+    using TimeseriesUtilities: workload_interp_setup
+
+    da1, da2, da3 = workload_interp_setup()
+    a_sync, b_sync, c_sync = tsync(da1, da2, da3)
 
     # Check that all synchronized arrays have the same time dimension
     @test parent(dims(a_sync, Ti)) == parent(dims(b_sync, Ti)) == parent(dims(c_sync, Ti))
@@ -68,8 +105,8 @@ end
     @test parent(c_sync) ≈ expected_values
 
     using JET
-    @test_opt broken = true workload_interp() # runtime dispatch
-    @test_call broken = true workload_interp() # runtime dispatch
+    @test_opt broken = true tsync(da1, da2, da3) # runtime dispatch
+    @test_call broken = true tsync(da1, da2, da3) # runtime dispatch
 end
 
 @testitem "tinterp_nans function" begin

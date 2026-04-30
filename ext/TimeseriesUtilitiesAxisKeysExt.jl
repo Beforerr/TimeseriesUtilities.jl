@@ -1,23 +1,38 @@
 module TimeseriesUtilitiesAxisKeysExt
 
-import TimeseriesUtilities as TU
 import AxisKeys
-import TimeseriesUtilities: unwrap, dimnum, set, dims, axiskeys
+import TimeseriesUtilities:
+    axiskeys,
+    dimnum,
+    dims,
+    rebuild_axis,
+    set,
+    times,
+    tinterp,
+    unwrap
 using AxisKeys: KeyedArray
 
-TU.unwrap(x::KeyedArray) = AxisKeys.keyless_unname(x)
-TU.dimnum(x::KeyedArray, ::Nothing) = AxisKeys.dim(x, :time)
-TU.dimnum(x::KeyedArray, dim) = AxisKeys.dim(x, dim)
-TU.axiskeys(x::KeyedArray, dim) = AxisKeys.axiskeys(x, dim)
-TU.dims(x::KeyedArray, dim) = AxisKeys.dimnames(x, dim)
+unwrap(x::KeyedArray) = AxisKeys.keyless_unname(x)
+dimnum(x::KeyedArray, dim) = AxisKeys.dim(x, @something dim :time)
+axiskeys(x::KeyedArray, dim) = AxisKeys.axiskeys(x, dim)
+dims(x::KeyedArray, dim) = AxisKeys.dimnames(x, dim)
+times(x::KeyedArray, dim = nothing) = axiskeys(x, dimnum(x, dim))
+function rebuild_axis(x::KeyedArray, data, dim, keys)
+    names = ntuple(i -> dims(x, i), ndims(x))
+    newkeys = ntuple(ndims(x)) do i
+        i == dim ? keys : axiskeys(x, i)
+    end
+    return KeyedArray(data; NamedTuple{names}(newkeys)...)
+end
 
-function TU.set(x::KeyedArray, pair::Pair)
+function set(x::KeyedArray, pair::Pair)
     dim, new_keys = pair
     dn = dimnum(x, dim)
+    names = ntuple(i -> dims(x, i), ndims(x))
     new_axiskeys = ntuple(ndims(x)) do i
         i == dn ? new_keys : axiskeys(x, i)
     end
-    return KeyedArray(parent(x), new_axiskeys)
+    return KeyedArray(parent(x); NamedTuple{names}(new_axiskeys)...)
 end
 
 end

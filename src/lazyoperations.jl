@@ -5,7 +5,7 @@
 
 Difference quotient of `v` with respect to `t`.
 
-To avoid undefined behavior for division by Date/DateTime, we convert the time difference to a `Unitful.Quantity` if `eltype(v)` is not a `Unitful.Quantity`.
+Date/DateTime differences are converted to seconds before division.
 """
 struct DiffQ{T, N, D, A1, A2} <: AbstractArray{T, N}
     v::A1
