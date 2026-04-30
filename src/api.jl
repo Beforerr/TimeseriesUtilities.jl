@@ -26,7 +26,3 @@ Get time coordinate of `x`.
 times(x) = x
 
 function samplingrate end
-
-function tinterp_nans end
-
-function workload_interp_setup end

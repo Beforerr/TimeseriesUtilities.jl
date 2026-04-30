@@ -7,9 +7,7 @@ using DimensionalData:
     AbstractDimStack,
     DimArray,
     Dimension,
-    Ti,
     TimeDim,
-    Y,
     basetypeof,
     lookup,
     maplayers,
@@ -17,24 +15,19 @@ using DimensionalData:
     rebuild
 import TimeseriesUtilities as TU
 import TimeseriesUtilities:
-    DiffQ,
     axiskeys,
     dimnum,
     dims,
     dropna,
-    find_outliers,
     groupby_dynamic,
     norm_combine,
     rebuild_axis,
-    resolution,
     smooth,
     sorted_axis,
-    tfilter,
     times,
     tnorm_combine,
     tstat,
-    unwrap,
-    workload_interp_setup
+    unwrap
 
 const AbstractDimLike = Union{AbstractDimArray, AbstractDimStack}
 
@@ -80,8 +73,6 @@ end
     return rebuild(x, data, newdims)
 end
 
-resolution(da::AbstractDimArray; kwargs...) = resolution(times(da); kwargs...)
-
 function smooth(da::AbstractDimArray, window; dim = nothing, kwargs...)
     dnum = dimnum(da, dim)
     tdim = DD.dims(da, dnum)
@@ -104,10 +95,6 @@ function dropna(ds::AbstractDimStack; dim = nothing)
     return ds[basetypeof(tdim)(valid_idx)]
 end
 
-for f in (:smooth, :tfilter)
-    @eval $f(args...; kwargs...) = da -> $f(da, args...; kwargs...)
-end
-
 function tstat(f, ds::AbstractDimStack, args...; dim = nothing)
     d = dimnum(ds, dim)
     return maplayers(ds) do layer
@@ -124,22 +111,6 @@ function tnorm_combine(x::AbstractDimArray; dim = nothing, name = :magnitude)
     new_odim = odimType(vcat(odim.val, name))
     new_dims = map(dd -> dd isa odimType ? new_odim : dd, dims(x))
     return rebuild(x, data, new_dims)
-end
-
-function find_outliers(A::AbstractDimArray, args...; dim = nothing, kw...)
-    d = dimnum(A, dim)
-    return find_outliers(parent(A), args...; dim = d, kw...)
-end
-
-function workload_interp_setup(n = 4)
-    times1 = DateTime(2020, 1, 1) + Day.(0:(n - 1))
-    times2 = DateTime(2020, 1, 2) + Day.(0:(n - 1))
-    times3 = DateTime(2020, 1, 1, 12) + Day.(0:(n - 2))
-
-    da1 = DimArray(1:n, (Ti(times1),))
-    da2 = DimArray(10:(10 + n - 1), (Ti(times2),))
-    da3 = DimArray(hcat(5:(5 + n - 2), 8:2:(8 + 2n - 4)), (Ti(times3), Y([1, 2])))
-    return da1, da2, da3
 end
 
 end

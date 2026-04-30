@@ -1,5 +1,5 @@
-function resolution(times; tol = 2, check = true, f = _median)
-    dts = diff(times)
+function resolution(x; tol = 2, check = true, f = _median)
+    dts = diff(times(x))
     return if check
         dt, relerr = stat_relerr(dts, f)
         relerr > exp10(-tol - 1) && @warn "Time resolution is is not approximately constant (relerr ≈ $relerr)"
