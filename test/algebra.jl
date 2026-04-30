@@ -95,6 +95,6 @@ end
     using JET
     @test_opt ignored_modules = (Base,) tderiv(data, times)
     @test_call ignored_modules = (Base,) tderiv(data, times)
-    @test_opt broken = broken ignored_modules = (Base,) tderiv(A)
+    @test_opt tderiv(A)
     @test_call ignored_modules = (Base,) tderiv(A)
 end
