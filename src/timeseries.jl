@@ -46,14 +46,13 @@ _window_offsets(window) = _half(window), _half(window)
 _half(window) = window / 2
 _half(window::Period) = Millisecond(window) / 2
 
-function _dropna(A; dim = nothing)
-    valid_idx = vec(all(!isnan, A; dims = other_dims(A, dim)))
-    return selectdim(A, dim, valid_idx)
-end
-
 """
     dropna(A; dim=nothing)
 
-Remove slices containing NaN values along the `dim` dimension.
+Remove slices containing NaN values along dimension `dim`.
 """
-dropna(A; dim = nothing) = _dropna(A; dim)
+@inline function dropna(A; dim = nothing)
+    d = dimnum(A, dim)
+    idxs = vec(all(!isnan, A; dims = other_dims(A, d)))
+    return selectdim(A, d, idxs)
+end

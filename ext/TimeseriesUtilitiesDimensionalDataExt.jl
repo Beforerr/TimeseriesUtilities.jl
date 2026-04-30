@@ -95,20 +95,14 @@ function smooth(da::AbstractDimArray, window; dim = nothing, kwargs...)
 end
 
 """
-    dropna(A::AbstractDimArray; dim=nothing)
     dropna(ds::AbstractDimStack; dim=nothing)
 
 Remove slices containing NaN values along the `dim` dimension.
 """
-function dropna(A::AbstractDimArray; dim = nothing)
-    d = dimnum(A, dim)
-    return TU._dropna(A; dim = d)
-end
-
 function dropna(ds::AbstractDimStack; dim = nothing)
     d = dimnum(ds, dim)
     tdim = DD.dims(ds, d)
-    odims = otherdims(ds, tdim)
+    odims = otherdims(ds, d)
     valid_idx = mapreduce(.*, values(ds)) do A
         vec(all(!isnan, A; dims = odims))
     end

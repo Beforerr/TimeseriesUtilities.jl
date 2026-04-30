@@ -50,18 +50,21 @@
     @test_call tview(result, 1.0, 2.0)
 end
 
-@testitem "DimStack dropna" begin
+@testitem "dropna" begin
     using DimensionalData
 
-    t = Ti(1:4)
+    t = Ti(2:5)
     y = Y([:x, :y])
     ds = DimStack((
         a = DimArray([1.0, NaN, 3.0, 4.0], (t,)),
         b = DimArray([1.0 5.0; 2.0 NaN; 3.0 7.0; 4.0 8.0], (t, y)),
     ))
 
+    a_clean = dropna(ds.a)
+    @test a_clean == [1.0, 3.0, 4.0]
+    @test a_clean.dims[1].val == [2, 4, 5]
     result = dropna(ds)
-    @test dims(result, Ti).val == [1, 3, 4]
+    @test dims(result, Ti).val == [2, 4, 5]
     @test result.a == [1.0, 3.0, 4.0]
     @test result.b == [1.0 5.0; 3.0 7.0; 4.0 8.0]
 end
