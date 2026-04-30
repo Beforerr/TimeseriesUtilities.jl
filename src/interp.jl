@@ -75,8 +75,7 @@ tinterp(time_series, new_times; interp = CubicSpline)
     return if ndims(A) == 1
         interp(A, old_times; kws...).(new_times)
     else
-        u = eachslice(hybridify(A, dim); dims = dim) # hybridify to reduce memory allocation
-        f = interp(u, old_times; kws...)
+        f = interp(LazyStaticSlices(A, dim), old_times; kws...)
         stack(f, new_times; dims = dim)
     end
 end
