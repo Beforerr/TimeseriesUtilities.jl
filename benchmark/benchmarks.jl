@@ -2,7 +2,8 @@ using BenchmarkTools
 import DataInterpolations
 using DimensionalData
 using TimeseriesUtilities
-using TimeseriesUtilities: tinterp, tsync, workload_interp_setup
+using TimeseriesUtilities: tinterp, tsync
+include("../test/setup.jl")
 
 const SUITE = BenchmarkGroup()
 

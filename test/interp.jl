@@ -82,7 +82,7 @@ end
 
 @testitem "tsync" begin
     using Dates, DimensionalData
-    using TimeseriesUtilities: workload_interp_setup
+    include("./setup.jl")
 
     da1, da2, da3 = workload_interp_setup()
     a_sync, b_sync, c_sync = tsync(da1, da2, da3)

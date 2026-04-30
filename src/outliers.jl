@@ -11,16 +11,8 @@
 # - https://stackoverflow.com/questions/37556487/remove-spikes-from-signal-in-python
 # - https://medium.com/towards-data-science/removing-spikes-from-raman-spectra-a-step-by-step-guide-with-python-b6fd90e8ea77
 
-function outlier_detector(method)
-    if method == :median
-        return find_outliers_median
-    elseif method == :mean
-        return find_outliers_mean
-    end
-end
-
 """
-    find_outliers(A, [method, window]; dim = 1, kw...)
+    find_outliers(A, [method, window]; dim = nothing, kw...)
 
 Find outliers in data `A` along the specified `dim` dimension.
 
@@ -31,7 +23,8 @@ When the length of `A` is greater than 256, it uses a moving `window` of size 16
 
 See also: [`find_outliers_median`](@ref), [`find_outliers_mean`](@ref), [isoutlier - MATLAB](https://www.mathworks.com/help/matlab/ref/isoutlier.html)
 """
-function find_outliers(A; dim = 1, kw...)
+function find_outliers(A; dim = nothing, kw...)
+    dim = dimnum(A, dim)
     if size(A, dim) > 256
         window = 16
         return find_outliers(A, :median, window; dim, kw...)
@@ -40,8 +33,9 @@ function find_outliers(A; dim = 1, kw...)
     end
 end
 
-function find_outliers(A, method, args...; dim = 1, kw...)
-    detector = outlier_detector(method)
+function find_outliers(A, method, args...; dim = nothing, kw...)
+    dim = dimnum(A, dim)
+    detector = method == :median ? find_outliers_median : find_outliers_mean
     return mapslices(A; dims = dim) do x
         detector(x, args...; kw...)
     end
