@@ -28,13 +28,10 @@ import TimeseriesUtilities:
     norm_combine,
     rebuild_axis,
     resolution,
-    set,
     smooth,
     sorted_axis,
     tderiv,
     tfilter,
-    tinterp,
-    tinterp_nans,
     times,
     tnorm_combine,
     tstat,
@@ -49,7 +46,7 @@ dimnum(x::AbstractDimLike, dim) = DD.dimnum(x, @something dim TimeDim)
 axiskeys(x::AbstractDimLike, dim) = unwrap(DD.dims(x, dim))
 times(x::AbstractDimLike, dim = nothing) = axiskeys(x, dimnum(x, dim))
 
-for f in (:set, :dims)
+for f in (:dims,)
     @eval $f(args...; kwargs...) = DD.$f(args...; kwargs...)
 end
 
