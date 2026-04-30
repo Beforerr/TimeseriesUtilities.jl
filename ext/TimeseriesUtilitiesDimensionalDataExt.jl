@@ -115,21 +115,6 @@ function dropna(ds::AbstractDimStack; dim = nothing)
     return ds[basetypeof(tdim)(valid_idx)]
 end
 
-"""
-    tinterp_nans(da::AbstractDimArray; dim=nothing, kwargs...)
-
-Interpolate only the NaN values in `da` along the time dimension.
-"""
-function tinterp_nans(da::AbstractDimArray; dim = nothing, kwargs...)
-    u = parent(da)
-    dims = dimnum(da, dim)
-    t = axiskeys(da, dims)
-    new_data = mapslices(u; dims) do slice
-        TU.interpolate_nans(slice, t; kwargs...)
-    end
-    return rebuild(da; data = new_data)
-end
-
 for f in (:smooth, :tfilter)
     @eval $f(args...; kwargs...) = da -> $f(da, args...; kwargs...)
 end
