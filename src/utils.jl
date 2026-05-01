@@ -1,3 +1,6 @@
+/ₜ(x, n) = x / n
+/ₜ(x::P, n) where {P <: Dates.AbstractTime} = P(cld(Dates.value(x), n))
+
 """
     tsplit(t0, t1, n::Int)
     tsplit(t0, t1, dt)
@@ -5,32 +8,7 @@
 
 Split the range from `t0` to `t1` into `n` parts, `dt`-sized parts, or by period type (e.g., Month, Day).
 """
-function tsplit(t0, t1, n::Int)
-    return if n <= 1
-        [(t0, t1)]
-    else
-        dt = (t1 - t0) / n
-        map(1:n) do i
-            t0 + (i - 1) * dt, min(t0 + i * dt, t1)
-        end
-    end
-end
-
-function tsplit(t0, t1, dt)
-    T = promote_type(typeof(t0), typeof(t1))
-    periods = NTuple{2, T}[]
-    current = t0
-
-    while current < t1
-        next_period = current + dt
-        push!(periods, (current, min(next_period, t1)))
-        current = next_period
-    end
-
-    return periods
-end
-
-tsplit(t0, t1, dtType::Type{<:Period}) = tsplit(t0, t1, dtType(1))
+tsplit(t0, t1, dt) = collect(IntervalRange(t0, t1, dt))
 tsplit((t0, t1), arg) = tsplit(t0, t1, arg)
 
 function stat_relerr(itr, f)
@@ -89,11 +67,13 @@ Base.length(s::LazyStaticSlices{T, N, S, d}) where {T, N, S, d} = size(s.data, d
 
 @inline function Base.getindex(s::LazyStaticSlices{T, N, S, d}, k::Int) where {T, N, S, d}
     slice_sz = size(S)
-    return S(ntuple(Val(length(S))) do p
-        ci = CartesianIndices(slice_sz)[p]
-        full_idx = ntuple(Val(N)) do j
-            j < d ? ci[j] : j == d ? k : ci[j - 1]
+    return S(
+        ntuple(Val(length(S))) do p
+            ci = CartesianIndices(slice_sz)[p]
+            full_idx = ntuple(Val(N)) do j
+                j < d ? ci[j] : j == d ? k : ci[j - 1]
+            end
+            @inbounds s.data[full_idx...]
         end
-        @inbounds s.data[full_idx...]
-    end)
+    )
 end
