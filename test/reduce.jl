@@ -84,37 +84,26 @@ end
     using AxisKeys
     using Dates
     using DimensionalData
-    using TimeseriesUtilities
+    using Chairmarks
 
     # Create time series with gaps
     times = [
-        DateTime(2023, 1, 1, 0, 0, 0),
-        DateTime(2023, 1, 1, 1, 0, 0),
-        DateTime(2023, 1, 1, 2, 0, 0),  # First continuous range ends here
-        DateTime(2023, 1, 1, 6, 0, 0),  # Gap of 4 hours
-        DateTime(2023, 1, 1, 7, 0, 0),
-        DateTime(2023, 1, 1, 8, 0, 0),  # Second continuous range ends here
-        DateTime(2023, 1, 1, 12, 0, 0), # Gap of 4 hours
-        DateTime(2023, 1, 1, 13, 0, 0)  # Third continuous range
+        Time(0, 0, 0), Time(1, 0, 0), Time(2, 0, 0), # Gap of 4 hours
+        Time(6, 0, 0), Time(7, 0, 0), Time(8, 0, 0), # Gap of 4 hours
+        Time(12, 0, 0), Time(13, 0, 0),
     ]
 
     # Find continuous ranges with max gap of 2 hours
-    ranges = find_continuous_timeranges(times, Hour(2))
+    ranges = collect(ContinuousTimeRanges(times, Hour(2)))
 
     # Should find 3 continuous ranges
     @test length(ranges) == 3
+    @test ranges[1] == (Time(0, 0, 0), Time(2, 0, 0))
+    @test ranges[2] == (Time(6, 0, 0), Time(8, 0, 0))
+    @test ranges[3] == (Time(12, 0, 0), Time(13, 0, 0))
 
-    # Check first range
-    @test ranges[1][1] == DateTime(2023, 1, 1, 0, 0, 0)
-    @test ranges[1][2] == DateTime(2023, 1, 1, 2, 0, 0)
-
-    # Check second range
-    @test ranges[2][1] == DateTime(2023, 1, 1, 6, 0, 0)
-    @test ranges[2][2] == DateTime(2023, 1, 1, 8, 0, 0)
-
-    # Check third range
-    @test ranges[3][1] == DateTime(2023, 1, 1, 12, 0, 0)
-    @test ranges[3][2] == DateTime(2023, 1, 1, 13, 0, 0)
+    @test (@b ContinuousTimeRanges($times, Hour(2))).allocs == 0
+    @test (@b find_continuous_timeranges($times, Hour(2))).allocs <= 2
 
     # Test with DimArray
     da = DimArray(rand(length(times)), (Ti(times),))
