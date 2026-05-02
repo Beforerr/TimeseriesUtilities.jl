@@ -74,7 +74,7 @@ export smooth, tfilter
 export dropna
 export find_outliers, replace_outliers!, replace_outliers
 
-export tsplit
+export tsplit, IntervalRange
 
 include("api.jl")
 include("sliding.jl")

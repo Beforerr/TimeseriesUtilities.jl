@@ -118,6 +118,7 @@ end
 @testitem "AxisKeys tgroupby" begin
     using AxisKeys
     using TimeseriesUtilities
+    using Chairmarks
 
     ka = KeyedArray(10.0:10.0:50.0; time = 1.0:5.0)
     groups = tgroupby(ka, 2.0)
@@ -126,4 +127,9 @@ end
     @test groups[1] == [10.0]
     @test axiskeys(groups[2], 1) == [2.0, 3.0]
     @test axiskeys(groups[3], 1) == [4.0, 5.0]
+
+    ka_large = KeyedArray(rand(1000); time = 1.0:1000.0)
+    b = @b tgroupby($ka_large, 24.0)
+    @info "tgroupby (1000 pts, window=24)" b
+    @test b.allocs <= 270
 end
