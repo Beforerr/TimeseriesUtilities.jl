@@ -25,6 +25,8 @@ function tclip(A, t0, t1; dim = nothing)
     return A[_selectors(A, d, idx)...]
 end
 
+tclip(A, trange; kw...) = tclip(A, trange...; kw...)
+
 """
     tview(A, t0, t1; dim=nothing)
 
@@ -35,6 +37,8 @@ function tview(A, t0, t1; dim = nothing)
     idx = _search_range(axiskeys(A, d), t0, t1)
     return @view A[_selectors(A, d, idx)...]
 end
+
+tview(A, trange; kw...) = tview(A, trange...; kw...)
 
 function _selectors(A, d, selector)
     return ntuple(i -> i == d ? selector : Colon(), ndims(A))
