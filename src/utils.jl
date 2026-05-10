@@ -1,6 +1,21 @@
 /ₜ(x, n) = x / n
 /ₜ(x::P, n) where {P <: Dates.AbstractTime} = P(cld(Dates.value(x), n))
 
+# Handle numeric offsets for datetime-like types (default to Unix epoch)
+struct TimeOffsets{T, A <: AbstractArray} <: AbstractVector{T}
+    offsets::A
+    t0::T
+end
+
+TimeOffsets(offsets) = TimeOffsets(offsets, Dates.unix2datetime(0))
+
+Base.size(to::TimeOffsets) = size(to.offsets)
+function Base.getindex(to::TimeOffsets, i::Int)
+    _add(t0, dt) = t0 + dt
+    _add(t0::Dates.AbstractTime, dt::Number) = t0 + Nanosecond(round(Int, 1.0e9 * dt))
+    return _add(to.t0, to.offsets[i])
+end
+
 """
     tsplit(t0, t1, n::Int)
     tsplit(t0, t1, dt)
