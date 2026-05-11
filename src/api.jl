@@ -9,12 +9,13 @@ Get the ordinal of the dimension `dim` in `x`.
 """
 dimnum(x, dim) = @something dim ndims(x)
 
-function axiskeys end
+axiskeys(x, _) = throw(MethodError(axiskeys, (x,)))
 
-function dims end
+dims(x, _) = throw(MethodError(dims, (x,)))
 
 rebuild_axis(x, data, dim, keys) = data
 rebuild_axis(x, dim, keys) = rebuild_axis(x, parent(x), dim, keys)
+rebuild_axes(x, data, dims, keys) = data
 
 sorted_axis(sorted, dim; rev = false) = sorted
 
@@ -26,6 +27,9 @@ Get time coordinate of `x`.
 times(x) = x
 
 function samplingrate end
+
+_seconds(dt::Period) = dt / Second(1)
+_seconds(dt) = dt
 
 """
     unwrap(x)

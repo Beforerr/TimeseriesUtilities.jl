@@ -22,6 +22,7 @@ import TimeseriesUtilities:
     groupby_dynamic,
     norm_combine,
     rebuild_axis,
+    rebuild_axes,
     smooth,
     sorted_axis,
     times,
@@ -35,6 +36,7 @@ unwrap(x::AbstractDimArray) = parent(x)
 unwrap(x::Dimension) = parent(lookup(x))
 dimnum(x::AbstractDimLike, dim) = DD.dimnum(x, @something dim TimeDim)
 axiskeys(x::AbstractDimLike, dim) = unwrap(DD.dims(x, dim))
+dims(x::AbstractDimLike, dim) = DD.dims(x, dim)
 times(x::AbstractDimLike, dim = nothing) = axiskeys(x, dimnum(x, dim))
 
 for f in (:dims,)
@@ -71,6 +73,14 @@ end
     newdim = DD.rebuild(olddim; val = DD.rebuild(lookup(olddim); data = keys))
     newdims = Base.setindex(olddims, newdim, dim)
     return rebuild(x, data, newdims)
+end
+
+_dim_from_keys(dim::Symbol, keys) = DD.Dim{dim}(keys)
+_dim_from_keys(dim::Dimension, keys) = rebuild(dim, keys)
+
+function rebuild_axes(x::AbstractDimArray, data, newdims, keys)
+    dims = map(_dim_from_keys, newdims, keys)
+    return rebuild(x, data, DD.format(dims, data))
 end
 
 function smooth(da::AbstractDimArray, window; dim = nothing, kwargs...)

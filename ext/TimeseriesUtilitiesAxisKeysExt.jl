@@ -6,6 +6,7 @@ import TimeseriesUtilities:
     dimnum,
     dims,
     rebuild_axis,
+    rebuild_axes,
     times,
     unwrap
 using AxisKeys: KeyedArray
@@ -21,6 +22,10 @@ function rebuild_axis(x::KeyedArray, data, dim, keys)
         i == dim ? keys : axiskeys(x, i)
     end
     return KeyedArray(data; NamedTuple{names}(newkeys)...)
+end
+
+function rebuild_axes(::KeyedArray, data, dims, keys)
+    return KeyedArray(data; NamedTuple{dims}(keys)...)
 end
 
 end

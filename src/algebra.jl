@@ -8,7 +8,6 @@ function tsubtract(x, op = nanmedian; dim = nothing)
     return x .- op(parent(x); dims)
 end
 
-_seconds(dt::Period) = dt / Second(1)
 _deriv_tfunc(T1::Type, T2::Type) = identity
 _deriv_tfunc(::Type{T1}, ::Type{T2}) where {T1 <: Real, T2 <: Dates.TimeType} = _seconds
 
