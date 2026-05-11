@@ -57,6 +57,9 @@ end
     expected_dim2 = [3.0 5.0; 6.0 10.0]  # derivatives along second dimension
     @test result_dim2 == expected_dim2
 
+    data_view = @view data2d[2:4, :]
+    @test tderiv(data_view, 2:4; dim = 1) == [5.0 10.0; 7.0 14.0]
+
     # Test with DimensionalData arrays
     t = Ti(1.0:1.0:5.0)
     y = Y(1:3)

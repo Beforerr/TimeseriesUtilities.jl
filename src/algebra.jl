@@ -40,7 +40,7 @@ See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_mod
     dim = dimnum(A, dim)
     f = lazy ? DiffQ : _tderiv
     times = @something times axiskeys(A, dim)
-    out = f(parent(A), times; dim)
+    out = f(unwrap(A), times; dim)
     return rebuild_axis(A, out, dim, @view times[1:end-1])
 end
 
