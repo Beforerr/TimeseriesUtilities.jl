@@ -54,8 +54,6 @@ See also: [`tnorm_combine`](@ref)
 tnorm(A; dim = nothing) =
     norm.(eachslice(A; dims = dimnum(A, dim)))
 
-cross3(x, y) = cross(SV3(x), SV3(y))
-
 """
     tcross(x, y; dim=nothing)
 
@@ -64,7 +62,13 @@ Compute the cross product of two (arrays of) vectors along dimension `dim`.
 function tcross(x, y; dim = nothing)
     dims = dimnum(x, dim)
     z = similar(x)
-    map!(cross3, eachslice(z; dims), eachslice(x; dims), eachslice(y; dims))
+    xs, ys, zs = eachslice(x; dims), eachslice(y; dims), eachslice(z; dims)
+    for i in eachindex(xs, ys, zs)
+        xi = xs[i]; yi = ys[i]; zi = zs[i]
+        zi[1] = xi[2] * yi[3] - xi[3] * yi[2]
+        zi[2] = xi[3] * yi[1] - xi[1] * yi[3]
+        zi[3] = xi[1] * yi[2] - xi[2] * yi[1]
+    end
     return z
 end
 

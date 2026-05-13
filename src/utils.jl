@@ -52,6 +52,29 @@ end
 
 other_dims(A, dim) = filter(!=(dim), ntuple(identity, ndims(A)))
 
+# Type-stable alternative to selectdim: ntuple with Val(N) makes every index
+# position a compile-time constant, so the SubArray type is fully inferred.
+@inline _vdim(A::AbstractArray{T, N}, ::Val{d}, k) where {T, N, d} =
+    @inbounds view(A, ntuple(j -> j == d ? k : Colon(), Val(N))...)
+
+# Lazy slice iterator for interpolators
+# T encodes the slice representation — copy-based by default, SArray when
+# the StaticArrays extension is loaded. Splines require T to support round-trip
+# arithmetic (e.g. u[i+1]-u[i] returns the same type), so views are not suitable.
+struct LazySlices{T, A, d} <: AbstractVector{T}
+    data::A
+end
+
+function LazySlices(A::AbstractArray{Tv, N}, d) where {Tv, N}
+    return LazySlices{Array{Tv, N - 1}, typeof(A), d}(A)
+end
+
+Base.length(s::LazySlices{T, A, d}) where {T, A, d} = size(s.data, d)
+
+@inline function Base.getindex(s::LazySlices{T, A, d}, k::Int) where {T <: Array, A, d}
+    return copy(_vdim(s.data, Val(d), k))
+end
+
 # https://github.com/joshday/SearchSortedNearest.jl
 function searchsortednearest(a, x; by = identity, lt = isless, rev = false, distance = (a, b) -> abs(a - b))
     i = searchsortedfirst(a, x; by, lt, rev)
@@ -63,32 +86,4 @@ function searchsortednearest(a, x; by = identity, lt = isless, rev = false, dist
         i = lt(distance(by(a[i]), by(x)), distance(by(a[i - 1]), by(x))) ? i : i - 1
     end
     return i
-end
-
-# Lazy iterator that yields SArray slices along `dim` without heap-allocating views.
-# ntuple(Val(n)) unrolls at compile time, so all intermediates are stack-allocated.
-# Inspired by HybridArrays.jl
-struct LazyStaticSlices{T, N, S <: SArray, dim, A <: AbstractArray{T, N}} <: AbstractVector{S}
-    data::A
-end
-
-function LazyStaticSlices(A::AbstractArray{T, N}, dim::Int) where {T, N}
-    other = ntuple(i -> size(A, i < dim ? i : i + 1), N - 1)
-    S = SArray{Tuple{other...}, T, N - 1, prod(other)}
-    return LazyStaticSlices{T, N, S, dim, typeof(A)}(A)
-end
-
-Base.length(s::LazyStaticSlices{T, N, S, d}) where {T, N, S, d} = size(s.data, d)
-
-@inline function Base.getindex(s::LazyStaticSlices{T, N, S, d}, k::Int) where {T, N, S, d}
-    slice_sz = size(S)
-    return S(
-        ntuple(Val(length(S))) do p
-            ci = CartesianIndices(slice_sz)[p]
-            full_idx = ntuple(Val(N)) do j
-                j < d ? ci[j] : j == d ? k : ci[j - 1]
-            end
-            @inbounds s.data[full_idx...]
-        end
-    )
 end

@@ -32,9 +32,10 @@ end
 
 @testitem "DataInterpolations compatibility" begin
     using Dates, DimensionalData
-    using DataInterpolations: LinearInterpolation, ExtrapolationType
+    using DataInterpolations: LinearInterpolation, ExtrapolationType, CubicSpline
     using TimeseriesUtilities
     using TimeseriesUtilities: Tinterp
+    import StaticArrays
 
     times = [DateTime(2020, 1, 1), DateTime(2020, 1, 2), DateTime(2020, 1, 3)]
     da = DimArray(0:2, (Ti(times),))
@@ -45,6 +46,23 @@ end
     before = DateTime(2019, 12, 31)
     @test tinterp(da, before; extrapolation = true) ≈ -1.0
     @test tinterp(da, before; interp = Tinterp(LinearInterpolation), extrapolation = ExtrapolationType.Linear) ≈ -1.0
+
+    # CubicSpline on multi-dim array via LazySlices (copy-based fallback).
+    # eachslice/SubArray views fail for CubicSpline due to type heterogeneity.
+    t3 = [DateTime(2020, 1, i) for i in 1:5]
+    da3 = DimArray([Float64(i) for i in 1:5, j in 1:3], (Ti(t3), Y(1:3)))
+    t_new = [DateTime(2020, 1, 2, 12)]
+    out = tinterp(da3, t_new; interp = Tinterp(CubicSpline))
+    @test out isa DimArray
+    @test size(out) == (1, 3)
+    @test out[1, :] ≈ [2.5, 2.5, 2.5] atol = 0.1
+
+    # Verify StaticArrays extension activates: LazySlices element type should be SArray.
+    using StaticArrays
+    A = rand(3, 5)
+    slices = TimeseriesUtilities.LazySlices(A, 2)
+    @test eltype(slices) <: SArray   # SA-backed when extension is loaded
+    @test slices[1] isa SArray{Tuple{3}, Float64, 1, 3}
 end
 
 @testitem "AxisKeys tinterp" begin
@@ -105,7 +123,7 @@ end
     @test parent(c_sync) ≈ expected_values
 
     using JET
-    @test_opt broken = true tsync(da1, da2, da3) # runtime dispatch
+    @test_opt tsync(da1, da2, da3)
     @test_call tsync(da1, da2, da3)
 end
 

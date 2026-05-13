@@ -47,11 +47,8 @@ using Base: @propagate_inbounds
 using Dates
 using Dates: AbstractTime
 using LinearAlgebra
-using StaticArrays
 using NaNStatistics
 using Statistics: median, median!
-
-const SV3 = SVector{3}
 
 export resolution, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
