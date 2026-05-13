@@ -52,6 +52,23 @@
     @test_call tview(result, 1.0, 2.0)
 end
 
+@testitem "tview(f::Function)" begin
+    # f without dim — dim must not be forwarded
+    f_plain(t0, t1) = (t0, t1)
+    f_dim(t0, t1; dim = nothing) = (t0, t1, dim)
+
+    @test tview(f_plain, 1.0, 3.0) == (1.0, 3.0)
+    @test tview(f_plain, 1.0, 3.0; dim = 1) == (1.0, 3.0)
+    @test tview(f_dim, 1.0, 3.0) == (1.0, 3.0, nothing)          # not passed → f's default
+    @test tview(f_dim, 1.0, 3.0; dim = nothing) == (1.0, 3.0, nothing) # explicit nothing forwarded
+    @test tview(f_dim, 1.0, 3.0; dim = 1) == (1.0, 3.0, 1)
+
+    # f with non-nothing default dim — tview should not override it
+    f_dim2(t0, t1; dim = 2) = (t0, t1, dim)
+    @test tview(f_dim2, 1.0, 3.0) == (1.0, 3.0, 2)        # f's own default preserved
+    @test tview(f_dim2, 1.0, 3.0; dim = 1) == (1.0, 3.0, 1) # explicit dim forwarded
+end
+
 @testitem "dropna" begin
     using DimensionalData
 
