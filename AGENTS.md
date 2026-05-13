@@ -8,4 +8,4 @@ Prefer defining operations against common coordinate API:
 - `dims(x, dim)`: dimension identity/metadata, not coordinate values.
 - `times(x; dim=nothing)` or `times(x, dim)`: raw time coordinate values.
 - `unwrap(x)`: parent underlying array.
-- `rebuild_axis(x, data, dim, keys)`: rebuild the original container with new data and axis keys.
+- `rebuild(x, data, dim, keys)`: rebuild the original container with new data and axis keys.

@@ -13,9 +13,13 @@ axiskeys(x, _) = throw(MethodError(axiskeys, (x,)))
 
 dims(x, _) = throw(MethodError(dims, (x,)))
 
-rebuild_axis(x, data, dim, keys) = data
-rebuild_axis(x, dim, keys) = rebuild_axis(x, parent(x), dim, keys)
-rebuild_axes(x, data, dims, keys) = data
+rebuild(x, data) = data
+# rebuild multiple dimensions
+rebuild(x, data, dims, keys) = data
+# rebuild one dimension with new data and keys
+rebuild(x, data, dim::Integer, key) = data
+# rebuild one dimension with new keys
+rebuild(x, dim::Integer, keys) = rebuild(x, parent(x), dim, keys)
 
 sorted_axis(sorted, dim; rev = false) = sorted
 
