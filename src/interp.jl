@@ -75,9 +75,37 @@ tinterp(time_series, new_times; interp = CubicSpline)
     return if ndims(A) == 1
         interp(A, old_times; kws...).(new_times)
     else
-        f = interp(LazyStaticSlices(A, dim), old_times; kws...)
-        stack(f, new_times; dims = dim)
+        _tinterp_nd(interp, A, old_times, new_times, dim; kws...)
     end
+end
+
+# Fast path for built-in LinearInterpolation: avoids StaticArrays.
+# Wraps d in Val so the inner kernel specialises on the dimension at compile time.
+@inline _tinterp_nd(::Type{<:LinearInterpolation}, A, old_times, new_times, d; extrapolation = false, kws...) =
+    _tinterp_linear_nd(A, old_times, new_times, Val(d), extrapolation)
+
+function _tinterp_linear_nd(A, old_times, new_times, ::Val{d}, extrapolation) where {d}
+    n_new = length(new_times)
+    out_sz = ntuple(i -> i == d ? n_new : size(A, i), ndims(A))
+    out = similar(A, float(eltype(A)), out_sz)
+    @inbounds for (j, x) in enumerate(new_times)
+        i = _interp_segment(old_times, x, extrapolation)
+        α = (x - old_times[i]) / (old_times[i + 1] - old_times[i])
+        β = 1 - α
+        s0 = _vdim(A, Val(d), i)
+        s1 = _vdim(A, Val(d), i + 1)
+        out_j = _vdim(out, Val(d), j)
+        @. out_j = β * s0 + α * s1
+    end
+    return out
+end
+
+# General fallback for external interpolators (DataInterpolations.jl etc.).
+# LazySlices dispatches to copy-based slices by default; the StaticArrays extension
+# specializes LazySlices(::AbstractArray{<:Number}) to return SArray slices instead.
+@inline function _tinterp_nd(interp, A, old_times, new_times, d; kws...)
+    f = interp(LazySlices(A, d), old_times; kws...)
+    return stack(f, new_times; dims = d)
 end
 
 function tinterp(A, t; dim = nothing, kws...)
