@@ -1,9 +1,13 @@
 using BenchmarkTools
 import DataInterpolations
 using DimensionalData
+using Random
+using StaticArrays
 using TimeseriesUtilities
 using TimeseriesUtilities: tinterp, tsync
 include("../test/setup.jl")
+
+Random.seed!(42)
 
 const SUITE = BenchmarkGroup()
 
