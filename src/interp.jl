@@ -128,6 +128,51 @@ function tresample(A, dt; dim = nothing, kws...)
     return tinterp(A, time_grid(axiskeys(A, d), dt); dim = d, kws...)
 end
 
+"""
+    tfillgaps(A, old_times, new_times; dim=ndims(A), fill=NaN)
+    tfillgaps(A, old_times, dt; dim=ndims(A), fill=NaN)
+    tfillgaps(A, new_times; dim=nothing, fill=NaN)
+    tfillgaps(A, dt; dim=nothing, fill=NaN)
+
+Insert missing time points and fill their data with `fill`.
+
+Existing samples are copied at matching coordinates. `new_times` must be sorted and
+contain every value in `old_times`; passing `dt` builds `time_grid(old_times, dt)`.
+"""
+function tfillgaps(A, old_times, new_times; dim = ndims(A), fill = NaN)
+    length(old_times) == size(A, dim) || throw(DimensionMismatch("length(old_times) must match size(A, dim)"))
+    issorted(old_times) || throw(ArgumentError("old_times must be sorted"))
+    issorted(new_times) || throw(ArgumentError("new_times must be sorted"))
+
+    T = promote_type(float(eltype(A)), typeof(fill))
+    out_sz = ntuple(i -> i == dim ? length(new_times) : size(A, i), ndims(A))
+    out = similar(A, T, out_sz)
+    fill!(out, fill)
+
+    @inbounds for (i, t) in enumerate(old_times)
+        j = searchsortedfirst(new_times, t)
+        (j <= length(new_times) && new_times[j] == t) ||
+            throw(ArgumentError("new_times must contain every value in old_times"))
+        _vdim(out, Val(dim), j) .= _vdim(A, Val(dim), i)
+    end
+    return out
+end
+
+function tfillgaps(A, old_times, dt::Union{Number, Period}; kwargs...)
+    return tfillgaps(A, old_times, time_grid(old_times, dt); kwargs...)
+end
+
+function tfillgaps(A, new_times; dim = nothing, kwargs...)
+    d = dimnum(A, dim)
+    return rebuild(A, tfillgaps(unwrap(A), axiskeys(A, d), new_times; dim = d, kwargs...), d, new_times)
+end
+
+function tfillgaps(A, dt::Union{Number, Period}; dim = nothing, kwargs...)
+    d = dimnum(A, dim)
+    new_times = time_grid(axiskeys(A, d), dt)
+    return tfillgaps(A, new_times; dim = d, kwargs...)
+end
+
 
 """
     tsync(A, Bs...)
