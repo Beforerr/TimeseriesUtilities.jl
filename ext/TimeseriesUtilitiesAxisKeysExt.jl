@@ -16,7 +16,7 @@ dimnum(x::KeyedArray, dim) = AxisKeys.dim(x, @something dim :time)
 axiskeys(x::KeyedArray, dim) = AxisKeys.axiskeys(x, dim)
 dims(x::KeyedArray, dim) = AxisKeys.dimnames(x, dim)
 times(x::KeyedArray, dim = nothing) = axiskeys(x, dimnum(x, dim))
-function rebuild(x::KeyedArray, data, dim, keys)
+function rebuild(x::KeyedArray, data, dim::Integer, keys)
     names = ntuple(i -> dims(x, i), ndims(x))
     newkeys = ntuple(ndims(x)) do i
         i == dim ? keys : axiskeys(x, i)
