@@ -1,15 +1,47 @@
-@testitem "resolution" begin
+@testitem "cadence" begin
     using Dates
     using DimensionalData
 
     # https://github.com/JuliaSIMD/VectorizedStatistics.jl/issues/44#issue-3326201976
     t = Millisecond.(0:10000)
-    @test resolution(t) == Millisecond(1)
-    @test resolution(Millisecond.(0:20000)) == Millisecond(1)
+    @test cadence(t) == Millisecond(1)
+    @test cadence(Millisecond.(0:20000)) == Millisecond(1)
 
     tdim = Ti(t)
     x = rand(tdim)
-    @test resolution(x) == Millisecond(1)
+    @test cadence(x) == Millisecond(1)
+
+    gapped = Millisecond.([0, 1, 2, 10, 11, 12])
+    @test_logs (:warn, r"not approximately constant") cadence(gapped)
+    @test cadence(gapped; check = false) == Millisecond(1)
+    # Mixed cadence: gaps are not integer multiples → warn
+    mixed = Millisecond.([0, 1, 2, 5, 6, 7])
+    @test_logs (:warn, r"not approximately constant") cadence(mixed)
+
+    # Robustness: 40% dropout (keeps 6/10 per cycle); diffs are [1,2,1,2,1,3,...]
+    rng = 1:100
+    all_t = Millisecond.(rng)
+    kept = sort(all_t[filter(i -> mod(i * 7 + 3, 10) > 3, rng)])
+    @test cadence(kept; check = false) == Millisecond(1)
+
+    # Majority-gap dropout: pair+single pattern (period 7); 20 ones vs 39 threes
+    # → median = 3, modal = 1
+    kept2 = Millisecond.(vcat([[7k + 1, 7k + 2, 7k + 5] for k in 0:19]...))
+    @test cadence(kept2; check = false) == Millisecond(1)
+
+    # Large isolated burst gap (10 000× cadence) in otherwise regular data
+    t_gap = vcat(Millisecond.(1:50), Millisecond.(10_001:10_050))
+    @test cadence(t_gap; check = false) == Millisecond(1)
+
+    # Realistic jitter: ±3% noise on 1 s cadence (Float64 timestamps)
+    dt = 1.0
+    t_jitter = dt .* (1:200) .+ 0.03dt .* (sin.(1:200))
+    @test isapprox(cadence(t_jitter; check = false), dt; rtol = 0.01)
+
+    # Mixed 2× cadence contamination: every 3rd point removed → 2Δt gaps
+    base = collect(1:100)
+    deleteat!(base, 3:3:99)
+    @test cadence(base; check = false) == 1
 end
 
 @testitem "tmin, tmax, timerange" begin
