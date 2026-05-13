@@ -1,4 +1,4 @@
-# Reference: 
+# Reference:
 # - https://github.com/brenhinkeller/NaNStatistics.jl
 # - https://github.com/JuliaSIMD/VectorizedStatistics.jl
 
@@ -30,7 +30,7 @@ end
 function tstat(f, x, dt; dim = nothing)
     d = dimnum(x, dim)
     out, s = stat1d(f, unwrap(x), axiskeys(x, d), dt, d)
-    return rebuild_axis(x, out, d, s)
+    return rebuild(x, out, d, s)
 end
 
 tstat_doc(sym, desc = sym) = """

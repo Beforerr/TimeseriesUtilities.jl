@@ -111,7 +111,7 @@ end
 function tinterp(A, t; dim = nothing, kws...)
     d = dimnum(A, dim)
     out = tinterp(unwrap(A), axiskeys(A, d), t; dim = d, kws...)
-    return t isa AbstractArray ? rebuild_axis(A, out, d, t) : out
+    return t isa AbstractArray ? rebuild(A, out, d, t) : out
 end
 
 """
@@ -171,7 +171,7 @@ function tinterp_nans(A; dim = nothing, kwargs...)
     out = mapslices(parent(A); dims) do slice
         interpolate_nans!(slice, t; kwargs...)
     end
-    return rebuild_axis(A, out, dims, t)
+    return rebuild(A, out, dims, t)
 end
 
 # Interpolate only the NaN values in `u` along `t`.

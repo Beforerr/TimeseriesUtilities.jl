@@ -16,7 +16,7 @@ function tfilter(A, Wn1, Wn2 = nothing; dim = nothing, kwargs...)
     d = dimnum(A, dim)
     ts = axiskeys(A, d)
     data = tfilter(unwrap(A), ts, Wn1, Wn2; dim = d, kwargs...)
-    return rebuild_axis(A, data, d, ts)
+    return rebuild(A, data, d, ts)
 end
 
 """
@@ -38,5 +38,5 @@ function pspectrum(A; dim = nothing, freqdim = :frequency, kwargs...)
     odims = Tuple(i for i in 1:ndims(A) if i != d)
     newdims = (freqdim, dims(A, d), ntuple(i -> dims(A, odims[i]), length(odims))...)
     keys = (spec.freq, spec.time, ntuple(i -> axiskeys(A, odims[i]), length(odims))...)
-    return rebuild_axes(A, spec.power, newdims, keys)
+    return rebuild(A, spec.power, newdims, keys)
 end

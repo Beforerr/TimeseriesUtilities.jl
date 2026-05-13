@@ -21,8 +21,6 @@ import TimeseriesUtilities:
     dropna,
     groupby_dynamic,
     norm_combine,
-    rebuild_axis,
-    rebuild_axes,
     smooth,
     sorted_axis,
     times,
@@ -67,7 +65,7 @@ end
     return rebuild(sorted; dims = newdims)
 end
 
-@inline function rebuild_axis(x::AbstractDimArray, data, dim, keys)
+@inline function TU.rebuild(x::AbstractDimArray, data, dim::Integer, keys)
     olddims = DD.dims(x)
     olddim = olddims[dim]
     newdim = DD.rebuild(olddim; val = DD.rebuild(lookup(olddim); data = keys))
@@ -78,10 +76,12 @@ end
 _dim_from_keys(dim::Symbol, keys) = DD.Dim{dim}(keys)
 _dim_from_keys(dim::Dimension, keys) = rebuild(dim, keys)
 
-function rebuild_axes(x::AbstractDimArray, data, newdims, keys)
+function TU.rebuild(x::AbstractDimArray, data, newdims, keys)
     dims = map(_dim_from_keys, newdims, keys)
     return rebuild(x, data, DD.format(dims, data))
 end
+
+TU.rebuild(x::AbstractDimArray, data) = rebuild(x, data)
 
 function smooth(da::AbstractDimArray, window; dim = nothing, kwargs...)
     dnum = dimnum(da, dim)
