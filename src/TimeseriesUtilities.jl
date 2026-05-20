@@ -14,6 +14,7 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 
 - [`times`](@ref), [`time_grid`](@ref)
 - [`timerange`](@ref), [`common_timerange`](@ref)
+- [`cadence`](@ref) — robust modal-cluster Δt, survives gaps, jitter, and dropout
 
 ## (Windowed) Statistics
 
@@ -48,9 +49,9 @@ using Dates
 using Dates: AbstractTime
 using LinearAlgebra
 using NaNStatistics
-using Statistics: median, median!
+using Statistics: median, median!, quantile, middle
 
-export resolution, samplingrate
+export cadence, resolution, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
 export timerange, common_timerange, time_grid, find_continuous_timeranges
 export tinterp, tsync, tresample, tinterp_nans

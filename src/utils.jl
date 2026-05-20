@@ -26,6 +26,22 @@ Split the range from `t0` to `t1` into `n` parts, `dt`-sized parts, or by period
 tsplit(t0, t1, dt) = collect(IntervalRange(t0, t1, dt))
 tsplit((t0, t1), arg) = tsplit(t0, t1, arg)
 
+# https://github.com/JuliaStats/Statistics.jl/issues/203
+@inline function _quantile_sorted(v, p::Real)
+    n = length(v)
+    n == 1 && @inbounds return v[1]
+    h = (n - 1) * p
+    i = floor(Int, h)
+    f = h - i
+    @inbounds return v[i + 1] * (1 - f) + v[min(i + 2, n)] * f
+end
+
+@inline function _median_sorted(v, lo::Int, hi::Int)
+    n = hi - lo + 1
+    m = lo + n ÷ 2
+    return isodd(n) ? v[m] : middle(v[m - 1], v[m])
+end
+
 function stat_relerr(itr, f)
     m = f(itr)
     relerrs = abs.(extrema(itr) .- m) ./ m
