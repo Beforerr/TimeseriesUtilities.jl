@@ -152,3 +152,30 @@ end
     @test dims(result2, Y).val == [:a, :b]
     @test isnan(data2[2, 1])
 end
+
+@testitem "tfillgaps" begin
+    using AxisKeys, Dates, DimensionalData
+    using TimeseriesUtilities
+
+    times = DateTime(2020, 1, 1):Day(1):DateTime(2020, 1, 5)
+    sparse_times = times[[1, 2, 5]]
+
+    data = [1.0, 2.0, 5.0]
+    out = tfillgaps(data, sparse_times, times)
+    @test isequal(out, [1.0, 2.0, NaN, NaN, 5.0])
+
+    da = DimArray([1.0 10.0; 2.0 20.0; 5.0 50.0], (Ti(sparse_times), Y([:a, :b])))
+    result = tfillgaps(da, Day(1))
+    @test result isa DimArray
+    @test dims(result, Ti).val == times
+    @test dims(result, Y).val == [:a, :b]
+    @test isequal(parent(result), [1.0 10.0; 2.0 20.0; NaN NaN; NaN NaN; 5.0 50.0])
+
+    ka = KeyedArray([1.0, 5.0]; time = sparse_times[[1, 3]])
+    keyed = tfillgaps(ka, Day(1))
+    @test isequal(keyed, [1.0, NaN, NaN, NaN, 5.0])
+    @test axiskeys(keyed, 1) == times
+    @test AxisKeys.dimnames(keyed, 1) == :time
+
+    @test_throws ArgumentError tfillgaps(data, sparse_times, times[1:4])
+end

@@ -36,7 +36,7 @@ From data cleaning to arithmetic operations (e.g. linear algebra) to common time
 - [`tshift`](@ref)
 - [`tsplit`](@ref)
 - [`tgroupby`](@ref)
-- Resampling: [`tinterp`](@ref), [`tsync`](@ref)
+- Resampling: [`tinterp`](@ref), [`tsync`](@ref), [`tfillgaps`](@ref)
 
 ## Time-Frequency Domain Operations
 
@@ -54,7 +54,7 @@ using Statistics: median, median!, quantile, middle
 export cadence, resolution, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
 export timerange, common_timerange, time_grid, find_continuous_timeranges
-export tinterp, tsync, tresample, tinterp_nans
+export tinterp, tsync, tresample, tinterp_nans, tfillgaps
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
