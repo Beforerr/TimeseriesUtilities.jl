@@ -68,6 +68,30 @@ end
 
 other_dims(A, dim) = filter(!=(dim), ntuple(identity, ndims(A)))
 
+# View `A` as (dims before `d`, `d`, dims after `d`): kernels then compile once per
+# array type instead of once per (type, d).
+_as3d(A, d) = reshape(A, prod(i -> size(A, i), 1:(d - 1); init = 1), size(A, d), :)
+
+# Call `f(p, q)` over the non-time indices of an `_as3d` array. Time on the first/last dim
+# leaves a length-1 loop whose overhead dominates few-channel data (e.g. 3-vectors);
+@inline function _foreach_pq(f, A3)
+    P, Q = size(A3, 1), size(A3, 3)
+    if P == 1
+        for q in 1:Q
+            f(1, q)
+        end
+    elseif Q == 1
+        for p in 1:P
+            f(p, 1)
+        end
+    else
+        for q in 1:Q, p in 1:P
+            f(p, q)
+        end
+    end
+    return
+end
+
 # Type-stable alternative to selectdim: ntuple with Val(N) makes every index
 # position a compile-time constant, so the SubArray type is fully inferred.
 @inline _vdim(A::AbstractArray{T, N}, ::Val{d}, k) where {T, N, d} =

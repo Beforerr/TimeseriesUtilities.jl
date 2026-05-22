@@ -80,24 +80,26 @@ tinterp(time_series, new_times; interp = CubicSpline)
 end
 
 # Fast path for built-in LinearInterpolation: avoids StaticArrays.
-# Wraps d in Val so the inner kernel specialises on the dimension at compile time.
 @inline _tinterp_nd(::Type{<:LinearInterpolation}, A, old_times, new_times, d; extrapolation = false, kws...) =
-    _tinterp_linear_nd(A, old_times, new_times, Val(d), extrapolation)
+    _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
 
-function _tinterp_linear_nd(A, old_times, new_times, ::Val{d}, extrapolation) where {d}
-    n_new = length(new_times)
-    out_sz = ntuple(i -> i == d ? n_new : size(A, i), ndims(A))
+function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
+    out_sz = ntuple(i -> i == d ? length(new_times) : size(A, i), ndims(A))
     out = similar(A, float(eltype(A)), out_sz)
+    _tinterp_linear3!(_as3d(out, d), _as3d(A, d), old_times, new_times, extrapolation)
+    return out
+end
+
+function _tinterp_linear3!(out3, A3, old_times, new_times, extrapolation)
     @inbounds for (j, x) in enumerate(new_times)
         i = _interp_segment(old_times, x, extrapolation)
         α = (x - old_times[i]) / (old_times[i + 1] - old_times[i])
         β = 1 - α
-        s0 = _vdim(A, Val(d), i)
-        s1 = _vdim(A, Val(d), i + 1)
-        out_j = _vdim(out, Val(d), j)
-        @. out_j = β * s0 + α * s1
+        _foreach_pq(A3) do p, q
+            @inbounds out3[p, j, q] = β * A3[p, i, q] + α * A3[p, i + 1, q]
+        end
     end
-    return out
+    return out3
 end
 
 # General fallback for external interpolators (DataInterpolations.jl etc.).
@@ -186,4 +188,95 @@ function interpolate_nans!(u, t; interp = LinearInterpolation)
         end
     end
     return u
+end
+
+
+# Keeps `dt` disjoint from time vectors so the optional positional `dt` dispatches unambiguously.
+const _Step = Union{Dates.Period, Real}
+
+"""
+    tfill_gaps(t, [dt]; max_gap = nothing) -> t_new
+    tfill_gaps(A, [dt]; fill = NaN, max_gap = nothing, dim = nothing) -> typeof(A)
+    tfill_gaps(A, t, [dt]; fill = NaN, max_gap = nothing, dim = ndims(A)) -> (A_new, t_new)
+
+Insert missing timestamps (new samples set to `fill`); originals are kept exactly.
+A gap `Δ` gets `round(Δ / dt) - 1` points at `t[i] + k * dt`; gaps `Δ > max_gap` are left open.
+`dt` defaults to [`cadence`](@ref). Float eltypes are kept; others promote to fit `fill`.
+
+```julia
+tfill_gaps(da, Second(1); max_gap = Minute(5)) |> tinterp_nans   # fill short gaps, then interpolate
+```
+"""
+function tfill_gaps(t::AbstractVector{<:AbstractTime}, dt::_Step = cadence(t; check = false); max_gap = nothing)
+    fillers, n_new = _gap_fillers(t, dt, max_gap)
+    return _fill_timestamps(t, fillers, n_new, dt)
+end
+
+function tfill_gaps(A, dt::Union{_Step, Nothing} = nothing; dim = nothing, kws...)
+    d = dimnum(A, dim)
+    out, t_new = _tfill_gaps(unwrap(A), axiskeys(A, d), d, dt; kws...)
+    return rebuild(A, out, d, t_new)
+end
+
+tfill_gaps(A::AbstractArray, t::AbstractVector, dt::Union{_Step, Nothing} = nothing; dim = ndims(A), kws...) =
+    _tfill_gaps(A, t, dim, dt; kws...)
+
+# Counting first and writing into exactly-sized buffers beats a single push!-pass.
+function _gap_fillers(t, dt, max_gap)
+    dt_s = _seconds(dt)
+    dt_s > 0 || throw(ArgumentError("dt must be positive, got $dt"))
+    max_gap_s = isnothing(max_gap) ? Inf : _seconds(max_gap)
+    n_old = length(t)
+    fillers = Vector{Int}(undef, max(n_old - 1, 0))
+    n_new = n_old
+    @inbounds for i in 1:(n_old - 1)
+        gap_s = _seconds(t[i + 1] - t[i])
+        n = gap_s > max_gap_s ? 0 : max(0, round(Int, gap_s / dt_s) - 1)
+        fillers[i] = n
+        n_new += n
+    end
+    return fillers, n_new
+end
+
+function _fill_timestamps(t_old, fillers, n_new, dt)
+    n_new == length(t_old) && return collect(t_old)
+    t_new = Vector{eltype(t_old)}(undef, n_new)
+    j = 1
+    @inbounds for i in eachindex(fillers)
+        ti = t_old[i]
+        t_new[j] = ti
+        for k in 1:fillers[i]
+            t_new[j + k] = ti + k * dt
+        end
+        j += fillers[i] + 1
+    end
+    @inbounds t_new[end] = t_old[end]
+    return t_new
+end
+
+_fill_eltype(::Type{T}, fill) where {T} = T <: AbstractFloat && fill isa Real ? T : promote_type(T, typeof(fill))
+
+function _tfill_gaps(A::AbstractArray, t_old, d, dt; fill = NaN, max_gap = nothing)
+    dt = isnothing(dt) ? cadence(t_old; check = false) : dt
+    size(A, d) == length(t_old) || throw(DimensionMismatch("size(A, $d) = $(size(A, d)) but length(t) = $(length(t_old))"))
+    fillers, n_new = _gap_fillers(t_old, dt, max_gap)
+    t_new = _fill_timestamps(t_old, fillers, n_new, dt)
+    sz = ntuple(i -> i == d ? n_new : size(A, i), ndims(A))
+    out = similar(A, _fill_eltype(eltype(A), fill), sz)
+    Base.fill!(out, fill)
+    _copy_spread!(_as3d(out, d), _as3d(A, d), fillers)
+    return out, t_new
+end
+
+# Copy slice `i` of `A3` to slice `i + sum(fillers[1:i-1])` of `out3`.
+function _copy_spread!(out3, A3, fillers)
+    offset = 0
+    for i in axes(A3, 2)
+        j = i + offset
+        _foreach_pq(A3) do p, q
+            @inbounds out3[p, j, q] = A3[p, i, q]
+        end
+        i <= length(fillers) && (offset += fillers[i])
+    end
+    return out3
 end
