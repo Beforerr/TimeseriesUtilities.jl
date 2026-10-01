@@ -1,4 +1,4 @@
-name: Documentation - Cleanup Preview
+name: Doc Preview Cleanup
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout gh-pages branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: gh-pages
       - name: Delete preview and history + push changes
