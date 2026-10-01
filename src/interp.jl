@@ -39,6 +39,27 @@ function _interp_segment(t, x, extrapolation)
     end
 end
 
+# Sorted queries land at or after the previous segment: gallop forward from `hint`
+# (O(log gap) instead of O(log n)), then bisect the bracket.
+@inline function _interp_segment(t, x, extrapolation, hint)
+    n = length(t)
+    @inbounds if 1 <= hint < n && t[hint] <= x < t[n]
+        x < t[hint + 1] && return hint
+        lo, step = hint + 1, 1
+        hi = lo + 1
+        while t[hi] <= x
+            lo, step = hi, 2step
+            hi = min(lo + step, n)
+        end
+        while hi - lo > 1
+            m = (lo + hi) >>> 1
+            t[m] <= x ? (lo = m) : (hi = m)
+        end
+        return lo
+    end
+    return _interp_segment(t, x, extrapolation)
+end
+
 function (interp::LinearInterpolation)(x)
     if length(interp.t) == 1
         (x == only(interp.t) || interp.extrapolation) && return only(interp.u)
@@ -71,15 +92,13 @@ new_times = DateTime("2023-01-01"):Hour(1):DateTime("2023-01-02")
 tinterp(time_series, new_times; interp = CubicSpline)
 ```
 """
-@inline function tinterp(A, old_times, new_times; interp = LinearInterpolation, dim = ndims(A), kws...)
-    return if ndims(A) == 1
-        interp(A, old_times; kws...).(new_times)
-    else
-        _tinterp_nd(interp, A, old_times, new_times, dim; kws...)
-    end
+function tinterp(A, old_times, new_times; interp = LinearInterpolation, dim = ndims(A), kws...)
+    new_times isa AbstractArray && return _tinterp_nd(interp, A, old_times, new_times, dim; kws...)
+    out = _tinterp_nd(interp, A, old_times, [new_times], dim; kws...)
+    return ndims(A) == 1 ? only(out) : out
 end
 
-# Fast path for built-in LinearInterpolation: avoids StaticArrays.
+# Fast path for built-in LinearInterpolation: one pass over all channels per query point.
 @inline _tinterp_nd(::Type{<:LinearInterpolation}, A, old_times, new_times, d; extrapolation = false, kws...) =
     _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
 
@@ -91,8 +110,9 @@ function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
 end
 
 function _tinterp_linear3!(out3, A3, old_times, new_times, extrapolation)
+    hint = 0
     @inbounds for (j, x) in enumerate(new_times)
-        i = _interp_segment(old_times, x, extrapolation)
+        i = hint = _interp_segment(old_times, x, extrapolation, hint)
         α = (x - old_times[i]) / (old_times[i + 1] - old_times[i])
         β = 1 - α
         _foreach_pq(A3) do p, q
@@ -102,12 +122,23 @@ function _tinterp_linear3!(out3, A3, old_times, new_times, extrapolation)
     return out3
 end
 
-# General fallback for external interpolators (DataInterpolations.jl etc.).
-# LazySlices dispatches to copy-based slices by default; the StaticArrays extension
-# specializes LazySlices(::AbstractArray{<:Number}) to return SArray slices instead.
-@inline function _tinterp_nd(interp, A, old_times, new_times, d; kws...)
-    f = interp(LazySlices(A, d), old_times; kws...)
-    return stack(f, new_times; dims = d)
+# General fallback for external interpolators (DataInterpolations.jl etc.): one scalar
+# interpolator per channel over a view, so nothing is copied and any `interp` works
+# (vector-valued splines need slice types whose arithmetic round-trips).
+function _tinterp_nd(interp, A, old_times, new_times, d; kws...)
+    A3 = _as3d(A, d)
+    fs = [interp(view(A3, p, :, q), old_times; kws...) for q in axes(A3, 3) for p in axes(A3, 1)]
+    return _stack_channels(A, d, [f.(new_times) for f in fs])
+end
+
+# Assemble per-channel results (ordered as `vec` of the non-time dims) into `A`'s layout.
+function _stack_channels(A, d, cols)
+    out = similar(A, eltype(first(cols)), ntuple(i -> i == d ? length(first(cols)) : size(A, i), ndims(A)))
+    out3 = _as3d(out, d)
+    for (k, I) in enumerate(CartesianIndices((axes(out3, 1), axes(out3, 3))))
+        out3[I[1], :, I[2]] = cols[k]
+    end
+    return out
 end
 
 function tinterp(A, t; dim = nothing, kws...)

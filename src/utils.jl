@@ -92,29 +92,6 @@ _as3d(A, d) = reshape(A, prod(i -> size(A, i), 1:(d - 1); init = 1), size(A, d),
     return
 end
 
-# Type-stable alternative to selectdim: ntuple with Val(N) makes every index
-# position a compile-time constant, so the SubArray type is fully inferred.
-@inline _vdim(A::AbstractArray{T, N}, ::Val{d}, k) where {T, N, d} =
-    @inbounds view(A, ntuple(j -> j == d ? k : Colon(), Val(N))...)
-
-# Lazy slice iterator for interpolators
-# T encodes the slice representation — copy-based by default, SArray when
-# the StaticArrays extension is loaded. Splines require T to support round-trip
-# arithmetic (e.g. u[i+1]-u[i] returns the same type), so views are not suitable.
-struct LazySlices{T, A, d} <: AbstractVector{T}
-    data::A
-end
-
-function LazySlices(A::AbstractArray{Tv, N}, d) where {Tv, N}
-    return LazySlices{Array{Tv, N - 1}, typeof(A), d}(A)
-end
-
-Base.length(s::LazySlices{T, A, d}) where {T, A, d} = size(s.data, d)
-
-@inline function Base.getindex(s::LazySlices{T, A, d}, k::Int) where {T <: Array, A, d}
-    return copy(_vdim(s.data, Val(d), k))
-end
-
 # https://github.com/joshday/SearchSortedNearest.jl
 function searchsortednearest(a, x; by = identity, lt = isless, rev = false, distance = (a, b) -> abs(a - b))
     i = searchsortedfirst(a, x; by, lt, rev)
