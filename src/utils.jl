@@ -68,27 +68,28 @@ end
 
 other_dims(A, dim) = filter(!=(dim), ntuple(identity, ndims(A)))
 
-# Type-stable alternative to selectdim: ntuple with Val(N) makes every index
-# position a compile-time constant, so the SubArray type is fully inferred.
-@inline _vdim(A::AbstractArray{T, N}, ::Val{d}, k) where {T, N, d} =
-    @inbounds view(A, ntuple(j -> j == d ? k : Colon(), Val(N))...)
+# View `A` as (dims before `d`, `d`, dims after `d`): kernels then compile once per
+# array type instead of once per (type, d).
+_as3d(A, d) = reshape(A, prod(i -> size(A, i), 1:(d - 1); init = 1), size(A, d), :)
 
-# Lazy slice iterator for interpolators
-# T encodes the slice representation — copy-based by default, SArray when
-# the StaticArrays extension is loaded. Splines require T to support round-trip
-# arithmetic (e.g. u[i+1]-u[i] returns the same type), so views are not suitable.
-struct LazySlices{T, A, d} <: AbstractVector{T}
-    data::A
-end
-
-function LazySlices(A::AbstractArray{Tv, N}, d) where {Tv, N}
-    return LazySlices{Array{Tv, N - 1}, typeof(A), d}(A)
-end
-
-Base.length(s::LazySlices{T, A, d}) where {T, A, d} = size(s.data, d)
-
-@inline function Base.getindex(s::LazySlices{T, A, d}, k::Int) where {T <: Array, A, d}
-    return copy(_vdim(s.data, Val(d), k))
+# Call `f(p, q)` over the non-time indices of an `_as3d` array. Time on the first/last dim
+# leaves a length-1 loop whose overhead dominates few-channel data (e.g. 3-vectors);
+@inline function _foreach_pq(f, A3)
+    P, Q = size(A3, 1), size(A3, 3)
+    if P == 1
+        for q in 1:Q
+            f(1, q)
+        end
+    elseif Q == 1
+        for p in 1:P
+            f(p, 1)
+        end
+    else
+        for q in 1:Q, p in 1:P
+            f(p, q)
+        end
+    end
+    return
 end
 
 # https://github.com/joshday/SearchSortedNearest.jl

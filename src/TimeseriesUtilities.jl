@@ -1,48 +1,9 @@
-"""
-    TimeseriesUtilities
-
-A collection of utilities to simplify common time series analysis.
-    
-From data cleaning to arithmetic operations (e.g. linear algebra) to common time series operations (e.g. resampling, filtering).
-
-## Data Cleaning
-
-- [`find_outliers`](@ref), [`find_outliers_median`](@ref), [`find_outliers_mean`](@ref)
-- [`replace_outliers`](@ref), [`replace_outliers!`](@ref)
-
-## Query
-
-- [`times`](@ref), [`time_grid`](@ref)
-- [`timerange`](@ref), [`common_timerange`](@ref)
-- [`cadence`](@ref) — robust modal-cluster Δt, survives gaps, jitter, and dropout
-
-## (Windowed) Statistics
-
-- Base: [`tstat`](@ref) - `tstat(f, x, [dt]; dim)`
-- NaNStatistics wrappers: [`tmean`](@ref), [`tmedian`](@ref), [`tsum`](@ref), [`tvar`](@ref), [`tstd`](@ref), [`tsem`](@ref)
-
-## Algebra
-
-- [`tcross`](@ref), [`tdot`](@ref), [`tnorm`](@ref)
-- [`tsproj`](@ref), [`tproj`](@ref), [`toproj`](@ref)
-- [`tsubtract`](@ref), [`tderiv`](@ref)
-
-## Time-Domain Operations
-
-- [`tselect`](@ref)
-- [`tclip`](@ref), [`tclips`](@ref)
-- [`tview`](@ref)
-- [`tmask`](@ref) and [`tmask!`](@ref)
-- [`tshift`](@ref)
-- [`tsplit`](@ref)
-- [`tgroupby`](@ref)
-- Resampling: [`tinterp`](@ref), [`tsync`](@ref)
-
-## Time-Frequency Domain Operations
-
-- [`tfilter`](@ref), [`pspectrum`](@ref)
-"""
 module TimeseriesUtilities
+
+@doc let path = joinpath(dirname(@__DIR__), "README.md")
+    include_dependency(path)
+    read(path, String)
+end TimeseriesUtilities
 
 using Base: @propagate_inbounds
 using Dates
@@ -54,7 +15,7 @@ using Statistics: median, median!, quantile, middle
 export cadence, resolution, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
 export timerange, common_timerange, time_grid, find_continuous_timeranges
-export tinterp, tsync, tresample, tinterp_nans
+export tinterp, tsync, tresample, tinterp_nans, tfill_gaps
 
 # Time operations
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift

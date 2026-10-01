@@ -2,7 +2,6 @@ using BenchmarkTools
 import DataInterpolations
 using DimensionalData
 using Random
-using StaticArrays
 using TimeseriesUtilities
 using TimeseriesUtilities: tinterp, tsync
 include("../test/setup.jl")
@@ -16,6 +15,7 @@ const t_bench = rand(1:1000, 32)
 
 SUITE["tinterp"] = BenchmarkGroup()
 SUITE["tinterp"]["internal_linear"] = @benchmarkable tinterp($da_bench, $t_bench; interp = TimeseriesUtilities.LinearInterpolation)
+SUITE["tinterp"]["internal_linear_sorted_dense"] = @benchmarkable tinterp($da_bench, $(1.5:0.25:999.5))
 SUITE["tinterp"]["data_interpolations_linear"] = @benchmarkable tinterp($da_bench, $t_bench; interp = DataInterpolations.LinearInterpolation)
 
 const interp_nans_dimarray_bench = let data = rand(1000, 3)

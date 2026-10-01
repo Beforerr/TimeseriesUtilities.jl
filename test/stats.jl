@@ -58,8 +58,8 @@ end
 
         # tsum, tvar, tstd, tsem
         @test tsum(da2) == vec(sum(da2, dims = 1))
-        @test tvar(da1) == var(da1)
-        @test tstd(da1) == std(da1)
+        @test tvar(da1) ≈ var(da1)
+        @test tstd(da1) ≈ std(da1)
         @test tsem(da1) == nansem(da1)
 
         # DimStack

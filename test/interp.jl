@@ -35,7 +35,6 @@ end
     using DataInterpolations: LinearInterpolation, ExtrapolationType, CubicSpline
     using TimeseriesUtilities
     using TimeseriesUtilities: Tinterp
-    import StaticArrays
 
     times = [DateTime(2020, 1, 1), DateTime(2020, 1, 2), DateTime(2020, 1, 3)]
     da = DimArray(0:2, (Ti(times),))
@@ -47,8 +46,7 @@ end
     @test tinterp(da, before; extrapolation = true) ≈ -1.0
     @test tinterp(da, before; interp = Tinterp(LinearInterpolation), extrapolation = ExtrapolationType.Linear) ≈ -1.0
 
-    # CubicSpline on multi-dim array via LazySlices (copy-based fallback).
-    # eachslice/SubArray views fail for CubicSpline due to type heterogeneity.
+    # CubicSpline on multi-dim array (per-channel fallback)
     t3 = [DateTime(2020, 1, i) for i in 1:5]
     da3 = DimArray([Float64(i) for i in 1:5, j in 1:3], (Ti(t3), Y(1:3)))
     t_new = [DateTime(2020, 1, 2, 12)]
@@ -57,12 +55,37 @@ end
     @test size(out) == (1, 3)
     @test out[1, :] ≈ [2.5, 2.5, 2.5] atol = 0.1
 
-    # Verify StaticArrays extension activates: LazySlices element type should be SArray.
-    using StaticArrays
-    A = rand(3, 5)
-    slices = TimeseriesUtilities.LazySlices(A, 2)
-    @test eltype(slices) <: SArray   # SA-backed when extension is loaded
-    @test slices[1] isa SArray{Tuple{3}, Float64, 1, 3}
+end
+
+@testitem "linear search hint" begin
+    using TimeseriesUtilities: tinterp, LinearInterpolation
+    # Repeated, backward and endpoint queries after a sorted run; nonlinear data so a
+    # wrong segment changes the value. Reference: scalar path, which never uses the hint.
+    t = cumsum(rand(50) .+ 0.1)
+    u = sin.(t)
+    q = [t[1]; sort(t[1] .+ (t[end] - t[1]) .* rand(200)); t[end]; t[3]; t[3]; t[20]]
+    @test tinterp(u, t, q) ≈ LinearInterpolation(u, t).(q)
+end
+
+@testitem "FastInterpolations extension" begin
+    using Dates, DimensionalData
+    using FastInterpolations
+    using TimeseriesUtilities
+
+    t = collect(0.0:20.0)
+    q = [0.5, 3.3, 19.9]
+    A = randn(2, length(t), 3)  # time on dim 2, channels on dims 1 and 3
+    for f in (cubic_interp, pchip_interp)  # `Series` path and per-channel path
+        ref = [f(t, A[p, :, r], x) for p in 1:2, x in q, r in 1:3]
+        @test tinterp(A, t, q; interp = f, dim = 2) ≈ ref
+        @test tinterp(permutedims(A, (2, 1, 3)), t, q; interp = f, dim = 1) ≈ permutedims(ref, (2, 1, 3))
+    end
+
+    @test tinterp(t, t, [21.0]; interp = linear_interp, extrapolation = true) ≈ [21.0]
+
+    times = DateTime(2020) .+ Hour.(0:3)
+    da = DimArray([0.0, 1.0, 4.0, 9.0], (Ti(times),))
+    @test tinterp(da, DateTime(2020, 1, 1, 1, 30); interp = cubic_interp) ≈ cubic_interp(0:3, parent(da), 1.5)
 end
 
 @testitem "AxisKeys tinterp" begin
@@ -125,6 +148,37 @@ end
     using JET
     @test_opt tsync(da1, da2, da3)
     @test_call tsync(da1, da2, da3)
+end
+
+@testitem "tfill_gaps" begin
+    using Dates, DimensionalData
+    using TimeseriesUtilities
+
+    d(i, h = 0, m = 0) = DateTime(2020, 1, i, h, m)
+
+    # jitter: count by rounding, fillers anchored to left original
+    @test tfill_gaps([d(1), d(1, 23, 59), d(4, 0, 1)], Day(1)) ==
+        [d(1), d(1, 23, 59), d(2, 23, 59), d(4, 0, 1)]
+
+    # small gap filled, gap > max_gap left open
+    @test tfill_gaps([d(1), d(3), d(10), d(11)], Day(1); max_gap = Day(2)) ==
+        [d(1), d(2), d(3), d(10), d(11)]
+
+    # (A, t): time on last dim, values preserved
+    A = [1.0 2.0 4.0; 10.0 20.0 40.0]
+    out, t_new = tfill_gaps(A, [0.0, 1.0, 3.0])
+    @test t_new == [0.0, 1.0, 2.0, 3.0]
+    @test isequal(out, [1.0 2.0 NaN 4.0; 10.0 20.0 NaN 40.0])
+
+    # eltype: float precision kept, ints promoted to fit `fill`
+    t = [0.0, 1.0, 3.0]
+    @test eltype(first(tfill_gaps(Float32[1, 2, 4], t))) == Float32
+    @test eltype(first(tfill_gaps([1, 2, 4], t))) == Float64
+    @test isequal(first(tfill_gaps([1, 2, 4], t; fill = missing)), [1, 2, missing, 4])
+
+    da = tfill_gaps(DimArray([1.0, 2.0, 4.0], (Ti([d(1), d(2), d(4)]),)))
+    @test lookup(da, Ti) == [d(1), d(2), d(3), d(4)]
+    @test isequal(parent(da), [1.0, 2.0, NaN, 4.0])
 end
 
 @testitem "tinterp_nans" begin
