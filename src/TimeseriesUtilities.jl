@@ -1,5 +1,10 @@
 module TimeseriesUtilities
 
+@doc let path = joinpath(dirname(@__DIR__), "README.md")
+    include_dependency(path)
+    read(path, String)
+end TimeseriesUtilities
+
 using Base: @propagate_inbounds
 using Dates
 using Dates: AbstractTime
