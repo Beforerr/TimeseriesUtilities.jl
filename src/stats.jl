@@ -56,5 +56,16 @@ for (sym, desc) in (
     @eval @doc $doc $tfunc(x, arg...; kw...) = tstat($nanfunc, x, arg...; kw...)
 end
 
-# https://github.com/JuliaLang/julia/issues/54542"
-tmean(vec::AbstractArray{DateTime}) = convert(DateTime, Millisecond(round(nanmean(Dates.value.(vec)))))
+# https://github.com/JuliaLang/julia/issues/54542
+# Reduce offsets from the first element: Float64 of a raw epoch count (≈1.6e18 ns) cannot resolve sub-μs.
+function tmean(x::AbstractArray{<:Dates.TimeType})
+    t0 = first(x)
+    return _shift(t0, mean(t -> Dates.value(t - t0), x))
+end
+
+function tmedian(x::AbstractArray{<:Dates.TimeType})
+    t0 = first(x)
+    return _shift(t0, median!([Dates.value(t - t0) for t in x]))
+end
+
+_shift(t0, Δ) = t0 + typeof(t0 - t0)(round(Int, Δ))

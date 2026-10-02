@@ -40,17 +40,6 @@ See also: [`common_timerange`](@ref), [`tminimum`](@ref), [`tmaximum`](@ref)
 """
 timerange(x) = extrema(times(x))
 
-_median(x) = median(x)
-
-for f in (:median, :median!)
-    _f = Symbol(:_, f)
-    @eval $_f(x::AbstractArray{T}) where {T <: Union{Date, DateTime, Period, Int}} = T(round(Int, $f(reinterpret(Int, x))))
-end
-
-# function _median(x::AbstractArray{T}) where {T<:Union{Date,DateTime,Period}}
-#     return T(round(Int, median(reinterpret(Int, x))))
-# end
-
 timerange(x1, xs...) = common_timerange(x1, xs...)
 
 """

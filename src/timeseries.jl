@@ -127,7 +127,7 @@ A scalar `window` is interpreted as a coordinate span along the smoothed axis.
 @inline function smooth(data, coords, window; dim = ndims(data), op = nanmean)
     length(coords) == size(data, dim) || throw(DimensionMismatch("length(coords) must match size(data, dim)"))
     issorted(coords) || throw(ArgumentError("coords must be sorted"))
-    before, after = _window_offsets(window)
+    before, after = _window_offsets(window, eltype(coords))
     windows = PointWindows(coords, before, after)
     return mapslices(data; dims = dim) do slice
         op.(WindowedView{1}(slice, coords, windows))
@@ -139,14 +139,21 @@ function smooth(data, window; dim = ndims(data), kw...)
 end
 
 
-function _window_offsets(window::Tuple)
+function _window_offsets(window::Tuple, _)
     @assert length(window) == 2
     return window[1], window[2]
 end
 
-_window_offsets(window) = _half(window), _half(window)
-_half(window) = window / 2
-_half(window::Period) = Millisecond(window) / 2
+_window_offsets(window, _) = window / 2, window / 2
+
+# Split in the coordinates' resolution: on that grid `[c - w÷2, c + w - w÷2)` selects the same points as
+# `[c - w/2, c + w/2)`, whereas a finer half-width would be silently rounded by e.g. `DateTime ± Nanosecond`.
+function _window_offsets(window::Period, T)
+    P = Base.promote_op(-, T, T)
+    w = P <: Period && isconcretetype(P) ? convert(P, window) : Nanosecond(window)
+    before = w ÷ 2
+    return before, w - before
+end
 
 """
     dropna(A; dim=nothing)

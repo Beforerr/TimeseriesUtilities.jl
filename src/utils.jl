@@ -12,7 +12,7 @@ TimeOffsets(offsets) = TimeOffsets(offsets, Dates.unix2datetime(0))
 Base.size(to::TimeOffsets) = size(to.offsets)
 function Base.getindex(to::TimeOffsets, i::Int)
     _add(t0, dt) = t0 + dt
-    _add(t0::Dates.AbstractTime, dt::Number) = t0 + Nanosecond(round(Int, 1.0e9 * dt))
+    _add(t0::Dates.AbstractTime, dt::Number) = t0 + round(Nanosecond(round(Int, 1.0e9 * dt)), typeof(t0 - t0))
     return _add(to.t0, to.offsets[i])
 end
 
