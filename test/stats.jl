@@ -35,6 +35,11 @@ end
         @test_throws MethodError mean(ts)
         @test tmean(ts) == t0 + Microsecond(4500)
         @test_throws MethodError tmean([1.0, 2.0, 3.0], 1.0)
+
+        using Durations: Timestamp
+        tn = Timestamp{Nanosecond}(t0) .+ Nanosecond.([0, 1, 2, 3, 10])
+        @test tmean(tn) === tn[4]
+        @test tmedian(tn) === tn[3]
     end
 
     @testset "DimensionalData" begin

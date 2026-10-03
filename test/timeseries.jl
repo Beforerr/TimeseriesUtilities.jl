@@ -22,4 +22,9 @@
 
     @test smoothed == [1.0, 1.5, 4.0, 6.0]
     @test parent(dims(smoothed, Ti)) == datetimes
+
+    ms = t0 .+ Millisecond.(0:5)
+    @test smooth(1.0:6, ms, Millisecond(3)) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]
+    @test smooth(1.0:6, ms, Millisecond(5)) == [2.0, 2.5, 3.0, 4.0, 4.5, 5.0]
+    @test smooth(1.0:6, Date(2020) .+ Day.(0:5), Day(3)) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]
 end
