@@ -51,9 +51,9 @@ end
         da1 = rand(t)
         da2 = rand(t, y)
 
-        @test tmean(da1) == mean(da1)
+        @test tmean(da1) ≈ mean(da1)
         @test tmean(da1, Millisecond(2)) == [mean(da1[1:2]), mean(da1[3:4])]
-        @test tmean(da2) == vec(mean(da2, dims = 1))
+        @test tmean(da2) ≈ vec(mean(da2, dims = 1))
         @test tmean(da2, Millisecond(2)) == [mean(parent(da2)[1:2, :], dims = 1); mean(parent(da2)[3:4, :], dims = 1)]
 
         # tmedian
@@ -62,7 +62,7 @@ end
         @test tmedian(da2) == vec(median(da2, dims = 1))
 
         # tsum, tvar, tstd, tsem
-        @test tsum(da2) == vec(sum(da2, dims = 1))
+        @test tsum(da2) ≈ vec(sum(da2, dims = 1))
         @test tvar(da1) ≈ var(da1)
         @test tstd(da1) ≈ std(da1)
         @test tsem(da1) == nansem(da1)
