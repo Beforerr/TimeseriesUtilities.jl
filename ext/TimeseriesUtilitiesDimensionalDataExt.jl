@@ -65,21 +65,16 @@ end
     return rebuild(sorted; dims = newdims)
 end
 
-@inline function TU.rebuild(x::AbstractDimArray, data, dim::Integer, keys)
-    olddims = DD.dims(x)
-    olddim = olddims[dim]
-    newdim = DD.rebuild(olddim; val = DD.rebuild(lookup(olddim); data = keys))
-    newdims = Base.setindex(olddims, newdim, dim)
-    return rebuild(x, data, newdims)
-end
+_span(keys::AbstractRange) = DD.Regular(step(keys))
+_span(keys) = DD.Irregular((nothing, nothing))
+_rekey(l::DD.Sampled, keys) = rebuild(l; data = keys, span = _span(keys))
+_rekey(l, keys) = rebuild(l; data = keys)
+_newdim(dim::Dimension, keys) = rebuild(dim, _rekey(lookup(dim), keys))
+_newdim(dim::Symbol, keys) = DD.format(DD.Dim{dim}(keys), axes(keys, 1))
 
-_dim_from_keys(dim::Symbol, keys) = DD.Dim{dim}(keys)
-_dim_from_keys(dim::Dimension, keys) = rebuild(dim, keys)
-
-function TU.rebuild(x::AbstractDimArray, data, newdims, keys)
-    dims = map(_dim_from_keys, newdims, keys)
-    return rebuild(x, data, DD.format(dims, data))
-end
+@inline TU.rebuild(x::AbstractDimArray, data, dim::Integer, keys) =
+    rebuild(x, data, Base.setindex(DD.dims(x), _newdim(DD.dims(x, dim), keys), dim))
+TU.rebuild(x::AbstractDimArray, data, newdims, keys) = rebuild(x, data, map(_newdim, newdims, keys))
 
 TU.rebuild(x::AbstractDimArray, data) = rebuild(x, data)
 

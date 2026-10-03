@@ -17,6 +17,9 @@
     @test isa(res2, DimArray)
     @test res2 ≈ [0.25, 1.75]
     @test dims(res2, Ti).val == t2
+    @test DimensionalData.span(dims(res2, Ti)) isa DimensionalData.Irregular
+    t3 = DateTime(2020, 1, 1):Hour(6):DateTime(2020, 1, 2)
+    @test DimensionalData.span(dims(tinterp(da, t3), Ti)) == DimensionalData.Regular(Hour(6))
 
     # create 3×2 series with numeric time dimension
     da3 = DimArray([1.0 4.0; 2.0 5.0; 3.0 6.0], (Ti(times), Y([10, 20])))

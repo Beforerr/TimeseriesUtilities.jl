@@ -96,8 +96,9 @@ end
     @test dims(y, Ti)[1] == DateTime("2020-01-01T00:00:08")
     @test dims(y, Dim{:frequency})[1] == 0.0
 
-    multi = DimArray(hcat(sin.(1:100), cos.(1:100)), (Ti(ts), Dim{:comp}([:x, :y])))
+    multi = DimArray(hcat(sin.(1:100), cos.(1:100)), (Ti(ts), Dim{:comp}([:x, :y]; metadata = Dict(:units => "nT"))))
     multi_spec = pspectrum(multi; nfft = 16)
+    @test DimensionalData.metadata(dims(multi_spec, Dim{:comp}))[:units] == "nT"
     multi_t2 = DimArray(permutedims(parent(multi)), (Dim{:comp}([:x, :y]), Ti(ts)))
     multi_t2_spec = pspectrum(multi_t2; dim = Ti, nfft = 16)
     keyed_multi = KeyedArray(permutedims(parent(multi)); comp = [:x, :y], time = ts)
