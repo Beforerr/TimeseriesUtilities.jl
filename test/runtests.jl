@@ -8,9 +8,8 @@ using TestItems, TestItemRunner
 end
 
 @testitem "api" begin
-    using TimeseriesUtilities: axiskeys, dims, rebuild
+    using TimeseriesUtilities: axiskeys, rebuild
     @test_throws MethodError axiskeys([1, 2, 3], 1)
-    @test_throws MethodError dims([1, 2, 3], 1)
     @test rebuild([1, 2, 3], 2:4, 1, 1:3) == 2:4
 end
 

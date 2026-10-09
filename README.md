@@ -34,6 +34,11 @@ Most of the utilities operate on the time dimension by default, but you can spec
 - `tsproj`, `tproj`, `toproj`
 - `tsubtract`, `tderiv`
 
+## Per-Sample Operations
+
+- `eachsample(A, [ts]; dim)` — iterate `(x, t)` over slices along time. `ts` is either one time per sample or a single value shared by all samples. It defaults to the time keys of `A`; plain arrays have none and must pass it.
+- `mapsamples(f, A, [ts]; dim)` — apply `f(x, t)` per sample and stack results along time (at position `dim`, or last when the result has fewer axes)
+
 ## Time-Domain Operations
 
 - `tselect`
