@@ -25,6 +25,7 @@ import TimeseriesUtilities:
     sorted_axis,
     times,
     tnorm_combine,
+    tdimnum,
     tstat,
     unwrap
 
@@ -32,8 +33,9 @@ const AbstractDimLike = Union{AbstractDimArray, AbstractDimStack}
 
 unwrap(x::AbstractDimArray) = parent(x)
 unwrap(x::Dimension) = parent(lookup(x))
-dimnum(x::AbstractDimLike, dim) = isnothing(dim) ? _tdimnum(x) : DD.dimnum(x, dim)
-_tdimnum(x) = DD.hasdim(x, TimeDim) ? DD.dimnum(x, TimeDim) : DD.dimnum(x, DD.Dim{:time})
+dimnum(x::AbstractDimLike, dim::DD.Dimensions.DimOrDimType) = DD.dimnum(x, dim)
+_dimnum(x, dim) = DD.hasdim(x, dim) ? DD.dimnum(x, dim) : nothing
+tdimnum(x::AbstractDimLike) = @something _dimnum(x, TimeDim) _dimnum(x, DD.Dim{:time}) Some(nothing)
 @inline axiskeys(x::AbstractDimLike, dim) = unwrap(DD.dims(x, dim))
 times(x::AbstractDimLike, dim = nothing) = axiskeys(x, dimnum(x, dim))
 
