@@ -15,43 +15,19 @@ tmaximum(x) = maximum(times(x))
 targmin(x) = times(x)[argmin(x)]
 targmax(x) = times(x)[argmax(x)]
 
-"""    
-    timerange(x)
-    timerange(x1, xs...)
-
-Get the time range of time series data `x`.
-
-For a single argument, returns a tuple `(tmin, tmax)` containing the minimum and maximum times.
-For multiple arguments, returns the common time range (intersection) across all arrays - equivalent to `common_timerange(x1, xs...)`.
-
-# Examples
-```julia
-# Single time series
-times = [1, 2, 3, 4, 5]
-timerange(times)  # (1, 5)
-
-# Multiple time series - find common range
-x1_times = [1, 2, 3, 4]
-x2_times = [2, 3, 4, 5]
-timerange(x1_times, x2_times)  # (2, 4)
-```
-
-See also: [`common_timerange`](@ref), [`tminimum`](@ref), [`tmaximum`](@ref)
 """
-timerange(x) = extrema(times(x))
+    trange(x)
+    trange(x1, xs...)
 
-timerange(x1, xs...) = common_timerange(x1, xs...)
-
+Time range `(tmin, tmax)` of `x`. With several arguments, their common time range
+(intersection), or `nothing` if they do not overlap.
 """
-    common_timerange(x1, xs...)
+trange(x) = extrema(times(x))
 
-Get the common time range (intersection) across multiple arrays.
-If there is no overlap, returns nothing.
-"""
-function common_timerange(x1, xs...)
-    t0, t1 = timerange(x1)
+function trange(x1, xs...)
+    t0, t1 = trange(x1)
     for x in xs
-        _t0, _t1 = timerange(x)
+        _t0, _t1 = trange(x)
         t0 = max(t0, _t0)
         t1 = min(t1, _t1)
         t0 > t1 && return nothing
@@ -60,12 +36,11 @@ function common_timerange(x1, xs...)
 end
 
 """
-    find_continuous_timeranges(x, max_dt)
+    find_continuous_timeranges(ts, max_dt)
 
-Find continuous time ranges for `x`, where `max_dt` is the maximum time gap between consecutive times.
+Find continuous time ranges in times `ts`, where `max_dt` is the maximum time gap between consecutive times.
 """
-function find_continuous_timeranges(x, max_dt)
-    ts = times(x)
+function find_continuous_timeranges(ts, max_dt)
     return collect(
         issorted(ts) ?
             ContinuousTimeRanges(ts, max_dt) :
@@ -73,25 +48,7 @@ function find_continuous_timeranges(x, max_dt)
     )
 end
 
-
-"""
-    time_grid(x, dt)
-
-Create a time grid from the minimum to maximum time in `x` with the step size `dt`.
-
-# Examples
-```julia
-# Create hourly time grid
-time_grid(x, Hour(1))
-time_grid(x, 1u"hr")
-
-# Create 1-s intervals
-time_grid(x, Second(1))
-time_grid(x, 1u"second")
-time_grid(x, 1u"Hz")
-```
-"""
-function time_grid(x, dt)
-    tmin, tmax = timerange(x)
+function _time_grid(ts, dt)
+    tmin, tmax = extrema(ts)
     return tmin:dt:tmax
 end

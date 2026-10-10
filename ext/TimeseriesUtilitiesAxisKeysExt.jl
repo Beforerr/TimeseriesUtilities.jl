@@ -7,7 +7,6 @@ import TimeseriesUtilities:
     rebuild,
     rekey,
     tdimnum,
-    times,
     unwrap
 using AxisKeys: KeyedArray
 
@@ -15,7 +14,6 @@ unwrap(x::KeyedArray) = AxisKeys.keyless_unname(x)
 dimnum(x::KeyedArray, name::Symbol) = AxisKeys.dim(x, name)
 tdimnum(x::KeyedArray) = (i = AxisKeys.NamedDims.dim_noerror(AxisKeys.dimnames(x), :time); iszero(i) ? nothing : i)
 axiskeys(x::KeyedArray, dim) = AxisKeys.axiskeys(x, dim)
-times(x::KeyedArray, dim = nothing) = axiskeys(x, dimnum(x, dim))
 
 _name(x, ::Val{i}) where {i} = AxisKeys.dimnames(x)[i]
 _name(_, name::Symbol) = name

@@ -19,8 +19,8 @@ Most of the utilities operate on the time dimension by default, but you can spec
 
 ## Query
 
-- `times`, `time_grid`
-- `timerange`, `common_timerange`
+- `times`
+- `trange`
 - `cadence` — robust modal-cluster Δt, survives gaps, jitter, and dropout
 
 ## (Windowed) Statistics

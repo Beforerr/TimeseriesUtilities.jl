@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Breaking**: `cadence`, `resolution`, `samplingrate`, and `find_continuous_timeranges` take time coordinates only now; pass `times(x)` for a container.
+- **Breaking**: Rename `timerange(x)` to `trange(x)`; it accepts containers only. `common_timerange(xs...)` becomes `trange(xs...)`.
+- **Breaking**: `times(x)` on a plain array errors instead of returning `x`; so do `tminimum`, `tmaximum`, `targmin`, and `targmax`.
+- `times(x, dim)` is generic over `axiskeys` and `tdimnum`; container backends no longer define `times`.
+- **Breaking**: Remove the `trange` keyword of `tclips` and `tviews`; use `tclip.(xs, Ref(tr))`.
+
+### Removed
+
+- **Breaking**: `time_grid`; use `tresample(A, dt)` or `range(trange(x)...; step = dt)`.
+
 ## v0.2.0
 
 ### Added

@@ -14,7 +14,7 @@ using Statistics: mean, median, median!, quantile, middle
 
 export cadence, resolution, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
-export timerange, common_timerange, time_grid, find_continuous_timeranges
+export trange, find_continuous_timeranges
 export tinterp, tsync, tresample, tinterp_nans, tfill_gaps
 
 # Time operations

@@ -28,7 +28,7 @@ function tclip(A, t0, t1; dim = nothing)
     return A[_selectors(A, d, idx)...]
 end
 
-tclip(A, trange; kw...) = tclip(A, trange...; kw...)
+tclip(A, tr; kw...) = tclip(A, tr...; kw...)
 
 """
     tview(A, t0, t1; dim=nothing)
@@ -47,7 +47,7 @@ end
 tview(f::Function, t0::T1, t1::T2; dim = _notset) where {T1, T2} =
     (!isa(dim, _NotSet) && hasmethod(f, Tuple{T1, T2}, (:dim,))) ? f(t0, t1; dim) : f(t0, t1)
 
-tview(A, trange; kw...) = tview(A, trange...; kw...)
+tview(A, tr; kw...) = tview(A, tr...; kw...)
 
 function _selectors(A, d, selector)
     return ntuple(i -> i == d ? selector : Colon(), ndims(A))
@@ -62,22 +62,16 @@ end
 
 
 """
-    tclips(xs...; trange=common_timerange(xs...))
+    tclips(xs...)
+    tviews(xs...)
 
-Clip multiple arrays to a common time range `trange`.
-
-If `trange` is not provided, automatically finds the common time range
-across all input arrays.
+Clip (view) each of `xs` to their common time range [`trange`](@ref)`(xs...)`.
 """
-tclips(xs::Vararg{Any, N}; trange = common_timerange(xs...)) where {N} =
-    _tclips(tclip, trange, xs...)
-
-tviews(xs::Vararg{Any, N}; trange = common_timerange(xs...)) where {N} =
-    _tclips(tview, trange, xs...)
+tclips(xs::Vararg{Any, N}) where {N} = _tclips(tclip, trange(xs...), xs...)
+tviews(xs::Vararg{Any, N}) where {N} = _tclips(tview, trange(xs...), xs...)
 
 _tclips(f, ::Nothing, xs...) = throw(ArgumentError("No common time range found"))
-_tclips(f, trange, xs...) =
-    ntuple(i -> f(xs[i], trange...), length(xs))
+_tclips(f, tr, xs...) = map(x -> f(x, tr...), xs)
 
 
 """

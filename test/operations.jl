@@ -150,10 +150,6 @@ end
     @test dims(c2, Ti).val == [2.0, 3.0, 4.0, 5.0]
     @test c1 == [20.0, 30.0, 40.0, 50.0]
 
-    # explicit trange overrides
-    c1e, c2e = tclips(da1, da2; trange = (3.0, 4.0))
-    @test dims(c1e, Ti).val == [3.0, 4.0]
-
     # tviews — same logic, view semantics
     v1, v2 = tviews(da1, da2)
     @test dims(v1, Ti).val == [2.0, 3.0, 4.0, 5.0]

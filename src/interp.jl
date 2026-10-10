@@ -152,13 +152,13 @@ end
 
 Resample time series `A` onto a regular time grid with the specified frequency `freq`.
 
-See also: [`tinterp`](@ref), [`time_grid`](@ref)
+See also: [`tinterp`](@ref)
 """
-tresample(A, old_times, freq; kw...) = tinterp(A, old_times, time_grid(old_times, freq); kw...)
+tresample(A, old_times, freq; kw...) = tinterp(A, old_times, _time_grid(old_times, freq); kw...)
 
 function tresample(A, dt; dim = nothing, kws...)
     d = dimnum(A, dim)
-    return tinterp(A, time_grid(axiskeys(A, d), dt); dim = d, kws...)
+    return tinterp(A, _time_grid(axiskeys(A, d), dt); dim = d, kws...)
 end
 
 
@@ -178,11 +178,9 @@ This function aligns time series `Bs...` to match time points of `A` by:
 ```julia
 A_sync, B_sync, C_sync = tsync(A, B, C)
 ```
-
-See also: [`tinterp`](@ref), [`common_timerange`](@ref)
 """
 function tsync(A, Bs...)
-    tr = common_timerange(A, Bs...)
+    tr = trange(A, Bs...)
     @assert !isnothing(tr) "No common time range found"
     A_tsync = tclip(A, tr...)
     tstamps = times(A_tsync)
