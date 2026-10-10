@@ -2,11 +2,11 @@ module TimeseriesUtilitiesUnitfulExt
 
 using Dates
 import TimeseriesUtilities as TU
-import TimeseriesUtilities: samplingrate, time_grid, timerange
+import TimeseriesUtilities: samplingrate
 using Unitful
 
-function TU.time_grid(x, dt::Unitful.Quantity)
-    tmin, tmax = timerange(x)
+function TU._time_grid(ts, dt::Unitful.Quantity)
+    tmin, tmax = extrema(ts)
     return if dimension(dt) == Unitful.𝐓
         tmin:_2dates(dt):tmax
     elseif dimension(dt) == Unitful.𝐓^-1
@@ -27,6 +27,6 @@ end
 
 _2dates(x::Unitful.Quantity) = _2dates(Unitful.unit(x))(x)
 
-samplingrate(x) = 1u"s" / TU.resolution(x) * u"Hz" |> u"Hz"
+samplingrate(ts) = 1u"s" / TU.resolution(ts) * u"Hz" |> u"Hz"
 
 end

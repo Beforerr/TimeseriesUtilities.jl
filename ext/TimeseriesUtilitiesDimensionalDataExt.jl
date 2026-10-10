@@ -23,7 +23,6 @@ import TimeseriesUtilities:
     norm_combine,
     smooth,
     sorted_axis,
-    times,
     tnorm_combine,
     tdimnum,
     tstat,
@@ -37,7 +36,6 @@ dimnum(x::AbstractDimLike, dim::DD.Dimensions.DimOrDimType) = DD.dimnum(x, dim)
 _dimnum(x, dim) = DD.hasdim(x, dim) ? DD.dimnum(x, dim) : nothing
 tdimnum(x::AbstractDimLike) = @something _dimnum(x, TimeDim) _dimnum(x, DD.Dim{:time}) Some(nothing)
 @inline axiskeys(x::AbstractDimLike, dim) = unwrap(DD.dims(x, dim))
-times(x::AbstractDimLike, dim = nothing) = axiskeys(x, dimnum(x, dim))
 
 function groupby_dynamic(x::Dimension, args...; kwargs...)
     return groupby_dynamic(parent(lookup(x)), args...; kwargs...)

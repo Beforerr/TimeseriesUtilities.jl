@@ -22,7 +22,7 @@ dimnum(_, dim::Integer) = dim
 dimnum(x, ::Nothing) =
     @something tdimnum(x) throw(ArgumentError("$(typeof(x)) has no time dimension; pass `dim`"))
 
-axiskeys(x, _) = throw(MethodError(axiskeys, (x,)))
+function axiskeys end
 
 # Containers without a `rebuild` method degrade to their data, dropping their axis keys.
 rebuild(x, data) = data
@@ -38,11 +38,11 @@ rekey(x, dim, keys) = throw(ArgumentError("$(typeof(x)) has no axis keys to repl
 sorted_axis(sorted, dim; rev = false) = sorted
 
 """
-    times(x)
+    times(x, dim=nothing)
 
-Get time coordinate of `x`.
+Time coordinate of `x`: the keys of its time dimension (or of `dim`).
 """
-times(x) = x
+times(x, dim = nothing) = axiskeys(x, dimnum(x, dim))
 
 function samplingrate end
 
