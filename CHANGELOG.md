@@ -7,6 +7,7 @@
 - **Breaking**: `cadence`, `resolution`, `samplingrate`, and `find_continuous_timeranges` take time coordinates only now; pass `times(x)` for a container.
 - **Breaking**: Rename `timerange(x)` to `trange(x)`; it accepts containers only. `common_timerange(xs...)` becomes `trange(xs...)`.
 - **Breaking**: `times(x)` on a plain array errors instead of returning `x`; so do `tminimum`, `tmaximum`, `targmin`, and `targmax`.
+- **Breaking**: Plain arrays with more than one dimension have no default time dimension: calls without `dim`, including explicit-times forms like `tinterp(A, t, t_new)`, throw `ArgumentError`. Plain vectors are unaffected.
 - `times(x, dim)` is generic over `axiskeys` and `tdimnum`; container backends no longer define `times`.
 - **Breaking**: Remove the `trange` keyword of `tclips` and `tviews`; use `tclip.(xs, Ref(tr))`.
 

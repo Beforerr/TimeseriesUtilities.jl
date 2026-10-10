@@ -6,10 +6,10 @@
     tdimnum(x)
 
 Index of the time dimension of `x`, or `nothing` if `x` has none.
-Arrays without a named time dimension take time along their last dimension.
+A vector's time dimension is assumed to be its only one, multidimensional arrays have no default time dimension.
 """
 tdimnum(x) = nothing
-tdimnum(x::AbstractArray) = ndims(x)
+tdimnum(x::AbstractArray) = ndims(x) == 1 ? 1 : nothing
 
 """
     dimnum(x, dim)

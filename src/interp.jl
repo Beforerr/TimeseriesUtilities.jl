@@ -92,7 +92,8 @@ new_times = DateTime("2023-01-01"):Hour(1):DateTime("2023-01-02")
 tinterp(time_series, new_times; interp = CubicSpline)
 ```
 """
-function tinterp(A, old_times, new_times; interp = LinearInterpolation, dim = ndims(A), kws...)
+function tinterp(A, old_times, new_times; interp = LinearInterpolation, dim = nothing, kws...)
+    dim = dimnum(A, dim)
     new_times isa AbstractArray && return _tinterp_nd(interp, A, old_times, new_times, dim; kws...)
     out = _tinterp_nd(interp, A, old_times, [new_times], dim; kws...)
     return ndims(A) == 1 ? only(out) : out
@@ -226,7 +227,7 @@ const _Step = Union{Dates.Period, Real}
 """
     tfill_gaps(t, [dt]; max_gap = nothing) -> t_new
     tfill_gaps(A, [dt]; fill = NaN, max_gap = nothing, dim = nothing) -> typeof(A)
-    tfill_gaps(A, t, [dt]; fill = NaN, max_gap = nothing, dim = ndims(A)) -> (A_new, t_new)
+    tfill_gaps(A, t, [dt]; fill = NaN, max_gap = nothing, dim = nothing) -> (A_new, t_new)
 
 Insert missing timestamps (new samples set to `fill`); originals are kept exactly.
 A gap `Δ` gets `round(Δ / dt) - 1` points at `t[i] + k * dt`; gaps `Δ > max_gap` are left open.
@@ -247,8 +248,8 @@ function tfill_gaps(A, dt::Union{_Step, Nothing} = nothing; dim = nothing, kws..
     return rebuild(A, out, d, t_new)
 end
 
-tfill_gaps(A::AbstractArray, t::AbstractVector, dt::Union{_Step, Nothing} = nothing; dim = ndims(A), kws...) =
-    _tfill_gaps(A, t, dim, dt; kws...)
+tfill_gaps(A::AbstractArray, t::AbstractVector, dt::Union{_Step, Nothing} = nothing; dim = nothing, kws...) =
+    _tfill_gaps(A, t, dimnum(A, dim), dt; kws...)
 
 # Counting first and writing into exactly-sized buffers beats a single push!-pass.
 function _gap_fillers(t, dt, max_gap)

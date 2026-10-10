@@ -9,7 +9,7 @@
     @test smooth(data, 3; dim = 1) == [1.5 15.0; 2.0 20.0; 3.0 30.0; 3.5 35.0]
     @test smooth(data, times, 2.0; dim = 1) == [1.0 10.0; 1.5 15.0; 3.0 30.0; 4.0 40.0]
     @test smooth(data', times, 2.0; dim = 2) == [1.0 1.5 3.0 4.0; 10.0 15.0 30.0 40.0]
-    @test smooth(data', 3) == [1.5 2.0 3.0 3.5; 15.0 20.0 30.0 35.0]
+    @test smooth(data', 3; dim = 2) == [1.5 2.0 3.0 3.5; 15.0 20.0 30.0 35.0]
 
     explicit_left = smooth(data, times, (2.0, 0.0); dim = 1)
     @test isnan(explicit_left[1, 1])

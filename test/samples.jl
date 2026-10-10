@@ -7,21 +7,21 @@
     ts = [DateTime(2020), DateTime(2021)]
     shift(x, t) = x .+ year(t)
 
-    @test mapsamples(shift, A, ts) == A .+ [2020 2021]
+    @test mapsamples(shift, A, ts; dim = 2) == A .+ [2020 2021]
     @test mapsamples(shift, permutedims(A), ts; dim = 1) == permutedims(A .+ [2020 2021])
-    @test mapsamples(shift, A, ts[1]) == A .+ 2020
-    @test mapsamples(shift, A, Tuple(ts)) == A .+ [2020 2021]
-    @test_throws DimensionMismatch mapsamples(shift, A, ts[1:1])
+    @test mapsamples(shift, A, ts[1]; dim = 2) == A .+ 2020
+    @test mapsamples(shift, A, Tuple(ts); dim = 2) == A .+ [2020 2021]
+    @test_throws DimensionMismatch mapsamples(shift, A, ts[1:1]; dim = 2)
     @test_throws ArgumentError mapsamples(shift, A, ts[1]; dim = 3)
-    @test collect(eachsample(A, ts)) == [(A[:, 1], ts[1]), (A[:, 2], ts[2])]
-    @test_throws DimensionMismatch mapsamples((x, t) -> x[1:t], A, [2, 1])
+    @test collect(eachsample(A, ts; dim = 2)) == [(A[:, 1], ts[1]), (A[:, 2], ts[2])]
+    @test_throws DimensionMismatch mapsamples((x, t) -> x[1:t], A, [2, 1]; dim = 2)
     # element types widen like `map`
-    r = mapsamples((x, t) -> t == 1 ? missing : sum(x), A, 1:2)
+    r = mapsamples((x, t) -> t == 1 ? missing : sum(x), A, 1:2; dim = 2)
     @test r isa Vector{Union{Missing, Float64}} && isequal(r, [missing, 15.0])
-    r = mapsamples((x, t) -> t == 1 ? Int.(x) : x / 2, A, 1:2)
+    r = mapsamples((x, t) -> t == 1 ? Int.(x) : x / 2, A, 1:2; dim = 2)
     @test eltype(r) == Real && r == [1 2; 2 2.5; 3 3]
-    @test mapsamples(shift, zeros(3, 0), DateTime[]) == zeros(3, 0)
-    @test mapsamples((x, t) -> sum(x), zeros(3, 0), DateTime[]) isa Vector{Float64}
+    @test mapsamples(shift, zeros(3, 0), DateTime[]; dim = 2) == zeros(3, 0)
+    @test mapsamples((x, t) -> sum(x), zeros(3, 0), DateTime[]; dim = 2) isa Vector{Float64}
     # result with fewer axes than a sample: time goes last
     B = rand(3, 4, 5)
     @test mapsamples((x, t) -> x .+ t, B, 1:4; dim = 2) == B .+ reshape(1:4, 1, 4)
@@ -79,7 +79,7 @@ end
         allocs(n) = (A = data(n, d); ts = times_(n); (@b mapsamples($f, $A, $ts; dim = $d)).allocs)
         @test allocs(1000) == allocs(2000)
     end
-    shared(n) = (A = data(n, 2); (@b mapsamples(scalar, $A, DateTime(2020))).allocs)
+    shared(n) = (A = data(n, 2); (@b mapsamples(scalar, $A, DateTime(2020); dim = 2)).allocs)
     @test shared(1000) == shared(2000)
     # wrapped arrays: the time dim comes from the dimension types and must stay static
     da = DimArray(rand(3, 4, 5), (X(1:3), Y(1:4), Ti(times_(5))))

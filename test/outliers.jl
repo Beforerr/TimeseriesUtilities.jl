@@ -18,7 +18,7 @@
 
     # Detect Outliers in Matrix
     A = rand(5, 5) + 200I
-    @test sum(diag(find_outliers(A))) == 5
+    @test sum(diag(find_outliers(A; dim = 2))) == 5
 end
 
 @testitem "replace outliers" begin
