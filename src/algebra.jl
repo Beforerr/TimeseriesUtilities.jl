@@ -45,60 +45,6 @@ See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_mod
 end
 
 """
-    tnorm(A; dim=nothing)
-
-Compute the norm of each slice in `A` along dimension `dim`.
-
-See also: [`tnorm_combine`](@ref)
-"""
-tnorm(A; dim = nothing) =
-    norm.(eachslice(A; dims = dimnum(A, dim)))
-
-"""
-    tcross(x, y; dim=nothing)
-
-Compute the cross product of two (arrays of) vectors along dimension `dim`.
-"""
-function tcross(x, y; dim = nothing)
-    dims = dimnum(x, dim)
-    z = similar(x)
-    xs, ys, zs = eachslice(x; dims), eachslice(y; dims), eachslice(z; dims)
-    for i in eachindex(xs, ys, zs)
-        xi = xs[i]; yi = ys[i]; zi = zs[i]
-        zi[1] = xi[2] * yi[3] - xi[3] * yi[2]
-        zi[2] = xi[3] * yi[1] - xi[1] * yi[3]
-        zi[3] = xi[1] * yi[2] - xi[2] * yi[1]
-    end
-    return z
-end
-
-"""
-    tdot(x, y; dim=nothing)
-
-Dot product of two arrays `x` and `y` along dimension `dim`.
-"""
-function tdot(x, y; dim = nothing)
-    dims = dimnum(x, dim)
-    return dot.(eachslice(x; dims), eachslice(y; dims))
-end
-
-@inline function norm_combine(x::AbstractMatrix, dims)
-    nn = norm.(eachslice(x; dims))
-    return dims == 1 ? hcat(x, nn) : vcat(x, nn')
-end
-
-"""
-    tnorm_combine(x; dim=nothing, name=:magnitude)
-
-Calculate the norm of each slice along `dim` and combine it with the original components.
-"""
-function tnorm_combine(x::AbstractMatrix; dim = nothing, name = :magnitude)
-    d = dimnum(x, dim)
-    return norm_combine(x, d)
-end
-
-
-"""
     proj(a, b)
 
 Vector projection of a vector `a` on (or onto) a nonzero vector `b`.
@@ -109,54 +55,12 @@ See also: [`sproj`](@ref), [`oproj`](@ref)
 """
 proj(a, b) = (a ⋅ b / (b ⋅ b)) .* b
 
-function proj!(c, a, b)
-    return c .= (a ⋅ b / (b ⋅ b)) .* b
-end
-
 """
 Vector rejection
 """
 oproj(a, b) = a .- (a ⋅ b / (b ⋅ b)) .* b
 
-function oproj!(c, a, b)
-    return c .= a .- (a ⋅ b / (b ⋅ b)) .* b
-end
-
 """
 Scalar projection
 """
 sproj(a, b) = dot(a, b) / norm(b)
-
-"""
-    tsproj(A, B; dim=nothing)
-
-Compute scalar projection of `A` onto `B` along dimension `dim`.
-"""
-function tsproj(A, B; dim = nothing)
-    dims = dimnum(A, dim)
-    return sproj.(eachslice(A; dims), eachslice(B; dims))
-end
-
-function _tproj(f!, A, B; dim = nothing)
-    C = similar(A)
-    dims = dimnum(A, dim)
-    as, bs, cs = eachslice(A; dims), eachslice(B; dims), eachslice(C; dims)
-    for i in eachindex(as, bs, cs)
-        f!(cs[i], as[i], bs[i])
-    end
-    return C
-end
-
-"""
-    tproj(A, B; dim=nothing)
-
-Compute vector projection of `A` onto `B` along dimension `dim`.
-"""
-tproj(A, B; dim = nothing) = _tproj(proj!, A, B; dim)
-
-"""
-    toproj(A, B; dim=nothing)
-
-Compute vector rejection (orthogonal projection) of `A` from `B` along dimension `dim`.
-"""
-toproj(A, B; dim = nothing) = _tproj(oproj!, A, B; dim)
