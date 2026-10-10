@@ -9,6 +9,7 @@ using DimensionalData:
     Dimension,
     TimeDim,
     basetypeof,
+    dims,
     lookup,
     maplayers,
     otherdims,
@@ -17,7 +18,6 @@ import TimeseriesUtilities as TU
 import TimeseriesUtilities:
     axiskeys,
     dimnum,
-    dims,
     dropna,
     groupby_dynamic,
     norm_combine,
@@ -32,14 +32,10 @@ const AbstractDimLike = Union{AbstractDimArray, AbstractDimStack}
 
 unwrap(x::AbstractDimArray) = parent(x)
 unwrap(x::Dimension) = parent(lookup(x))
-dimnum(x::AbstractDimLike, dim) = DD.dimnum(x, @something dim TimeDim)
-axiskeys(x::AbstractDimLike, dim) = unwrap(DD.dims(x, dim))
-dims(x::AbstractDimLike, dim) = DD.dims(x, dim)
+dimnum(x::AbstractDimLike, dim) = isnothing(dim) ? _tdimnum(x) : DD.dimnum(x, dim)
+_tdimnum(x) = DD.hasdim(x, TimeDim) ? DD.dimnum(x, TimeDim) : DD.dimnum(x, DD.Dim{:time})
+@inline axiskeys(x::AbstractDimLike, dim) = unwrap(DD.dims(x, dim))
 times(x::AbstractDimLike, dim = nothing) = axiskeys(x, dimnum(x, dim))
-
-for f in (:dims,)
-    @eval $f(args...; kwargs...) = DD.$f(args...; kwargs...)
-end
 
 function groupby_dynamic(x::Dimension, args...; kwargs...)
     return groupby_dynamic(parent(lookup(x)), args...; kwargs...)
@@ -69,12 +65,15 @@ _span(keys::AbstractRange) = DD.Regular(step(keys))
 _span(keys) = DD.Irregular((nothing, nothing))
 _rekey(l::DD.Sampled, keys) = rebuild(l; data = keys, span = _span(keys))
 _rekey(l, keys) = rebuild(l; data = keys)
-_newdim(dim::Dimension, keys) = rebuild(dim, _rekey(lookup(dim), keys))
-_newdim(dim::Symbol, keys) = DD.format(DD.Dim{dim}(keys), axes(keys, 1))
+_newdim(x, ::Val{i}, keys) where {i} = _newdim(x, dims(x)[i], keys)
+_newdim(_, dim::Dimension, keys) = rebuild(dim, _rekey(lookup(dim), keys))
+_newdim(_, name::Symbol, keys) = DD.format(DD.Dim{name}(keys), axes(keys, 1))
+_newdim(_, ::Nothing, keys) = DD.format(DD.AnonDim(keys), axes(keys, 1))
 
 @inline TU.rebuild(x::AbstractDimArray, data, dim::Integer, keys) =
-    rebuild(x, data, Base.setindex(DD.dims(x), _newdim(DD.dims(x, dim), keys), dim))
-TU.rebuild(x::AbstractDimArray, data, newdims, keys) = rebuild(x, data, map(_newdim, newdims, keys))
+    rebuild(x, data, Base.setindex(dims(x), _newdim(x, dims(x)[dim], keys), dim))
+TU.rebuild(x::AbstractDimArray, data, newdims, keys) =
+    rebuild(x, data, map((d, k) -> _newdim(x, d, k), newdims, keys))
 
 TU.rebuild(x::AbstractDimArray, data) = rebuild(x, data)
 

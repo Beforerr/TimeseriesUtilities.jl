@@ -4,8 +4,6 @@ import AxisKeys
 import TimeseriesUtilities:
     axiskeys,
     dimnum,
-    dims,
-    rebuild,
     rebuild,
     times,
     unwrap
@@ -14,18 +12,24 @@ using AxisKeys: KeyedArray
 unwrap(x::KeyedArray) = AxisKeys.keyless_unname(x)
 dimnum(x::KeyedArray, dim) = AxisKeys.dim(x, @something dim :time)
 axiskeys(x::KeyedArray, dim) = AxisKeys.axiskeys(x, dim)
-dims(x::KeyedArray, dim) = AxisKeys.dimnames(x, dim)
 times(x::KeyedArray, dim = nothing) = axiskeys(x, dimnum(x, dim))
+
+_name(x, ::Val{i}) where {i} = AxisKeys.dimnames(x)[i]
+_name(_, name::Symbol) = name
+_name(_, ::Nothing) = :_
+
+# `NamedDimsArray` accepts repeated `:_` names, keyword construction does not
+@inline _keyed(data, names, keys) = KeyedArray(AxisKeys.NamedDims.NamedDimsArray(data, names), keys)
+
 function rebuild(x::KeyedArray, data, dim::Integer, keys)
-    names = ntuple(i -> dims(x, i), ndims(x))
     newkeys = ntuple(ndims(x)) do i
         i == dim ? keys : axiskeys(x, i)
     end
-    return KeyedArray(data; NamedTuple{names}(newkeys)...)
+    return _keyed(data, AxisKeys.dimnames(x), newkeys)
 end
 
-function rebuild(::KeyedArray, data, dims, keys)
-    return KeyedArray(data; NamedTuple{dims}(keys)...)
-end
+rebuild(x::KeyedArray, data) = _keyed(data, AxisKeys.dimnames(x), AxisKeys.axiskeys(x))
+
+rebuild(x::KeyedArray, data, dims, keys) = _keyed(data, map(d -> _name(x, d), dims), keys)
 
 end

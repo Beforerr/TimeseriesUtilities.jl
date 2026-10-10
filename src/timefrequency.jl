@@ -36,7 +36,7 @@ function pspectrum(A; dim = nothing, freqdim = :frequency, kwargs...)
     ts = axiskeys(A, d)
     spec = pspectrum(unwrap(A), ts; dim = d, kwargs...)
     odims = Tuple(i for i in 1:ndims(A) if i != d)
-    newdims = (freqdim, dims(A, d), ntuple(i -> dims(A, odims[i]), length(odims))...)
+    newdims = (freqdim, Val(d), map(Val, odims)...)
     keys = (spec.freq, spec.time, ntuple(i -> axiskeys(A, odims[i]), length(odims))...)
     return rebuild(A, spec.power, newdims, keys)
 end

@@ -11,10 +11,9 @@ dimnum(x, dim) = @something dim ndims(x)
 
 axiskeys(x, _) = throw(MethodError(axiskeys, (x,)))
 
-dims(x, _) = throw(MethodError(dims, (x,)))
-
 rebuild(x, data) = data
-# rebuild multiple dimensions
+# rebuild multiple dimensions; each entry of `dims` is a `Val{i}` (dimension `i` of `x`, static so
+# the result type is inferable), a `Symbol` (new named dimension) or `nothing` (new anonymous dimension)
 rebuild(x, data, dims, keys) = data
 # rebuild one dimension with new data and keys
 rebuild(x, data, dim::Integer, key) = data

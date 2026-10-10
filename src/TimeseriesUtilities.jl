@@ -21,6 +21,7 @@ export tinterp, tsync, tresample, tinterp_nans, tfill_gaps
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
 # Linear Algebra
 export proj, sproj, oproj
+export eachsample, mapsamples
 export tdot, tcross, tnorm, tproj, tsproj, toproj, tnorm_combine
 export tgroupby
 # Statistics
@@ -40,6 +41,7 @@ include("sliding.jl")
 include("timerange.jl"); export ContinuousTimeRanges
 include("timeseries.jl")
 include("operations.jl")
+include("samples.jl")
 include("groupby.jl")
 include("reduce.jl")
 include("stats.jl")
