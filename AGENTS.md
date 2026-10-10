@@ -4,8 +4,9 @@ Keep generic time-series behavior in main code and package-specific details in e
 
 Prefer defining operations against common coordinate API:
 
+- `dimnum(x, dim)`: dimension index; `dim=nothing` resolves to the time dimension.
 - `axiskeys(x, dim)`: raw coordinate values for a keyed/dimensional container axis.
-- `dims(x, dim)`: dimension identity/metadata, not coordinate values.
-- `times(x; dim=nothing)` or `times(x, dim)`: raw time coordinate values.
+- `tdimnum(x)`: time dimension index, or `nothing`; backends implement this rather than `dimnum(x, nothing)`.
+- `times(x, dim=nothing)`: raw time coordinate values.
 - `unwrap(x)`: parent underlying array.
 - `rebuild(x, data, dim, keys)`: rebuild the original container with new data and axis keys.

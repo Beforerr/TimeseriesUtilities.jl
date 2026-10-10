@@ -3,11 +3,24 @@
 # DimensionalData.jl: https://github.com/rafaqz/DimensionalData.jl
 
 """
+    tdimnum(x)
+
+Index of the time dimension of `x`, or `nothing` if `x` has none.
+Arrays without a named time dimension take time along their last dimension.
+"""
+tdimnum(x) = nothing
+tdimnum(x::AbstractArray) = ndims(x)
+
+"""
     dimnum(x, dim)
 
-Get the ordinal of the dimension `dim` in `x`.
+Index of dimension `dim` in `x`; `nothing` selects the time dimension ([`tdimnum`](@ref)).
+
+Containers with named dimensions add methods for their name types.
 """
-dimnum(x, dim) = @something dim ndims(x)
+dimnum(_, dim::Integer) = dim
+dimnum(x, ::Nothing) =
+    @something tdimnum(x) throw(ArgumentError("$(typeof(x)) has no time dimension; pass `dim`"))
 
 axiskeys(x, _) = throw(MethodError(axiskeys, (x,)))
 
