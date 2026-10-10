@@ -5,6 +5,7 @@ import TimeseriesUtilities:
     axiskeys,
     dimnum,
     rebuild,
+    rekey,
     tdimnum,
     times,
     unwrap
@@ -31,6 +32,7 @@ function rebuild(x::KeyedArray, data, dim::Integer, keys)
 end
 
 rebuild(x::KeyedArray, data) = _keyed(data, AxisKeys.dimnames(x), AxisKeys.axiskeys(x))
+rekey(x::KeyedArray, dim, keys) = rebuild(x, unwrap(x), dim, keys)
 
 rebuild(x::KeyedArray, data, dims, keys) = _keyed(data, map(d -> _name(x, d), dims), keys)
 

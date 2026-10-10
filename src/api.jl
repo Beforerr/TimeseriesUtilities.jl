@@ -24,14 +24,16 @@ dimnum(x, ::Nothing) =
 
 axiskeys(x, _) = throw(MethodError(axiskeys, (x,)))
 
+# Containers without a `rebuild` method degrade to their data, dropping their axis keys.
 rebuild(x, data) = data
 # rebuild multiple dimensions; each entry of `dims` is a `Val{i}` (dimension `i` of `x`, static so
 # the result type is inferable), a `Symbol` (new named dimension) or `nothing` (new anonymous dimension)
 rebuild(x, data, dims, keys) = data
 # rebuild one dimension with new data and keys
 rebuild(x, data, dim::Integer, key) = data
-# rebuild one dimension with new keys
-rebuild(x, dim::Integer, keys) = rebuild(x, parent(x), dim, keys)
+
+# Replace the keys of dimension `dim`
+rekey(x, dim, keys) = throw(ArgumentError("$(typeof(x)) has no axis keys to replace"))
 
 sorted_axis(sorted, dim; rev = false) = sorted
 
