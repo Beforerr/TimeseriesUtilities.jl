@@ -110,8 +110,8 @@ function _check_regular(pos, cval, rtol)
 end
 
 """
-    smooth(data, times, window; dim=ndims(data))
-    smooth(data, window; dim=ndims(data))
+    smooth(data, times, window; dim=nothing)
+    smooth(data, window; dim=nothing)
 
 Smooths a time series by computing a moving average over a sliding window.
 Edge windows are truncated, so the output has the same size as the input.
@@ -120,10 +120,11 @@ Each window covers the half-open interval `[coord - before, coord + after)`.
 A scalar `window` is interpreted as a coordinate span along the smoothed axis.
 
 # Arguments
-- `dim=ndims(data)`: Dimension along which to perform smoothing
+- `dim`: Dimension to smooth along; defaults to the time dimension
 - `op=nanmean`: Function used to aggregate each window
 """
-@inline function smooth(data, coords, window; dim = ndims(data), op = nanmean)
+@inline function smooth(data, coords, window; dim = nothing, op = nanmean)
+    dim = dimnum(data, dim)
     length(coords) == size(data, dim) || throw(DimensionMismatch("length(coords) must match size(data, dim)"))
     issorted(coords) || throw(ArgumentError("coords must be sorted"))
     before, after = _window_offsets(window, eltype(coords))
@@ -133,8 +134,9 @@ A scalar `window` is interpreted as a coordinate span along the smoothed axis.
     end
 end
 
-function smooth(data, window; dim = ndims(data), kw...)
-    return smooth(data, axes(data, dim), window; dim, kw...)
+function smooth(data, window; dim = nothing, kw...)
+    d = dimnum(data, dim)
+    return smooth(data, axes(data, d), window; dim = d, kw...)
 end
 
 

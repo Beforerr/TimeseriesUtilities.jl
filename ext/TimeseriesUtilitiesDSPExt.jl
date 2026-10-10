@@ -16,8 +16,9 @@ function TimeseriesUtilities.tfilter(
         Wn1::Real,
         Wn2 = nothing;
         designmethod = Butterworth(2),
-        dim = ndims(A),
+        dim = nothing,
     )
+    dim = TimeseriesUtilities.dimnum(A, dim)
     length(ts) == size(A, dim) || throw(DimensionMismatch("length(times) must match size(data, dim)"))
     fs = _sampling_frequency(ts)
     Wn2 = @something(Wn2, 0.999 * fs / 2)
@@ -47,11 +48,12 @@ end
 function TimeseriesUtilities.pspectrum(
         A::AbstractArray,
         ts::AbstractVector;
-        dim = ndims(A),
+        dim = nothing,
         nfft = 256,
         noverlap = div(nfft, 2),
         window = DSP.hamming,
     )
+    dim = TimeseriesUtilities.dimnum(A, dim)
     length(ts) == size(A, dim) || throw(DimensionMismatch("length(times) must match size(data, dim)"))
     ndims(A) == 1 && return TimeseriesUtilities.pspectrum(vec(A), ts; nfft, noverlap, window)
 

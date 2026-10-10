@@ -167,9 +167,9 @@ end
     @test tfill_gaps([d(1), d(3), d(10), d(11)], Day(1); max_gap = Day(2)) ==
         [d(1), d(2), d(3), d(10), d(11)]
 
-    # (A, t): time on last dim, values preserved
+    # (A, t): values preserved
     A = [1.0 2.0 4.0; 10.0 20.0 40.0]
-    out, t_new = tfill_gaps(A, [0.0, 1.0, 3.0])
+    out, t_new = tfill_gaps(A, [0.0, 1.0, 3.0]; dim = 2)
     @test t_new == [0.0, 1.0, 2.0, 3.0]
     @test isequal(out, [1.0 2.0 NaN 4.0; 10.0 20.0 NaN 40.0])
 

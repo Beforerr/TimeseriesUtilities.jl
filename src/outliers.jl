@@ -178,8 +178,8 @@ specified directly as a Boolean array `outliers`.
 
 See also: [filloutliers - MATLAB](https://www.mathworks.com/help/matlab/ref/filloutliers.html)
 """
-function replace_outliers!(A, method::Symbol, args...; dim = 1, kwargs...)
-    dims = other_dims(A, dim)
+function replace_outliers!(A, method::Symbol, args...; dim = nothing, kwargs...)
+    dims = other_dims(A, dimnum(A, dim))
     Aslices = eachslice(A; dims)
     foreach(Aslices) do x
         outliers = find_outliers(x, args...; kwargs...)
@@ -188,8 +188,8 @@ function replace_outliers!(A, method::Symbol, args...; dim = 1, kwargs...)
     return A
 end
 
-function replace_outliers!(A, method::Symbol, outliers::AbstractArray{Bool}; dim = 1, kwargs...)
-    dims = other_dims(A, dim)
+function replace_outliers!(A, method::Symbol, outliers::AbstractArray{Bool}; dim = nothing, kwargs...)
+    dims = other_dims(A, dimnum(A, dim))
     Aslices = eachslice(A; dims)
     outlierslices = eachslice(outliers; dims)
     foreach(Aslices, outlierslices) do x, y

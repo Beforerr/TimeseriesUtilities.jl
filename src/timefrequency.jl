@@ -1,5 +1,5 @@
 """
-    tfilter(A, times, Wn1, Wn2=nothing; dim=ndims(A), designmethod=nothing)
+    tfilter(A, times, Wn1, Wn2=nothing; dim=nothing, designmethod=nothing)
     tfilter(A, Wn1, Wn2=nothing; dim=nothing, designmethod=nothing)
 
 Bandpass filter `A` between `Wn1` and `Wn2`. The upper cutoff defaults to
@@ -20,7 +20,7 @@ function tfilter(A, Wn1, Wn2 = nothing; dim = nothing, kwargs...)
 end
 
 """
-    pspectrum(A, times; dim=ndims(A), nfft=256, noverlap=div(nfft, 2), window=DSP.hamming)
+    pspectrum(A, times; dim=nothing, nfft=256, noverlap=div(nfft, 2), window=DSP.hamming)
     pspectrum(A; dim=nothing, freqdim=:frequency, kwargs...)
 
 Compute a time-frequency power spectrum with `DSP.spectrogram`.

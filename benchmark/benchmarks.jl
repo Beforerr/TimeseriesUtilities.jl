@@ -45,8 +45,8 @@ sample_vector(x, t) = x .* t
 sample_static(x, t) = SVector{3}(x) .* t
 
 SUITE["mapsamples"] = BenchmarkGroup()
-SUITE["mapsamples"]["scalar_time_last"] = @benchmarkable mapsamples(sample_scalar, $(rand(3, 10_000)), $samples_times_bench)
+SUITE["mapsamples"]["scalar_time_last"] = @benchmarkable mapsamples(sample_scalar, $(rand(3, 10_000)), $samples_times_bench; dim = 2)
 SUITE["mapsamples"]["vector_time_first"] = @benchmarkable mapsamples(sample_vector, $(rand(10_000, 3)), $samples_times_bench; dim = 1)
 SUITE["mapsamples"]["static_time_first"] = @benchmarkable mapsamples(sample_static, $(rand(10_000, 3)), $samples_times_bench; dim = 1)
-SUITE["mapsamples"]["static_time_last"] = @benchmarkable mapsamples(sample_static, $(rand(3, 10_000)), $samples_times_bench)
+SUITE["mapsamples"]["static_time_last"] = @benchmarkable mapsamples(sample_static, $(rand(3, 10_000)), $samples_times_bench; dim = 2)
 SUITE["mapsamples"]["dimarray_scalar"] = @benchmarkable mapsamples(sample_scalar, $(DimArray(rand(10_000, 3), (Ti(samples_times_bench), Y(1:3)))))
