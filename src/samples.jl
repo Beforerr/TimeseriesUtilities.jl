@@ -1,44 +1,52 @@
 """
-    eachsample(A, [ts]; dim=nothing)
+    mapsamples(f, A, args...; dim=nothing)
 
-Iterate `(x, t)`: each slice `x` of `A` along time with its time `t`.
+Apply `f` to each sample of `A` and the matching samples of `args`, and stack results along time.
+
+Time sits at position `dim` of the result, clamped to last when results have too few axes.
+Results the size of a sample keep the other axes of `A`; other results get anonymous axes.
+
+Samples are views; for small vectors, converting them to `SVector`s avoids per-sample allocation, e.g. `mapsamples((e, b) -> cross(SVector{3}(e), SVector{3}(b)), E, B)`.
 """
-eachsample(A; dim = nothing) = eachsample(A, axiskeys(A, dimnum(A, dim)); dim)
-eachsample(A, ts; dim = nothing) = (d = dimnum(A, dim); zip(eachslice(unwrap(A); dims = d), _sampletimes(A, ts, d)))
+@inline mapsamples(f, A, args...; dim = nothing) = _mapsamples(f, A, args, dim, dimnum(A, dim), Val(ndims(A)))
 
-@inline function _sampletimes(A, ts, d)
-    bt = Base.broadcastable(ts)
-    N = length(axes(bt))  # `ndims` is undefined for tuples
-    N == 0 && return Iterators.repeated(bt[])
-    N == 1 || throw(ArgumentError("ts must be 0- or 1-dimensional, got $N dimensions"))
-    length(bt) == size(A, d) ||
-        throw(DimensionMismatch("length(ts) = $(length(bt)) must match size(A, $d) = $(size(A, d))"))
-    return bt
+# `eachslice` and the rebuild need a static dim: `Val(d)` with a runtime `d` infers `Any`, testing `d == N` for
+# each `N` union-splits, and a constant `d` (default `dim`, wrapper dimension types) folds to one branch.
+@inline _mapsamples(f, A, args, dim, d, D::Val{N}) where {N} =
+    d == N ? _mapsamples(f, A, args, dim, D) : _mapsamples(f, A, args, dim, d, Val(N - 1))
+_mapsamples(_, _, _, _, d, ::Val{0}) = throw(ArgumentError("dim = $d is out of range"))
+
+function _mapsamples(f, A, args, dim, D::Val{d}) where {d}
+    keys = unwrap(A) === A ? nothing : axiskeys(A, d)
+    ys = map(x -> _samples(x, dim, D, size(A, d), keys), args)
+    return _rebuild_samples(A, _stack_samples(f, unwrap(A), ys, D), D)
 end
 
-"""
-    mapsamples(f, A, [ts]; dim=nothing)
+_valof(::Val{D}) where {D} = D
 
-Apply `f(x, t)` per sample and stack results along time.
+# per-sample iterator over argument `x`, sliced along its own time dim
+@inline function _samples(x, dim, D, n, keys)
+    bt = Base.broadcastable(x)
+    N = length(axes(bt))  # `ndims` is undefined for tuples
+    N == 0 && return Iterators.repeated(bt[])
+    # an integer `dim` applies to every argument, so reuse the static dim of `A`
+    dx = N == 1 ? Val(1) : dim isa Integer ? D : Val(dimnum(x, dim))
+    m = length(axes(bt)[_valof(dx)])
+    m == n || throw(DimensionMismatch("argument has $m samples along dimension $(_valof(dx)); A has $n"))
+    isnothing(keys) || unwrap(x) === x || _samekeys(axiskeys(x, _valof(dx)), keys) ||
+        throw(DimensionMismatch("argument time keys differ from those of A; align with `tinterp` or `tsync` first"))
+    return N == 1 ? unwrap(bt) : eachslice(unwrap(bt); dims = _valof(dx))
+end
 
-Results the size of a sample keep the other axes of `A`; other results get anonymous axes.
-"""
-@inline mapsamples(f, A; dim = nothing) = mapsamples(f, A, axiskeys(A, dimnum(A, dim)); dim)
-@inline mapsamples(f, A, ts; dim = nothing) =
-    (d = dimnum(A, dim); _mapsamples(f, A, _sampletimes(A, ts, d), d, Val(ndims(A))))
+_samekeys(a, b) = a === b || a == b
 
-# `eachslice` and the rebuild need a static `D`: `Val(d)` with a runtime `d` infers `Any`, testing `d == N`
-# for each `N` union-splits, and a constant `d` (default `dim`, wrapper dimension types) folds to one branch.
-@inline _mapsamples(f, A, ts, d, D::Val{N}) where {N} =
-    d == N ? _rebuild_samples(A, _stack_samples(f, unwrap(A), ts, D), D) : _mapsamples(f, A, ts, d, Val(N - 1))
-_mapsamples(_, _, _, d, ::Val{0}) = throw(ArgumentError("dim = $d is out of range"))
-
-function _stack_samples(f, A, ts, ::Val{D}) where {D}
+# `f::F` forces specialization for Julia 1.10 which dispatches `f(s...)` dynamically otherwise
+function _stack_samples(f::F, A, ys, ::Val{D}) where {F, D}
     xs = eachslice(A; dims = D)
-    isempty(xs) && return _empty_samples(A, Base.promote_op(f, eltype(xs), eltype(ts)), D)
-    samples = zip(xs, ts)
-    (x, t), state = iterate(samples)
-    y = f(x, t)
+    isempty(xs) && return _empty_samples(A, Base.promote_op(f, eltype(xs), map(eltype, ys)...), D)
+    samples = zip(xs, ys...)
+    s, state = iterate(samples)
+    y = f(s...)
     P = _slotdim(y, D)
     return _fill_samples!(_similar_samples(A, y, length(xs), P), f, y, samples, state, 1, P)
 end
@@ -65,7 +73,7 @@ end
 
 # When its element type does not fit, widen `out` and continue from `k`
 # (same strategy as `map`; for a type-stable `f` the check folds away).
-function _fill_samples!(out, f, y, samples, state, k, P)
+function _fill_samples!(out, f::F, y, samples, state, k, P) where {F}
     while true
         T = isnothing(P) ? typeof(y) : eltype(y)
         if !(T <: eltype(out))
@@ -78,8 +86,9 @@ function _fill_samples!(out, f, y, samples, state, k, P)
         _setsample!(out, k, y, P)
         next = iterate(samples, state)
         isnothing(next) && return out
-        (x, t), state = next
-        y, k = f(x, t), k + 1
+        s, state = next
+        # inlined so small results such as `SVector`s stay in registers
+        y, k = (@inline f(s...)), k + 1
     end
 end
 

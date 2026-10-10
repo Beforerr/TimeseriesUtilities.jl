@@ -20,10 +20,8 @@ import TimeseriesUtilities:
     dimnum,
     dropna,
     groupby_dynamic,
-    norm_combine,
     smooth,
     sorted_axis,
-    tnorm_combine,
     tdimnum,
     tstat,
     unwrap
@@ -105,17 +103,6 @@ function tstat(f, ds::AbstractDimStack, args...; dim = nothing)
     return maplayers(ds) do layer
         tstat(f, layer, args...; dim = d)
     end
-end
-
-function tnorm_combine(x::AbstractDimArray; dim = nothing, name = :magnitude)
-    d = dimnum(x, dim)
-    data = norm_combine(parent(x), d)
-
-    odim = otherdims(x, d) |> only
-    odimType = basetypeof(odim)
-    new_odim = odimType(vcat(odim.val, name))
-    new_dims = map(dd -> dd isa odimType ? new_odim : dd, dims(x))
-    return rebuild(x, data, new_dims)
 end
 
 end
