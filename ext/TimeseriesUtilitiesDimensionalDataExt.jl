@@ -78,6 +78,7 @@ TU.rebuild(x::AbstractDimArray, data, newdims, keys) =
     rebuild(x, data, map((d, k) -> _newdim(x, d, k), newdims, keys))
 
 TU.rebuild(x::AbstractDimArray, data) = rebuild(x, data)
+TU.rekey(x::AbstractDimArray, dim, keys) = TU.rebuild(x, parent(x), dim, keys)
 
 function smooth(da::AbstractDimArray, window; dim = nothing, kwargs...)
     dnum = dimnum(da, dim)

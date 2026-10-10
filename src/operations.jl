@@ -140,5 +140,5 @@ function tshift(x, t0 = nothing; dim = nothing)
     d = dimnum(x, dim)
     times = axiskeys(x, d)
     times′ = times .- (@something t0 first(times))
-    return rebuild(x, d, times′)
+    return rekey(x, d, times′)
 end
