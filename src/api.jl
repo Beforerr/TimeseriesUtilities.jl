@@ -44,8 +44,6 @@ Time coordinate of `x`: the keys of its time dimension (or of `dim`).
 """
 times(x, dim = nothing) = axiskeys(x, dimnum(x, dim))
 
-function samplingrate end
-
 _seconds(dt::Period) = dt / Second(1)
 _seconds(dt) = dt
 

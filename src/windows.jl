@@ -1,7 +1,3 @@
-abstract type AbstractWindowView{T} <: AbstractVector{T} end
-
-Base.size(wv::AbstractWindowView) = (length(wv.windows),)
-
 # Window spec yielding `(coords[i] - before, coords[i] + after)` for each index `i`.
 struct PointWindows{C, B, A}
     coords::C
@@ -26,7 +22,7 @@ end
 
 `windows` is any indexable source of `(t_start, t_stop)` pairs (e.g. `TimeRanges`). The `before`/`after` form builds a symmetric window around each point in `coords`. Requires `coords` to be sorted.
 """
-struct WindowedView{dim, T, D, C, W} <: AbstractWindowView{T}
+struct WindowedView{dim, T, D, C, W} <: AbstractVector{T}
     data::D
     coords::C
     windows::W
@@ -40,6 +36,8 @@ function WindowedView{dim}(data::D, coords::C, windows::W) where {dim, D, C, W}
     T = Base.promote_op(_dim_view, D, Val{dim}, UnitRange{Int})
     return WindowedView{dim, T, D, C, W}(data, coords, windows)
 end
+
+Base.size(wv::WindowedView) = (length(wv.windows),)
 
 function Base.getindex(wv::WindowedView{dim}, i::Int) where {dim}
     t_start, t_stop = wv.windows[i]

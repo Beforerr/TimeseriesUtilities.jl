@@ -1,6 +1,3 @@
-struct _NotSet end
-const _notset = _NotSet()
-
 """
     tsort(A; dim=nothing, rev=false)
 
@@ -32,20 +29,14 @@ tclip(A, tr; kw...) = tclip(A, tr...; kw...)
 
 """
     tview(A, t0, t1; dim=nothing)
-    tview(f, t0, t1)
 
 View `A` in time range `[t0, t1]` along dimension `dim`.
-
-When `f` is callable, returns `f(t0, t1)`.
 """
 function tview(A, t0, t1; dim = nothing)
     d = dimnum(A, dim)
     idx = _search_range(axiskeys(A, d), t0, t1)
     return @view A[_selectors(A, d, idx)...]
 end
-
-tview(f::Function, t0::T1, t1::T2; dim = _notset) where {T1, T2} =
-    (!isa(dim, _NotSet) && hasmethod(f, Tuple{T1, T2}, (:dim,))) ? f(t0, t1; dim) : f(t0, t1)
 
 tview(A, tr; kw...) = tview(A, tr...; kw...)
 

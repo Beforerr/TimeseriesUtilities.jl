@@ -1,6 +1,6 @@
 # Sampling cadence
 
-`cadence` (alias `resolution`) estimates the fundamental sampling step `Δt` of
+`cadence` estimates the fundamental sampling step `Δt` of
 a time series. Real timestamps rarely arrive on a clean grid — they may have:
 
 - **gaps** at multiples of `Δt` (`k·Δt`),
@@ -60,7 +60,7 @@ cadence(t_jitter; check = false)
 
 ```@docs
 cadence
-resolution
+samplingrate
 ```
 
 

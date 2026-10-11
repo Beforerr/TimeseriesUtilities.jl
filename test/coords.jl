@@ -37,6 +37,8 @@
     base = collect(1:100)
     deleteat!(base, 3:3:99)
     @test cadence(base; check = false) == 1
+
+    @test samplingrate(DateTime(2020) .+ Millisecond.(0:10:100)) == 100.0
 end
 
 @testitem "tmin, tmax, trange" begin

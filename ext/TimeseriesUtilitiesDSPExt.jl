@@ -5,11 +5,6 @@ using DSP: Butterworth, Bandpass, digitalfilter, filtfilt
 import TimeseriesUtilities
 using TimeseriesUtilities: TimeOffsets
 
-function _sampling_frequency(ts)
-    dt = TimeseriesUtilities.resolution(ts)
-    return inv(TimeseriesUtilities._seconds(dt))
-end
-
 function TimeseriesUtilities.tfilter(
         A::AbstractArray,
         ts::AbstractVector,
@@ -20,7 +15,7 @@ function TimeseriesUtilities.tfilter(
     )
     dim = TimeseriesUtilities.dimnum(A, dim)
     length(ts) == size(A, dim) || throw(DimensionMismatch("length(times) must match size(data, dim)"))
-    fs = _sampling_frequency(ts)
+    fs = TimeseriesUtilities.samplingrate(ts)
     Wn2 = @something(Wn2, 0.999 * fs / 2)
     f = digitalfilter(Bandpass(Wn1, Wn2), designmethod; fs)
     return mapslices(slice -> filtfilt(f, slice), A; dims = dim)
@@ -41,7 +36,7 @@ function TimeseriesUtilities.pspectrum(
     )
     dim in (nothing, 1) || throw(ArgumentError("dimension $dim out of range for vector input"))
     length(x) == length(ts) || throw(DimensionMismatch("data and times must have the same length"))
-    spec = DSP.spectrogram(x, nfft, noverlap; fs = _sampling_frequency(ts), window)
+    spec = DSP.spectrogram(x, nfft, noverlap; fs = TimeseriesUtilities.samplingrate(ts), window)
     return (power = spec.power, time = TimeOffsets(spec.time, first(ts)), freq = spec.freq)
 end
 

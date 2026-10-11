@@ -20,7 +20,12 @@ function cadence(ts; tol = 2, rtol = exp10(-tol - 1), check = true)
     return T <: AbstractFloat ? cval : T(round(Int, cval))
 end
 
-const resolution = cadence
+"""
+    samplingrate(ts)
+
+Sampling rate of times `ts` in hertz: inverse [`cadence`](@ref), with numeric times taken as seconds.
+"""
+samplingrate(ts; kw...) = inv(_seconds(cadence(ts; kw...)))
 
 function _positive_diffs(ts)
     @inline _float(x) = Float64(x)
@@ -164,14 +169,12 @@ function _time_grid(ts, dt)
     return tmin:dt:tmax
 end
 
-abstract type AbstractTimeRanges end
-
 """
     ContinuousTimeRanges(times, max_dt)
 
 Iterator of `(t_start, t_stop)` spans over `times`, splitting wherever consecutive values differ by more than `max_dt`.
 """
-struct ContinuousTimeRanges{T, P} <: AbstractTimeRanges
+struct ContinuousTimeRanges{T, P}
     times::T
     max_dt::P
 end
@@ -205,7 +208,7 @@ end
 
 Lazy iterator of `(t_start, t_end)` pairs splitting `[t0, t1)` into `dt`-sized windows.
 """
-struct IntervalRange{T, D} <: AbstractTimeRanges
+struct IntervalRange{T, D}
     t0::T
     t1::T
     dt::D

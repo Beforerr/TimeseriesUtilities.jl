@@ -17,13 +17,6 @@ end
     return isodd(n) ? v[m] : middle(v[m - 1], v[m])
 end
 
-function stat_relerr(itr, f)
-    m = f(itr)
-    relerrs = abs.(extrema(itr) .- m) ./ m
-    relerr = maximum(relerrs)
-    return m, relerr
-end
-
 other_dims(A, dim) = filter(!=(dim), ntuple(identity, ndims(A)))
 
 # View `A` as (dims before `d`, `d`, dims after `d`): kernels then compile once per

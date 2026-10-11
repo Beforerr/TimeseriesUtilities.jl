@@ -10,10 +10,14 @@
 - **Breaking**: Plain arrays with more than one dimension have no default time dimension: calls without `dim`, including explicit-times forms like `tinterp(A, t, t_new)`, throw `ArgumentError`. Plain vectors are unaffected.
 - **Breaking**: `mapsamples(f, A, args...)` calls `f` with the matching sample of each argument, each sliced along its own time dimension. Time is no longer passed implicitly: `mapsamples(f, A)` becomes `mapsamples(f, A, times(A))`. Keyed arguments must share the time keys of `A`.
 - **Breaking**: Remove the `trange` keyword of `tclips` and `tviews`; use `tclip.(xs, Ref(tr))`.
+- **Breaking**: `samplingrate(ts)` is defined without Unitful and returns hertz as a plain number.
 - `times(x, dim)` is generic over `axiskeys` and `tdimnum`; container backends no longer define `times`.
 
 ### Removed
 
+- **Breaking**: `resolution`; use `cadence`.
+- **Breaking**: `tview(f::Function, t0, t1)`.
+- **Breaking**: `Tinterp`; external interpolators passed as `interp` receive raw time values (`Dates.value`) directly.
 - **Breaking**: `time_grid`; use `tresample(A, dt)` or `range(trange(x)...; step = dt)`.
 - **Breaking**: `tnorm`, `tdot`, `tcross`, `tsproj`, `tproj`, `toproj`, `tnorm_combine`; use `mapsamples(norm, B)`, `mapsamples(cross, E, B)`, `mapsamples(oproj, A, B)`, ...
 

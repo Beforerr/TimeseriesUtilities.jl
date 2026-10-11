@@ -1,28 +1,26 @@
-# A function-like wrapper for time series interpolation that handles time type conversions.
-# a workaround for `Time` type: https://github.com/SciML/DataInterpolations.jl/issues/436
-struct Tinterp{T, F}
-    interp::F
-    tType::Type{T}
-end
-
-Tinterp(u, t, interp; kws...) = Tinterp(interp(u, rawview(t); kws...), eltype(t))
-Tinterp(interp) = (u, t; kws...) -> Tinterp(u, t, interp; kws...)
-(ti::Tinterp{T})(t) where {T} = ti.interp(rawview(T(t)))
-
 rawview(x) = x
-
-function rawview(x::AbstractArray{T}) where {T <: AbstractTime}
-    return Dates.value.(x)
-    # reinterpret seems to be much slower
-    # rawType = Base.promote_op(Dates.value, T)
-    # return isbitstype(T) && sizeof(T) == sizeof(rawType) ? reinterpret(rawType, x) : x
-end
-
 rawview(x::AbstractTime) = Dates.value(x)
+rawview(x::AbstractArray{<:AbstractTime}) = Dates.value.(x)
+# Zero-copy, and indexes as fast as the broadcast copy; assumes `Dates.value` returns the innermost field.
+function rawview(x::DenseArray{T}) where {T <: AbstractTime}
+    R = Base.promote_op(Dates.value, T)
+    return _wraps(T, R) ? reinterpret(R, x) : Dates.value.(x)
+end
+_wraps(T, R) = T === R || (isbitstype(T) && fieldcount(T) == 1 && _wraps(fieldtype(T, 1), R))
 
-# https://github.com/brendanjohnharris/TimeseriesTools.jl/blob/main/ext/DataInterpolationsExt.jl
-# https://github.com/JuliaMath/Interpolations.jl
-# https://discourse.julialang.org/t/interpolating-along-a-single-dimension-of-a-multi-dimensional-array-for-particular-points/29308/3
+# Mixed time types (`Date` knots, `DateTime` queries) neither subtract nor share raw-value
+# epochs and units, so both sides convert to the promoted time type first.
+function _commontimes(t, tq)
+    T = promote_type(eltype(t), eltype(tq))
+    T <: AbstractTime && !isconcretetype(T) && eltype(t) != eltype(tq) &&
+        throw(ArgumentError("times of types $(eltype(t)) and $(eltype(tq)) have no common type"))
+    return _astime(T, t), _astime(T, tq)
+end
+_astime(::Type, x) = x
+_astime(::Type{T}, x) where {T <: AbstractTime} = eltype(x) <: T ? x : convert.(T, x)
+
+# Numeric interpolators (DataInterpolations.jl, FastInterpolations.jl) cannot take `Dates` times
+_rawtimes(t, tq) = map(rawview, _commontimes(t, tq))
 
 struct LinearInterpolation{U, T, E}
     u::U
@@ -126,6 +124,7 @@ end
     _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
 
 function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
+    old_times, new_times = _commontimes(old_times, new_times)
     out_sz = ntuple(i -> i == d ? length(new_times) : size(A, i), ndims(A))
     out = similar(A, float(eltype(A)), out_sz)
     _tinterp_linear3!(_as3d(out, d), _as3d(A, d), old_times, new_times, extrapolation)
@@ -149,9 +148,10 @@ end
 # interpolator per channel over a view, so nothing is copied and any `interp` works
 # (vector-valued splines need slice types whose arithmetic round-trips).
 function _tinterp_nd(interp, A, old_times, new_times, d; kws...)
+    x, xq = _rawtimes(old_times, new_times)
     A3 = _as3d(A, d)
-    fs = [interp(view(A3, p, :, q), old_times; kws...) for q in axes(A3, 3) for p in axes(A3, 1)]
-    return _stack_channels(A, d, [f.(new_times) for f in fs])
+    fs = [interp(view(A3, p, :, q), x; kws...) for q in axes(A3, 3) for p in axes(A3, 1)]
+    return _stack_channels(A, d, [f.(xq) for f in fs])
 end
 
 # Assemble per-channel results (ordered as `vec` of the non-time dims) into `A`'s layout.
@@ -203,8 +203,7 @@ A_sync, B_sync, C_sync = tsync(A, B, C)
 ```
 """
 function tsync(A, Bs...)
-    tr = trange(A, Bs...)
-    @assert !isnothing(tr) "No common time range found"
+    tr = @something trange(A, Bs...) throw(ArgumentError("No common time range found"))
     A_tsync = tclip(A, tr...)
     tstamps = times(A_tsync)
     Bs_syncs = map(Bs) do B

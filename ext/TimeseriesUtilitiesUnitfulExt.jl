@@ -2,7 +2,6 @@ module TimeseriesUtilitiesUnitfulExt
 
 using Dates
 import TimeseriesUtilities as TU
-import TimeseriesUtilities: samplingrate
 using Unitful
 
 function TU._time_grid(ts, dt::Unitful.Quantity)
@@ -26,7 +25,5 @@ for (period, unit) in (
 end
 
 _2dates(x::Unitful.Quantity) = _2dates(Unitful.unit(x))(x)
-
-samplingrate(ts) = 1u"s" / TU.resolution(ts) * u"Hz" |> u"Hz"
 
 end

@@ -2,34 +2,20 @@
     using Dates, DimensionalData
     using TimeseriesUtilities
 
-    # create a simple linearly increasing series
     times = [DateTime(2020, 1, 1), DateTime(2020, 1, 2), DateTime(2020, 1, 3)]
     da = DimArray(0:2, (Ti(times),))
+    @test tinterp(da, DateTime(2020, 1, 1, 12)) ≈ 0.5
 
-    # single DateTime interpolation
-    t1 = DateTime(2020, 1, 1, 12)
-    res1 = tinterp(da, t1)
-    @test res1 ≈ 0.5
-
-    # multiple DateTime interpolation
     t2 = [DateTime(2020, 1, 1, 6), DateTime(2020, 1, 2, 18)]
     res2 = tinterp(da, t2)
-    @test isa(res2, DimArray)
-    @test res2 ≈ [0.25, 1.75]
     @test dims(res2, Ti).val == t2
     @test DimensionalData.span(dims(res2, Ti)) isa DimensionalData.Irregular
     t3 = DateTime(2020, 1, 1):Hour(6):DateTime(2020, 1, 2)
     @test DimensionalData.span(dims(tinterp(da, t3), Ti)) == DimensionalData.Regular(Hour(6))
 
-    # create 3×2 series with numeric time dimension
     da3 = DimArray([1.0 4.0; 2.0 5.0; 3.0 6.0], (Ti(times), Y([10, 20])))
+    @test tinterp(da3, t2) ≈ [1.25 4.25; 2.75 5.75]
 
-    # interpolate at two points
-    res = tinterp(da3, t2)
-    @test dims(res, Ti).val == t2
-    @test res ≈ [1.25 4.25; 2.75 5.75]
-
-    @test tinterp([0.0, 1.0, 2.0], [0.0, 1.0, 2.0], [0.5, 1.5]) ≈ [0.5, 1.5]
     @test tresample([0.0, 1.0, 2.0], [0.0, 1.0, 2.0], 1.0) ≈ [0.0, 1.0, 2.0]
 end
 
@@ -37,27 +23,24 @@ end
     using Dates, DimensionalData
     using DataInterpolations: LinearInterpolation, ExtrapolationType, CubicSpline
     using TimeseriesUtilities
-    using TimeseriesUtilities: Tinterp
 
     times = [DateTime(2020, 1, 1), DateTime(2020, 1, 2), DateTime(2020, 1, 3)]
     da = DimArray(0:2, (Ti(times),))
 
-    t = DateTime(2020, 1, 1, 12)
-    @test tinterp(da, t) == tinterp(da, t; interp = Tinterp(LinearInterpolation))
+    dd = DimArray(0:2, (Ti(Date.(times)),))
+    for interp in (LinearInterpolation, TimeseriesUtilities.LinearInterpolation)
+        @test tinterp(dd, [DateTime(2020, 1, 2, 12)]; interp) == [1.5]
+    end
+    @test tinterp([0.0, 1.0, 2.0], [0, 1, 2], [0.5]; interp = LinearInterpolation) == [0.5]
 
     before = DateTime(2019, 12, 31)
     @test tinterp(da, before; extrapolation = true) ≈ -1.0
-    @test tinterp(da, before; interp = Tinterp(LinearInterpolation), extrapolation = ExtrapolationType.Linear) ≈ -1.0
+    @test tinterp(da, before; interp = LinearInterpolation, extrapolation = ExtrapolationType.Linear) ≈ -1.0
 
-    # CubicSpline on multi-dim array (per-channel fallback)
+    # per-channel fallback; a spline through linear data is exact
     t3 = [DateTime(2020, 1, i) for i in 1:5]
-    da3 = DimArray([Float64(i) for i in 1:5, j in 1:3], (Ti(t3), Y(1:3)))
-    t_new = [DateTime(2020, 1, 2, 12)]
-    out = tinterp(da3, t_new; interp = Tinterp(CubicSpline))
-    @test out isa DimArray
-    @test size(out) == (1, 3)
-    @test out[1, :] ≈ [2.5, 2.5, 2.5] atol = 0.1
-
+    da3 = DimArray([Float64(i * j) for i in 1:5, j in 1:3], (Ti(t3), Y(1:3)))
+    @test parent(tinterp(da3, [DateTime(2020, 1, 2, 12)]; interp = CubicSpline)) ≈ [2.5 5.0 7.5]
 end
 
 @testitem "linear search hint" begin
@@ -97,17 +80,7 @@ end
     using TimeseriesUtilities
 
     times = [DateTime(2020, 1, 1), DateTime(2020, 1, 2), DateTime(2020, 1, 3)]
-    ka = KeyedArray(0.0:2.0; time = times)
-
-    t1 = DateTime(2020, 1, 1, 12)
-    @test tinterp(ka, t1) ≈ 0.5
-
     t2 = [DateTime(2020, 1, 1, 6), DateTime(2020, 1, 2, 18)]
-    res = tinterp(ka, t2)
-    @test res ≈ [0.25, 1.75]
-    @test axiskeys(res, 1) == t2
-    @test AxisKeys.dimnames(res, 1) == :time
-
     ka2 = KeyedArray(
         [1.0 4.0; 2.0 5.0; 3.0 6.0];
         time = times,
@@ -115,11 +88,10 @@ end
     )
     res2 = tinterp(ka2, t2)
     @test res2 ≈ [1.25 4.25; 2.75 5.75]
-    @test axiskeys(res2, 1) == t2
-    @test axiskeys(res2, 2) == [10, 20]
-    @test AxisKeys.dimnames(res2, 2) == :component
+    @test axiskeys(res2) == (t2, [10, 20])
+    @test AxisKeys.dimnames(res2) == (:time, :component)
 
-    resampled = tresample(ka, Hour(12))
+    resampled = tresample(KeyedArray(0.0:2.0; time = times), Hour(12))
     @test axiskeys(resampled, 1) == DateTime(2020, 1, 1):Hour(12):DateTime(2020, 1, 3)
     @test resampled ≈ 0.0:0.5:2.0
 end
@@ -131,22 +103,12 @@ end
     da1, da2, da3 = workload_interp_setup()
     a_sync, b_sync, c_sync = tsync(da1, da2, da3)
 
-    # Check that all synchronized arrays have the same time dimension
-    @test parent(dims(a_sync, Ti)) == parent(dims(b_sync, Ti)) == parent(dims(c_sync, Ti))
-
-    # Check that the time range is the intersection of all input arrays
-    @test dims(a_sync, Ti)[1] == DateTime(2020, 1, 2)
-    @test dims(a_sync, Ti)[end] == DateTime(2020, 1, 3)
-
-    # Check that values from the first and second array are preserved
+    # common span is the intersection of all inputs; da3 is interpolated onto da1's times
+    tc = [DateTime(2020, 1, 2), DateTime(2020, 1, 3)]
+    @test parent(dims(a_sync, Ti)) == parent(dims(b_sync, Ti)) == parent(dims(c_sync, Ti)) == tc
     @test a_sync == [2, 3]
     @test b_sync == [10, 11]
-    # The values should be interpolated at DateTime(2020, 1, 2) and DateTime(2020, 1, 3)
-    expected_values = [
-        5.5 9;
-        6.5 11
-    ]
-    @test parent(c_sync) ≈ expected_values
+    @test parent(c_sync) ≈ [5.5 9; 6.5 11]
 
     using JET
     @test_opt tsync(da1, da2, da3)

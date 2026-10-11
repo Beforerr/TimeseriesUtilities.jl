@@ -11,7 +11,7 @@ _extrap(e::Bool) = e ? ExtendExtrap() : NoExtrap()
 _extrap(e) = e
 
 function TU._tinterp_nd(f::Union{SeriesInterp, LocalInterp}, A, old_times, new_times, d; extrapolation = false, kws...)
-    x, xq = TU.rawview(old_times), TU.rawview(new_times)
+    x, xq = TU._rawtimes(old_times, new_times)
     A3 = TU._as3d(A, d)
     kw = (; extrap = _extrap(extrapolation), kws...)
     cols = if f isa SeriesInterp

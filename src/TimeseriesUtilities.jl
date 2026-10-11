@@ -12,7 +12,7 @@ using LinearAlgebra
 using NaNStatistics
 using Statistics: mean, median, median!, quantile, middle
 
-export cadence, resolution, samplingrate
+export cadence, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
 export trange, find_continuous_timeranges, ContinuousTimeRanges, tsplit, IntervalRange
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
