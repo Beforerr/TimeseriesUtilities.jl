@@ -41,15 +41,17 @@
     @test samplingrate(DateTime(2020) .+ Millisecond.(0:10:100)) == 100.0
 end
 
-@testitem "tmin, tmax, trange" begin
+@testitem "targmin, targmax, trange" begin
     using DimensionalData
+
+    x = Timed([1.0 NaN NaN; NaN 5.0 NaN; 3.0 0.0 NaN], [10, 20, 30]; dim = 1)
+    @test isequal(targmax(x), [30, 20, missing])
+    @test isequal(targmin(x), [10, 30, missing])
+    @test ismissing(targmax(Timed(Float64[], Int[])))
+    @test isequal(tmaximum(x, 20), Timed([1.0 NaN NaN; 3.0 5.0 NaN], 0:20:20; dim = 1))
 
     t = Ti(1:10000)
     x = rand(t)
-    @test tminimum(x) == minimum(t)
-    @test tmaximum(x) == maximum(t)
-    @test targmin(x) == t[argmin(x)]
-    @test targmax(x) == t[argmax(x)]
     @test trange(x) == (1, 10000)
     @test trange(x, x[Ti = 5:20], x[Ti = 10:30]) == (10, 20)
     @test isnothing(trange(x[Ti = 1:5], x[Ti = 6:9]))

@@ -16,7 +16,7 @@ Starts begin at the first time floored to a multiple of `every` (`start_by=:wind
 function tstat(f, x; dim = nothing)
     d = dimnum(x, dim)
     data = unwrap(x)
-    return ndims(data) == 1 ? f(data) : _dropdim(x, map(f, eachslice(data; dims = other_dims(data, d))), d)
+    return ndims(data) == 1 ? f(data) : _dropdim(x, _map(f, eachslice(data; dims = other_dims(data, d))), d)
 end
 
 function tstat(f, x, every; period = every, start_by = :window, dim = nothing)
@@ -26,28 +26,31 @@ function tstat(f, x, every; period = every, start_by = :window, dim = nothing)
     # index ranges of the windows, searched once for all channels
     ranges = collect(WindowedView{1}(axes(data, d), t, windows))
     A3 = _as3d(data, d)
-    cols = [map(r -> f(view(A3, p, r, q)), ranges) for q in axes(A3, 3) for p in axes(A3, 1)]
+    cols = [_map(r -> f(view(A3, p, r, q)), ranges) for q in axes(A3, 3) for p in axes(A3, 1)]
     return rebuild(x, _stack_channels(data, d, cols), d, windows.coords)
 end
 
-tstat_doc(sym, desc = sym) = """
+tstat_doc(sym, desc = sym, note = "") = """
     $(Symbol(:t, sym))(x, [every]; period=every, start_by=:window, dim=nothing)
 
 The $desc of `x` along time (or `dim`), ignoring NaNs: over all samples or per window, see [`tstat`](@ref).
+$note
 """
 
-for (sym, desc) in (
-        (:sum, "sum"),
-        (:mean, "arithmetic mean"),
-        (:median, "median"),
-        (:var, "variance"),
-        (:std, "standard deviation"),
-        (:sem, "standard error of the mean"),
+for (sym, desc, note) in (
+        (:sum, "sum", ""),
+        (:mean, "arithmetic mean", ""),
+        (:median, "median", ""),
+        (:var, "variance", ""),
+        (:std, "standard deviation", ""),
+        (:sem, "standard error of the mean", ""),
+        (:maximum, "maximum", "Empty windows of integer data give `typemin`."),
+        (:minimum, "minimum", "Empty windows of integer data give `typemax`."),
     )
 
     nanfunc = Symbol(:nan, sym)
     tfunc = Symbol(:t, sym)
-    doc = tstat_doc(sym, desc)
+    doc = tstat_doc(sym, desc, note)
     @eval @doc $doc $tfunc(x, arg...; kw...) = tstat($nanfunc, x, arg...; kw...)
 end
 

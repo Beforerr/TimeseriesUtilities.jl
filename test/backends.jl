@@ -27,6 +27,8 @@
         tinterp_nans,
         tmean,
         x -> tmean(x, 2.0; period = 3.0),
+        x -> tmaximum(x, 2.0),
+        targmax,
         x -> mapsamples(sum, x),
         x -> outlier_mask(x, 3.0; threshold = 1),
         x -> despike(x; threshold = 1),

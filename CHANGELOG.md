@@ -15,12 +15,14 @@
 - **Breaking**: `smooth(x, window)` windows over the axis keys of every container (it used sample indices for `KeyedArray`); plain arrays still use sample indices.
 - **Breaking**: `tinterp(A, t)` at a single time on a multidimensional `A` returns the sample without the time axis.
 - **Breaking**: Windowed statistics take `tstat(f, x, every; period = every, start_by = :window)` (same for `tmean`, `tsum`, ...); `period > every` overlaps windows. Empty windows are kept: starts form a regular grid and `f` is called on an empty vector.
+- **Breaking**: `tmaximum(x, [every])` and `tminimum` are statistics of the data like `tmean`.
+- **Breaking**: `targmin(x)` and `targmax(x)` return one time per channel.
 - **Breaking**: `tstat(f, x)` calls `f` on each channel's samples as a vector instead of `f(data; dim)`. `tstat` is exported.
 - **Breaking**: Outlier functions are replaced by `despike(A, [window]; threshold = 3)` (and `despike!`), which sets outliers to NaN.
 - Full reductions (`tmean(x)` etc.) keep the remaining axes of `KeyedArray` as they do for `DimArray`.
 - **Breaking**: `cadence`, `resolution`, `samplingrate`, and `find_continuous_timeranges` take time coordinates only now; pass `times(x)` for a container.
 - **Breaking**: Rename `timerange(x)` to `trange(x)`; it accepts containers only. `common_timerange(xs...)` becomes `trange(xs...)`.
-- **Breaking**: `times(x)` on a plain array errors instead of returning `x`; so do `tminimum`, `tmaximum`, `targmin`, and `targmax`.
+- **Breaking**: `times(x)` on a plain array errors instead of returning `x`; so do `targmin` and `targmax`.
 - **Breaking**: Plain arrays with more than one dimension have no default time dimension: calls without `dim` throw `ArgumentError`. Plain vectors are unaffected.
 - **Breaking**: `mapsamples(f, A, args...)` calls `f` with the matching sample of each argument, each sliced along its own time dimension. Time is no longer passed implicitly: `mapsamples(f, A)` becomes `mapsamples(f, A, times(A))`. Keyed arguments must share the time keys of `A`.
 - **Breaking**: Remove the `trange` keyword of `tclips` and `tviews`; use `tclip.(xs, Ref(tr))`.

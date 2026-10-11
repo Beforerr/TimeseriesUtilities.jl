@@ -14,11 +14,11 @@ using Statistics: mean, median, median!, quantile, middle
 
 export cadence, samplingrate
 export Timed
-export times, tminimum, tmaximum, targmin, targmax
+export times, targmin, targmax
 export trange, find_continuous_timeranges, ContinuousTimeRanges, tsplit, IntervalRange
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
 export mapsamples, smooth, twindows
-export tstat, tsum, tmean, tmedian, tstd, tsem, tvar
+export tstat, tsum, tmean, tmedian, tstd, tsem, tvar, tmaximum, tminimum
 export tderiv, tsubtract, proj, sproj, oproj
 export tinterp, tsync, tresample
 export tinterp_nans, tfill_gaps, dropna

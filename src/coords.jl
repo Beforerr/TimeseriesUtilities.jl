@@ -115,21 +115,22 @@ function _check_regular(pos, cval, rtol)
 end
 
 """
-    tminimum(x)
+    targmin(x; dim=nothing)
+    targmax(x; dim=nothing)
 
-Get the minimum timestamp of `x`.
+Time of the minimum (maximum) of each channel of `x`, ignoring NaNs; `missing` for an all-NaN channel.
 """
-tminimum(x) = minimum(times(x))
+targmin(x; dim = nothing) = _targ(nanargmin, x, dim)
+targmax(x; dim = nothing) = _targ(nanargmax, x, dim)
 
-"""
-    tmaximum(x)
-
-Get the maximum timestamp of `x`.
-"""
-tmaximum(x) = maximum(times(x))
-
-targmin(x) = times(x)[argmin(x)]
-targmax(x) = times(x)[argmax(x)]
+function _targ(argf::F, x, dim) where {F}
+    t = axiskeys(x, dimnum(x, dim))
+    # `nanargmax` returns 1 for an empty or all-NaN slice
+    return tstat(x; dim) do v
+        i = isempty(v) ? 0 : argf(v)
+        i == 0 || isnan(v[i]) ? missing : t[i]
+    end
+end
 
 """
     trange(x)

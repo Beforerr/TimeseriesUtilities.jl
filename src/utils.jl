@@ -17,6 +17,14 @@ end
     return isodd(n) ? v[m] : middle(v[m - 1], v[m])
 end
 
+# `map` narrows a Union eltype to values seen, so result type depend on data; 
+# use inferred eltype when it is concrete or a union of concrete types.
+function _map(f::F, xs) where {F}
+    T = Base.promote_op(f, eltype(xs))
+    return _isconcreteunion(T) ? map!(f, similar(xs, T), xs) : map(f, xs)
+end
+_isconcreteunion(T) = T isa Union ? _isconcreteunion(T.a) && _isconcreteunion(T.b) : isconcretetype(T)
+
 # static length, so slicing or rebuilding over the result infers when `d` is constant
 other_dims(A, d) = ntuple(i -> i < d ? i : i + 1, Val(ndims(A) - 1))
 

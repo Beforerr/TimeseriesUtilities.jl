@@ -40,7 +40,7 @@ Functions are listed by call signature; keyword `dim = nothing` (time dimension)
 
 ### Time coordinates
 
-- `times(x)`: time keys of `x`; `tminimum(x)`, `tmaximum(x)`: first/last time; `targmin(x)`, `targmax(x)`: time of min/max value.
+- `times(x)`: time keys of `x`.
 - `trange(x)`: `(tmin, tmax)`; `trange(x, ys...)`: common (intersected) range, or `nothing`.
 - `cadence(t)`: robust sampling step of time vector `t` (survives gaps and jitter); `samplingrate(t)`: its inverse in Hz.
 - `find_continuous_timeranges(t, max_dt)` / `ContinuousTimeRanges(t, max_dt)`: `(t0, t1)` spans split at gaps `> max_dt`.
@@ -69,10 +69,19 @@ Functions are listed by call signature; keyword `dim = nothing` (time dimension)
 
 - `tstat(f, x)`: `f(channel_vector)` per channel over all samples; returns a scalar for a vector, else a container over the remaining axes.
 - `tstat(f, x, every; period = every, start_by = :window)`: per window `[start, start + period)`, starts `every` apart from the first time floored to `every` (`:window`) or from the first time (`:datapoint`); keyed by window start. `period > every` overlaps windows. Empty windows call `f` on an empty vector.
-- `tmean`, `tmedian`, `tsum`, `tvar`, `tstd`, `tsem`: `tstat` with the NaN-skipping statistic, same signatures minus `f`.
+- `tmean`, `tmedian`, `tsum`, `tvar`, `tstd`, `tsem`, `tminimum`, `tmaximum`: `tstat` with the NaN-skipping statistic, same signatures minus `f`.
+- `targmin(x)`, `targmax(x)`: time of each channel's minimum/maximum, ignoring NaNs; `missing` for an all-NaN channel.
 - `twindows(x, every; period, start_by)`: `(ws, starts)`, views of `x` over the same windows.
 - `smooth(x, window; op = nanmean)`: moving `op` over `[c - window/2, c + window/2)` around each time (`window` may be `(before, after)`); same size as `x`.
 - `tsubtract(x, op = nanmedian)`: subtract the per-channel statistic `op`.
+
+```julia
+tmean(x)                                       # one value per channel
+tmaximum(x, Second(2))                         # windows [t0, t0 + 2s), starts on a regular grid
+tstat(v -> count(>(0.5), v), x, Second(2); period = Second(4))  # any `f`, overlapping windows
+ws, starts = twindows(x, Second(2))            # the windows themselves, as views of `x`
+targmax(x)                                     # time of each channel's maximum
+```
 
 ### Cleaning
 
