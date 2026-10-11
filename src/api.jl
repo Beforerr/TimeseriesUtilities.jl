@@ -1,7 +1,7 @@
 # Backend interface. A container backend (an extension, or `Timed` for plain arrays) implements
-# `tdimnum`, `dimnum` for its dimension-name types, `axiskeys`, `unwrap`, `rebuild` and `rekey`,
+# `tdimnum`, `dimnum` for its dimension-name types, `axiskeys`, `unwrap` and `rebuild`,
 # plus indexing (`getindex`/`view` with one index per dimension) that keeps the keys of the kept axes.
-# Operations are written against these hooks only; see `_ontime` for the usual shape.
+# Backends whose lookups record sort order also implement `sorted_axis`.
 
 """
     tdimnum(x)
@@ -59,7 +59,8 @@ _norebuild(x, data) = _haskeys(x) ? throw(ArgumentError("$(typeof(x)) has no `re
 
 `x` with the keys of dimension `dim` replaced.
 """
-rekey(x, _, _) = throw(ArgumentError("$(typeof(x)) has no axis keys to replace"))
+@inline rekey(x, dim, keys) =
+    _haskeys(x) ? rebuild(x, unwrap(x), dim, keys) : throw(ArgumentError("$(typeof(x)) has no axis keys to replace"))
 
 # Hook for backends whose lookups record sort order (DimensionalData).
 sorted_axis(sorted, dim; rev = false) = sorted
@@ -78,6 +79,8 @@ times(x, dim = nothing) = axiskeys(x, dimnum(x, dim))
     out, t = f(unwrap(A), axiskeys(A, d), d)
     return rebuild(A, out, d, t)
 end
+
+_valof(::Val{D}) where {D} = D
 
 # Rebuild a reduction over dimension `d` of `x` with the remaining axes.
 @inline _dropdim(x, data, d) = _haskeys(x) ? _dropdim(x, data, Val(d)) : data

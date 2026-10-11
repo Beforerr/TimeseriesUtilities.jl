@@ -43,9 +43,8 @@ tdimnum(::Timed{D}) where {D} = D
 axiskeys(x::Timed, d::Integer) = x.keys[d]
 
 rebuild(x::Timed{D}, data) where {D} = Timed{D}(data, x.keys)
-rebuild(x::Timed{D}, data, d::Integer, keys) where {D} = Timed{D}(data, Base.setindex(x.keys, keys, d))
+@inline rebuild(x::Timed{D}, data, d::Integer, keys) where {D} = Timed{D}(data, Base.setindex(x.keys, keys, d))
 rebuild(x::Timed{D}, data, dims::Tuple, keys::Tuple) where {D} = _timed(_findval(Val(D), dims), data, keys)
-rekey(x::Timed, d, keys) = rebuild(x, x.data, d, keys)
 
 Base.:(==)(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && x.keys == y.keys && x.data == y.data
 Base.isequal(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && isequal(x.keys, y.keys) && isequal(x.data, y.data)
@@ -53,11 +52,13 @@ Base.hash(x::Timed, h::UInt) = hash(x.data, hash(x.keys, hash(tdimnum(x), hash(T
 
 # Without a time axis the result is plain data.
 _timed(::Nothing, data, _) = data
-_timed(D::Int, data, keys) = Timed{D}(data, keys)
+_timed(::Val{D}, data, keys) where {D} = Timed{D}(data, keys)
 
-# position of `v` in `dims`, by recursion so it folds to a constant for static `dims`
-@inline _findval(v, dims::Tuple, i = 1) = first(dims) === v ? i : _findval(v, Base.tail(dims), i + 1)
-_findval(v, ::Tuple{}, i = 1) = nothing
+# `Val` position of `v` in `dims`, by dispatch: constant propagation through `===` gives up inside larger callers
+_findval(v, dims::Tuple) = _findval(v, dims, Val(1))
+_findval(::V, ::Tuple{V, Vararg}, i::Val) where {V} = i
+_findval(v, dims::Tuple, ::Val{i}) where {i} = _findval(v, Base.tail(dims), Val(i + 1))
+_findval(_, ::Tuple{}, ::Val) = nothing
 
 Base.getindex(x::Timed, I...) = _index(getindex, x, I)
 Base.view(x::Timed, I...) = _index(view, x, I)
@@ -66,6 +67,7 @@ Base.view(x::Timed, I...) = _index(view, x, I)
 function _index(f, x::Timed{D}, I) where {D}
     length(I) == ndims(x) || throw(ArgumentError("index a `Timed` with one index per dimension"))
     data = f(x.data, I...)
-    kept = filter(i -> !(I[i] isa Integer), ntuple(identity, length(I)))
-    return _timed(_findval(D, kept), data, map(i -> f(x.keys[i], I[i]), kept))
+    I[D] isa Integer && return data
+    keys = filter(!isnothing, map((k, i) -> i isa Integer ? nothing : f(k, i), x.keys, I))
+    return Timed{D - count(i -> i isa Integer, I[1:(D - 1)])}(data, keys)
 end

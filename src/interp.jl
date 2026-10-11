@@ -113,7 +113,7 @@ tinterp(time_series, new_times; interp = CubicSpline)
 ```
 """
 function tinterp(A, t; interp = LinearInterpolation, dim = nothing, kws...)
-    # not `_ontime`: a closure capturing the `interp` type would not specialize on it
+    # not `_ontime`: a closure would capture `interp` (a type, by default) as `UnionAll`, so the `_tinterp_nd` call would not infer
     d = dimnum(A, dim)
     data, t0 = unwrap(A), axiskeys(A, d)
     t isa AbstractArray && return rebuild(A, _tinterp_nd(interp, data, t0, t, d; kws...), d, t)
@@ -152,9 +152,16 @@ end
 function _tinterp_nd(interp, A, old_times, new_times, d; kws...)
     x, xq = _rawtimes(old_times, new_times)
     A3 = _as3d(A, d)
-    fs = [interp(view(A3, p, :, q), x; kws...) for q in axes(A3, 3) for p in axes(A3, 1)]
+    ctor = _callable(interp)
+    fs = [ctor(view(A3, p, :, q), x; kws...) for q in axes(A3, 3) for p in axes(A3, 1)]
     return _stack_channels(A, d, [f.(xq) for f in fs])
 end
+
+# A closure capturing type values stores them as `DataType`/`UnionAll` fields
+struct _Ctor{T} end
+(::_Ctor{T})(args...; kws...) where {T} = T(args...; kws...)
+_callable(T::Type) = _Ctor{T}()
+_callable(f) = f
 
 """
     tresample(A, dt; dim=nothing, kws...)
@@ -164,8 +171,7 @@ Interpolate `A` onto the regular time grid of step `dt` spanning its times.
 See also: [`tinterp`](@ref)
 """
 function tresample(A, dt; dim = nothing, kws...)
-    d = dimnum(A, dim)
-    return tinterp(A, _time_grid(axiskeys(A, d), dt); dim = d, kws...)
+    return tinterp(A, _time_grid(times(A, dim), dt); dim, kws...)
 end
 
 

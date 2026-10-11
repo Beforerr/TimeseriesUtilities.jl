@@ -18,7 +18,6 @@ import TimeseriesUtilities:
     dimnum,
     dropna,
     rebuild,
-    rekey,
     sorted_axis,
     tdimnum,
     tstat,
@@ -69,7 +68,6 @@ rebuild(x::AbstractDimArray, data, newdims, keys) =
     DD.rebuild(x, data, map((d, k) -> _newdim(x, d, k), newdims, keys))
 
 rebuild(x::AbstractDimArray, data) = DD.rebuild(x, data)
-rekey(x::AbstractDimArray, dim, keys) = rebuild(x, parent(x), dim, keys)
 
 """
     dropna(ds::AbstractDimStack; dim=nothing)

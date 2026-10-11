@@ -5,7 +5,6 @@ import TimeseriesUtilities:
     axiskeys,
     dimnum,
     rebuild,
-    rekey,
     tdimnum,
     unwrap
 using AxisKeys: KeyedArray
@@ -22,15 +21,10 @@ _name(_, ::Nothing) = :_
 # `NamedDimsArray` accepts repeated `:_` names, keyword construction does not
 @inline _keyed(data, names, keys) = KeyedArray(AxisKeys.NamedDims.NamedDimsArray(data, names), keys)
 
-function rebuild(x::KeyedArray, data, dim::Integer, keys)
-    newkeys = ntuple(ndims(x)) do i
-        i == dim ? keys : axiskeys(x, i)
-    end
-    return _keyed(data, AxisKeys.dimnames(x), newkeys)
-end
+@inline rebuild(x::KeyedArray, data, dim::Integer, keys) =
+    _keyed(data, AxisKeys.dimnames(x), Base.setindex(AxisKeys.axiskeys(x), keys, dim))
 
 rebuild(x::KeyedArray, data) = _keyed(data, AxisKeys.dimnames(x), AxisKeys.axiskeys(x))
-rekey(x::KeyedArray, dim, keys) = rebuild(x, unwrap(x), dim, keys)
 
 rebuild(x::KeyedArray, data, dims, keys) = _keyed(data, map(d -> _name(x, d), dims), keys)
 

@@ -22,8 +22,6 @@ function _mapsamples(f, A, args, dim, D::Val{d}) where {d}
     return _rebuild_samples(A, _stack_samples(f, unwrap(A), ys, D), D)
 end
 
-_valof(::Val{D}) where {D} = D
-
 # per-sample iterator over argument `x`, sliced along its own time dim
 @inline function _samples(x, dim, D, n, keys)
     bt = Base.broadcastable(unwrap(x))
