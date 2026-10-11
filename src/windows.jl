@@ -84,13 +84,17 @@ Coordinates are the axis keys of `x`, or sample indices for a plain array.
 """
 function smooth(x, window; dim = nothing, op = nanmean)
     d = dimnum(x, dim)
-    coords = _haskeys(x) ? axiskeys(x, d) : axes(x, d)
-    issorted(coords) || throw(ArgumentError("coordinates must be sorted"))
-    windows = PointWindows(coords, _window_offsets(window, eltype(coords))...)
+    windows = _point_windows(x, d, window)
     out = mapslices(unwrap(x); dims = d) do slice
-        op.(WindowedView{1}(slice, coords, windows))
+        op.(WindowedView{1}(slice, windows.coords, windows))
     end
     return rebuild(x, out)
+end
+
+function _point_windows(x, d, window)
+    coords = _haskeys(x) ? axiskeys(x, d) : axes(x, d)
+    issorted(coords) || throw(ArgumentError("coordinates must be sorted"))
+    return PointWindows(coords, _window_offsets(window, eltype(coords))...)
 end
 
 function _window_offsets(window::Tuple, _)

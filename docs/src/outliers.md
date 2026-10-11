@@ -36,14 +36,14 @@ end
 y_spikey, n_spikes = create_sample_data()
 ```
 
-By default, `replace_outliers` uses a threshold-detection approach based on the median absolute deviation (MAD) to detect spikes. It is also possible to use a filter-based approach (i.e. low-pass filtering).
+[`despike`](@ref) sets to NaN the values more than `threshold` scaled median absolute deviations (MAD) from a moving median (a Hampel filter); a global median would miss spikes riding on the slow sine. [`tinterp_nans`](@ref) fills them if needed. A filter-based approach (i.e. low-pass filtering) is also possible.
 
 ```@example spikes
 using TimeseriesUtilities
 using CairoMakie
 using Test
 
-y_remove_outliers = replace_outliers(y_spikey)
+y_remove_outliers = despike(y_spikey, 16)
 n_removed = sum(isnan.(y_remove_outliers))
 @test n_removed == n_spikes
 
@@ -56,7 +56,6 @@ end
 ```
 
 ```@docs
-find_outliers
-replace_outliers!
-replace_outliers
+despike
+outlier_mask
 ```

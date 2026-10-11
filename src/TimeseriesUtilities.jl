@@ -22,7 +22,7 @@ export tstat, tsum, tmean, tmedian, tstd, tsem, tvar
 export tderiv, tsubtract, proj, sproj, oproj
 export tinterp, tsync, tresample
 export tinterp_nans, tfill_gaps, dropna
-export find_outliers, replace_outliers!, replace_outliers
+export outlier_mask, despike, despike!
 export tfilter, pspectrum
 
 include("api.jl")

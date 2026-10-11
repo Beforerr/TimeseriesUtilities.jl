@@ -12,231 +12,98 @@
 # - https://medium.com/towards-data-science/removing-spikes-from-raman-spectra-a-step-by-step-guide-with-python-b6fd90e8ea77
 
 """
-    find_outliers(A, [method, window]; dim = nothing, kw...)
+    outlier_mask(A, [window]; threshold=3, dim=nothing)
 
-Find outliers in data `A` along the specified `dim` dimension.
+Boolean mask (like `A`) of the values of each channel of `A` more than `threshold` scaled median absolute deviations
+(MAD) from the median along time (or `dim`); NaNs are never outliers.
+The statistics are global, or local over a moving `window` around each sample as in [`smooth`](@ref).
 
-Returns a Boolean array whose elements are true when an outlier is detected in the corresponding element of `A`.
-
-The default `method` is `:median` (other option is `:mean`), which uses the median absolute deviation (MAD) to detect outliers.
-When the length of `A` is greater than 256, it uses a moving `window` of size 16.
-
-See also: [`find_outliers_median`](@ref), [`find_outliers_mean`](@ref), [isoutlier - MATLAB](https://www.mathworks.com/help/matlab/ref/isoutlier.html)
+See also: [`despike`](@ref), [isoutlier - MATLAB](https://www.mathworks.com/help/matlab/ref/isoutlier.html)
 """
-function find_outliers(A; dim = nothing, kw...)
-    dim = dimnum(A, dim)
-    if size(A, dim) > 256
-        window = 16
-        return find_outliers(A, :median, window; dim, kw...)
-    else
-        return find_outliers(A, :median; dim, kw...)
-    end
+function outlier_mask(A, window = nothing; threshold = 3, dim = nothing)
+    d = dimnum(A, dim)
+    data = unwrap(A)
+    mask = similar(data, Bool)
+    windows = isnothing(window) ? nothing : _point_windows(A, d, window)
+    _outlier_mask!(_as3d(mask, d), _as3d(data, d), windows, threshold)
+    return rebuild(A, mask)
 end
 
-function find_outliers(A, method, args...; dim = nothing, kw...)
-    dim = dimnum(A, dim)
-    detector = method == :median ? find_outliers_median : find_outliers_mean
-    return mapslices(A; dims = dim) do x
-        detector(x, args...; kw...)
-    end
-end
-
-"""
-    find_outliers_median(x, window; threshold=3)
-
-Find outliers that are defined as elements more than `threshold=3` times the scaled median absolute deviation (MAD) from the median.
-
-When `window` is set to a integer, a moving window of that size is used to compute local MAD.
-Otherwise, global statistics are used.
-
-# References
-- [Median absolute deviation - Wikipedia](https://en.wikipedia.org/wiki/Median_absolute_deviation)
-"""
-function find_outliers_median(x::AbstractVector, window; threshold = 3)
-    y = falses(length(x))
-    n = length(x)
-    bsize, fsize = window_bf_sizes(window)
-    buffer = similar(x, bsize + fsize + 1) # use buffer to avoid allocations for median calculation
-    nan = eltype(x)(NaN)
-    for i in eachindex(x, y)
-        start_idx = max(1, i - bsize)
-        end_idx = min(n, i + fsize)
-        N = end_idx - start_idx + 1
-        copyto!(buffer, 1, x, start_idx, N)
-        buffer[(N + 1):end] .= nan
-        med = nanmedian!(buffer)
-        buffer .= abs.(buffer .- med)
-        mad = nanmedian!(buffer)
-        σ = 1.4826 * mad
-        y[i] = abs(x[i] - med) > threshold * σ
-    end
-    return y
-end
-
-function find_outliers_median(x::AbstractVector; threshold = 3)
-    med = nanmedian(x)
-    mad = nanmedian(abs.(x .- med))
-    σ = 1.4826 * mad
-    return abs.(x .- med) .> threshold * σ
-end
-
-"""
-    find_outliers_mean(x::AbstractVector, window; threshold = 3)
-
-Find outliers that are defined as elements more than three standard deviations from the mean.
-
-This method is faster but less robust than [`find_outliers_median`](@ref).
-"""
-function find_outliers_mean(x::AbstractVector, window; threshold = 3)
-    y = falses(length(x))
-    n = length(x)
-    bsize, fsize = window_bf_sizes(window)
-    for i in eachindex(x, y)
-        start_idx = max(1, i - bsize)
-        end_idx = min(n, i + fsize)
-        wdata = view(x, start_idx:end_idx)
-        mean = nanmean(wdata)
-        std = nanstd(wdata; mean = mean)
-        y[i] = abs(x[i] - mean) > threshold * std
-    end
-    return y
-end
-
-function find_outliers_mean(x::AbstractVector; threshold = 3)
-    mean = nanmean(x)
-    std = nanstd(x; mean = mean)
-    return abs.(x .- mean) .> threshold * std
-end
-
-"""
-    replace_outliers!(A, s, [find_method, window]; kwargs...)
-
-Finds outliers in `A` and replaces them with `s` (by default: NaN).
-
-See also: [`find_outliers`](@ref), [filloutliers - MATLAB](https://www.mathworks.com/help/matlab/ref/filloutliers.html)
-"""
-function replace_outliers!(A, s, args...; kwargs...)
-    indices = find_outliers(A, args...; kwargs...)
-    A[indices] .= s
-    return A
-end
-
-replace_outliers!(A, args...; kw...) = replace_outliers!(A, eltype(A)(NaN), args...; kw...)
-
-"""
-    interpolate_outliers!(x, t, outliers)
-
-Interpolate outliers in `x` using interpolation of neighboring non-outlier values.
-"""
-function interpolate_outliers!(x, t, outliers; interp = nothing)
-    interp = something(interp, LinearInterpolation)
-    goods = findall(.!outliers)
-    interp_obj = interp(x[goods], t[goods])
-    for i in eachindex(x, outliers)
-        !outliers[i] && continue
-        x[i] = interp_obj(t[i])
-    end
-    return x
-end
-
-function replace_outliers_nearest!(x, outliers)
-    goods = findall(.!outliers)
-    for idx in eachindex(x, outliers)
-        !outliers[idx] && continue
-        nearest_idx = searchsortednearest(goods, idx)
-        x[idx] = x[goods[nearest_idx]]
-    end
-    return x
-end
-
-function _replace_outliers_np!(x, outliers, range_func)
-    for i in eachindex(x, outliers)
-        !outliers[i] && continue
-        rs = range_func(i)
-        fidx = findfirst(j -> !outliers[j], rs)
-        if !isnothing(fidx)
-            x[i] = x[rs[fidx]]
+function _outlier_mask!(M3, A3, windows, k)
+    sorted = Vector{float(eltype(A3))}()
+    _foreach_pq(A3) do p, q
+        x, m = view(A3, p, :, q), view(M3, p, :, q)
+        if isnothing(windows)
+            sort!(filter!(!isnan, copyto!(resize!(sorted, length(x)), x)))
+            med, σ = _median_mad(sorted)
+            m .= abs.(x .- med) .> k * σ
+        else
+            _rolling_outlier_mask!(m, x, windows, k, empty!(sorted))
         end
     end
-    return x
+    return M3
+end
+
+# Window ends only advance along sorted coordinates, so `lo` and `hi` move forward and `sorted` (the non-NaN
+# `x[lo:hi]`) is updated by inserting the samples that entered and deleting those that left, whatever the spacing.
+function _rolling_outlier_mask!(m, x, windows, k, sorted)
+    c = windows.coords
+    lo, hi = 1, 0
+    for (i, (t_start, t_stop)) in enumerate(windows)
+        while hi < length(c) && c[hi + 1] < t_stop
+            hi += 1
+            isnan(x[hi]) || insert!(sorted, searchsortedfirst(sorted, x[hi]), x[hi])
+        end
+        while lo <= hi && c[lo] < t_start
+            isnan(x[lo]) || deleteat!(sorted, searchsortedfirst(sorted, x[lo]))
+            lo += 1
+        end
+        med, σ = _median_mad(sorted)
+        m[i] = abs(x[i] - med) > k * σ
+    end
+    return m
+end
+
+# Median and scaled MAD of sorted `s`.
+function _median_mad(s)
+    n = length(s)
+    n == 0 && return eltype(s)(NaN), eltype(s)(NaN)
+    med = _middle(i -> s[i], n)
+    return med, 1.4826 * _middle(k -> _kth_deviation(s, med, k), n)
+end
+
+_middle(f, n) = (f((n + 1) ÷ 2) + f(n ÷ 2 + 1)) / 2
+
+# k-th smallest `|s[i] - med|`: the k values of sorted `s` nearest `med` are a block `s[a:a+k-1]`;
+# `a` is the first start whose left end is no farther than the value after the block.
+function _kth_deviation(s, med, k)
+    lo, hi = 1, length(s) - k + 1
+    while lo < hi
+        a = (lo + hi) ÷ 2
+        med - s[a] > s[a + k] - med ? (lo = a + 1) : (hi = a)
+    end
+    return max(med - s[lo], s[lo + k - 1] - med)
 end
 
 """
-    replace_outliers!(A, method, [find_method, window]; kwargs...)
-    replace_outliers!(A, method, outliers; kwargs...)
+    despike(A, [window]; threshold=3, dim=nothing)
+    despike!(A, [window]; threshold=3, dim=nothing)
 
-Replaces outliers in `A` with values determined by the specified `method`.
+Set the [`outlier_mask`](@ref) values of `A` to NaN. Fill them with [`tinterp_nans`](@ref):
 
-Outliers can be detected using [`find_outliers`](@ref) with optional `find_method` and `window` parameters or
-specified directly as a Boolean array `outliers`.
-
-`method` can be one of the following:
-- `:linear`: Linear interpolation of neighboring, nonoutlier values
-- `:previous`: Previous nonoutlier value
-- `:next`: Next nonoutlier value
-- `:nearest`: Nearest nonoutlier value
-
-See also: [filloutliers - MATLAB](https://www.mathworks.com/help/matlab/ref/filloutliers.html)
+```julia
+despike(x, Second(10)) |> tinterp_nans
+```
 """
-function replace_outliers!(A, method::Symbol, args...; dim = nothing, kwargs...)
-    dims = other_dims(A, dimnum(A, dim))
-    Aslices = eachslice(A; dims)
-    foreach(Aslices) do x
-        outliers = find_outliers(x, args...; kwargs...)
-        _replace_outliers!(x, method, outliers; kwargs...)
-    end
+function despike(A, args...; kw...)
+    data = unwrap(A)
+    return despike!(rebuild(A, copyto!(similar(data, float(eltype(data))), data)), args...; kw...)
+end
+
+function despike!(A, args...; kw...)
+    data = unwrap(A)
+    eltype(data) <: AbstractFloat ||
+        throw(ArgumentError("despike! sets outliers to NaN, which an array of $(eltype(data)) cannot hold; use despike"))
+    data[unwrap(outlier_mask(A, args...; kw...))] .= NaN
     return A
-end
-
-function replace_outliers!(A, method::Symbol, outliers::AbstractArray{Bool}; dim = nothing, kwargs...)
-    dims = other_dims(A, dimnum(A, dim))
-    Aslices = eachslice(A; dims)
-    outlierslices = eachslice(outliers; dims)
-    foreach(Aslices, outlierslices) do x, y
-        _replace_outliers!(x, method, y; kwargs...)
-    end
-    return A
-end
-
-# Helper function for dispatching to different methods
-function _replace_outliers!(x::AbstractVector, method::Symbol, outliers; kwargs...)
-    if method == :linear
-        t = 1:length(x)
-        interpolate_outliers!(x, t, outliers)
-    elseif method == :nearest
-        replace_outliers_nearest!(x, outliers)
-    elseif method == :next
-        n = length(x)
-        next_range(idx) = (idx + 1):n
-        _replace_outliers_np!(x, outliers, next_range)
-    elseif method == :previous
-        prev_range(idx) = idx:-1:1
-        _replace_outliers_np!(x, outliers, prev_range)
-    end
-    return x
-end
-
-
-"""
-    replace_outliers(A; args...; kw...)
-
-Non-mutable version of [`replace_outliers!`](@ref).
-"""
-replace_outliers(A, args...; kw...) = replace_outliers!(copy(A), args...; kw...)
-
-"""
-    window_bf_sizes(window)
-
-Converts a window specification to backward and forward window sizes.
-
-When window is a positive integer scalar, the window is centered about the current element and contains window-1 neighboring elements.
-If window is even, then the window is centered about the current and previous elements.
-"""
-function window_bf_sizes(window::Integer)
-    return isodd(window) ? (window ÷ 2, window ÷ 2) : (window ÷ 2, window ÷ 2 - 1)
-end
-
-function window_bf_sizes(window)
-    @assert length(window) == 2 "Window must be of length 2"
-    return window
 end

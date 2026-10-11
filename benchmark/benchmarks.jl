@@ -50,3 +50,8 @@ SUITE["mapsamples"]["vector_time_first"] = @benchmarkable mapsamples(sample_vect
 SUITE["mapsamples"]["static_time_first"] = @benchmarkable mapsamples(sample_static, $(rand(10_000, 3)), $samples_times_bench; dim = 1)
 SUITE["mapsamples"]["static_time_last"] = @benchmarkable mapsamples(sample_static, $(rand(3, 10_000)), $samples_times_bench; dim = 2)
 SUITE["mapsamples"]["dimarray_scalar"] = @benchmarkable mapsamples(sample_scalar, $(DimArray(rand(10_000, 3), (Ti(samples_times_bench), Y(1:3)))), $samples_times_bench)
+
+SUITE["outlier_mask"] = BenchmarkGroup()
+SUITE["outlier_mask"]["global"] = @benchmarkable outlier_mask($smooth_data_bench; dim = 1)
+SUITE["outlier_mask"]["sample_window"] = @benchmarkable outlier_mask($smooth_data_bench, 16; dim = 1)
+SUITE["outlier_mask"]["dimarray_time_window"] = @benchmarkable outlier_mask($smooth_dimarray_bench, 0.1)

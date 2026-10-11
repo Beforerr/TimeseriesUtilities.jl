@@ -16,6 +16,7 @@
 - **Breaking**: `tinterp(A, t)` at a single time on a multidimensional `A` returns the sample without the time axis.
 - **Breaking**: Windowed statistics take `tstat(f, x, every; period = every, start_by = :window)` (same for `tmean`, `tsum`, ...); `period > every` overlaps windows. Empty windows are kept: starts form a regular grid and `f` is called on an empty vector.
 - **Breaking**: `tstat(f, x)` calls `f` on each channel's samples as a vector instead of `f(data; dim)`. `tstat` is exported.
+- **Breaking**: Outlier functions are replaced by `despike(A, [window]; threshold = 3)` (and `despike!`), which sets outliers to NaN.
 - Full reductions (`tmean(x)` etc.) keep the remaining axes of `KeyedArray` as they do for `DimArray`.
 - **Breaking**: `cadence`, `resolution`, `samplingrate`, and `find_continuous_timeranges` take time coordinates only now; pass `times(x)` for a container.
 - **Breaking**: Rename `timerange(x)` to `trange(x)`; it accepts containers only. `common_timerange(xs...)` becomes `trange(xs...)`.
