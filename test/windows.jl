@@ -45,6 +45,7 @@ end
 
     @test smoothed == [1.0, 1.5, 4.0, 6.0]
     @test parent(dims(smoothed, Ti)) == datetimes
+    @test_throws ArgumentError smooth(da, 2)
 
     ms = t0 .+ Millisecond.(0:5)
     @test parent(smooth(Timed(1.0:6, ms), Millisecond(3))) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]

@@ -32,6 +32,8 @@ dimnum(x::AbstractDimLike, dim::DD.Dimensions.DimOrDimType) = DD.dimnum(x, dim)
 _dimnum(x, dim) = DD.hasdim(x, dim) ? DD.dimnum(x, dim) : nothing
 tdimnum(x::AbstractDimLike) = @something _dimnum(x, TimeDim) _dimnum(x, DD.Dim{:time}) Some(nothing)
 @inline axiskeys(x::AbstractDimLike, dim) = parent(lookup(DD.dims(x, dim)))
+# `DD.dims(x, ::Int)` does not fold a constant index when inferred nested
+@inline axiskeys(x::AbstractDimLike, dim::Integer) = parent(lookup(dims(x)[dim]))
 
 function groupby_dynamic(x::Dimension, args...; kwargs...)
     return groupby_dynamic(parent(lookup(x)), args...; kwargs...)

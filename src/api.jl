@@ -80,10 +80,10 @@ times(x, dim = nothing) = axiskeys(x, dimnum(x, dim))
 end
 
 # Rebuild a reduction over dimension `d` of `x` with the remaining axes.
-function _dropdim(x, data, d)
-    _haskeys(x) || return data
-    others = other_dims(x, d)
-    return rebuild(x, data, map(Val, others), map(i -> axiskeys(x, i), others))
+@inline _dropdim(x, data, d) = _haskeys(x) ? _dropdim(x, data, Val(d)) : data
+function _dropdim(x, data, ::Val{d}) where {d}
+    others = map(Val, other_dims(x, d))
+    return rebuild(x, data, others, map(v -> axiskeys(x, _valof(v)), others))
 end
 
 _seconds(dt::Period) = dt / Second(1)

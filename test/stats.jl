@@ -30,7 +30,7 @@
 
         @test tmean(da1) ≈ mean(da1)
         @test tmean(da1, Millisecond(2)) == [mean(da1[1:2]), mean(da1[3:4])]
-        @test tmean(da2) ≈ vec(mean(da2, dims = 1))
+        @test @inferred(tmean(da2)) ≈ vec(mean(da2, dims = 1))
         @test tmean(da2, Millisecond(2)) == [mean(parent(da2)[1:2, :], dims = 1); mean(parent(da2)[3:4, :], dims = 1)]
 
         # tmedian
@@ -79,6 +79,8 @@
         @test grouped2 == [1.5 15.0; 3.5 35.0]
         @test AxisKeys.dimnames(grouped2, 1) == :time
         @test AxisKeys.dimnames(grouped2, 2) == :component
+
+        @test @inferred(tmean(ka2)) == [2.5, 25.0] && axiskeys(tmean(ka2), 1) == [1, 2]
 
         by_component = tmean(ka2, 1; dim = :component)
         @test by_component == [1.0 10.0; 2.0 20.0; 3.0 30.0; 4.0 40.0]

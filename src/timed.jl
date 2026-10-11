@@ -48,6 +48,8 @@ rebuild(x::Timed{D}, data, dims::Tuple, keys::Tuple) where {D} = _timed(_findval
 rekey(x::Timed, d, keys) = rebuild(x, x.data, d, keys)
 
 Base.:(==)(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && x.keys == y.keys && x.data == y.data
+Base.isequal(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && isequal(x.keys, y.keys) && isequal(x.data, y.data)
+Base.hash(x::Timed, h::UInt) = hash(x.data, hash(x.keys, hash(tdimnum(x), hash(Timed, h))))
 
 # Without a time axis the result is plain data.
 _timed(::Nothing, data, _) = data

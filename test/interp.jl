@@ -18,7 +18,7 @@
 
     # a scalar time selects a sample
     t1 = DateTime(2020, 1, 1, 12)
-    @test tinterp(da3, t1) ≈ [1.5, 4.5] && dims(tinterp(da3, t1)) == dims(da3, (Y,))
+    @test @inferred(tinterp(da3, t1)) ≈ [1.5, 4.5] && dims(tinterp(da3, t1)) == dims(da3, (Y,))
 end
 
 @testitem "DataInterpolations compatibility" begin

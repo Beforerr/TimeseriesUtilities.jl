@@ -72,6 +72,8 @@ function _window_offsets(window::Tuple, _)
 end
 
 _window_offsets(window, _) = window / 2, window / 2
+_window_offsets(window::Real, T::Type{<:AbstractTime}) =
+    throw(ArgumentError("a `$(typeof(window))` window does not apply to `$T` coordinates; pass a `Period`"))
 
 # Split in the coordinates' resolution: on that grid `[c - w÷2, c + w - w÷2)` selects the same points as
 # `[c - w/2, c + w/2)`, whereas a finer half-width would be silently rounded by e.g. `DateTime ± Nanosecond`.

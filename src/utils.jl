@@ -17,7 +17,8 @@ end
     return isodd(n) ? v[m] : middle(v[m - 1], v[m])
 end
 
-other_dims(A, dim) = filter(!=(dim), ntuple(identity, ndims(A)))
+# static length, so slicing or rebuilding over the result infers when `d` is constant
+other_dims(A, d) = ntuple(i -> i < d ? i : i + 1, Val(ndims(A) - 1))
 
 # View `A` as (dims before `d`, `d`, dims after `d`): kernels then compile once per
 # array type instead of once per (type, d).

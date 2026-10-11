@@ -33,6 +33,8 @@ end
     @test x[end, :] == Timed(A[2, :], t)
     @test Timed([1 2; 3 4], 1:2; dim = 1) != Timed([1 2; 3 4], 1:2; dim = 2)
     @test x == Timed(A, t; dim = Int32(2))
+    @test hash(x) == hash(Timed(copy(A), copy(t); dim = 2))
+    @test isequal(Timed([NaN], [1]), Timed([NaN], [1]))
     data, times_ = x
     @test data === A && times_ === t
     @test_throws MethodError collect(x)
