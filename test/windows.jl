@@ -1,20 +1,13 @@
-@testitem "AxisKeys tgroupby" begin
-    using AxisKeys
-    using TimeseriesUtilities
-    using Chairmarks
+@testitem "twindows" begin
+    using DimensionalData
 
-    ka = KeyedArray(10.0:10.0:50.0; time = 1.0:5.0)
-    groups = tgroupby(ka, 2.0)
-
-    @test length(groups) == 3
-    @test groups[1] == [10.0]
-    @test axiskeys(groups[2], 1) == [2.0, 3.0]
-    @test axiskeys(groups[3], 1) == [4.0, 5.0]
-
-    ka_large = KeyedArray(rand(1000); time = 1.0:1000.0)
-    b = @b tgroupby($ka_large, 24.0)
-    @info "tgroupby (1000 pts, window=24)" b
-    @test b.allocs <= 270
+    x = DimArray([1.0 10.0; 2.0 20.0; 3.0 30.0; 9.0 90.0], (Ti([0.0, 1.0, 2.5, 7.0]), Y(1:2)))
+    ws, starts = twindows(x, 2.0; period = 3.0)
+    @test starts === 0.0:2.0:6.0
+    @test collect(TimeseriesUtilities.PointWindows(1:2, 0.5, 0.5)) == [(0.5, 1.5), (1.5, 2.5)]
+    @test lookup(ws[2], Ti) == [2.5] && isempty(ws[3])
+    # same windows as `tstat`
+    @test reduce(vcat, [sum(parent(w); dims = 1) for w in ws]) == parent(tsum(x, 2.0; period = 3.0))
 end
 
 @testitem "smooth" begin
@@ -51,27 +44,4 @@ end
     @test parent(smooth(Timed(1.0:6, ms), Millisecond(3))) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]
     @test parent(smooth(Timed(1.0:6, ms), Millisecond(5))) == [2.0, 2.5, 3.0, 4.0, 4.5, 5.0]
     @test parent(smooth(Timed(1.0:6, Date(2020) .+ Day.(0:5)), Day(3))) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]
-end
-
-@testitem "groupby_dynamic" begin
-    using Dates
-    using TimeseriesUtilities: GroupByDynamic, groupby_dynamic
-
-    times = 1:1000
-    dt = 24
-    @test first.(collect(GroupByDynamic(times, dt))) == first(groupby_dynamic(times, dt))
-    @test length(groupby_dynamic(times, dt)[1]) == 42
-    times = Hour.(times)
-    @test length(groupby_dynamic(times, Hour(dt))[1]) == 42
-    times += DateTime(2010)
-    @test length(groupby_dynamic(times, Hour(dt))[1]) == 42
-
-    using JET
-    @test_opt groupby_dynamic(times, Hour(dt))
-    @test_call groupby_dynamic(times, Hour(dt))
-
-    using Chairmarks
-    verbose = true
-    verbose && @info "groupby_dynamic" @b(groupby_dynamic($times, Hour($dt)))
-    @test @b(groupby_dynamic($times, Hour($dt))).allocs <= 4
 end

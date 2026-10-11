@@ -20,6 +20,16 @@ end
 # static length, so slicing or rebuilding over the result infers when `d` is constant
 other_dims(A, d) = ntuple(i -> i < d ? i : i + 1, Val(ndims(A) - 1))
 
+# Assemble per-channel results (ordered as `vec` of the non-time dims) into `A`'s layout.
+function _stack_channels(A, d, cols)
+    out = similar(A, eltype(first(cols)), ntuple(i -> i == d ? length(first(cols)) : size(A, i), ndims(A)))
+    out3 = _as3d(out, d)
+    for (k, I) in enumerate(CartesianIndices((axes(out3, 1), axes(out3, 3))))
+        out3[I[1], :, I[2]] = cols[k]
+    end
+    return out
+end
+
 # View `A` as (dims before `d`, `d`, dims after `d`): kernels then compile once per
 # array type instead of once per (type, d).
 _as3d(A, d) = reshape(A, prod(i -> size(A, i), 1:(d - 1); init = 1), size(A, d), :)

@@ -91,3 +91,31 @@
         end
     end
 end
+
+@testitem "windowed tstat" begin
+    using Dates
+
+    x = Timed([1.0 10.0; 2.0 20.0; 3.0 30.0; 9.0 90.0], [0.0, 1.0, 2.5, 7.0]; dim = 1)
+    # overlapping windows; empty ones stay so starts are regular
+    r = tmean(x, 2.0; period = 3.0)
+    @test times(r) == 0.0:2.0:6.0
+    @test isequal(parent(r), [2.0 20.0; 3.0 30.0; NaN NaN; 9.0 90.0])
+    @test times(tsum(x, 2.0; start_by = :datapoint)) == 0.0:2.0:6.0
+    @test times(tsum(Timed([1.0, 2.0], [0.5, 3.5]), 2.0; start_by = :datapoint)) == 0.5:2.0:2.5
+    @test_throws ArgumentError tsum(x, 2.0; start_by = :start)
+    # `f` sees one channel and may return anything
+    @test parent(tstat(extrema, x, 4.0))[:, 1] == [(1.0, 3.0), (9.0, 9.0)]
+    @test tstat(length, x) == [4, 4]
+
+    # channels land back in place when time is a middle dimension
+    A = reshape(1.0:24, 2, 4, 3)
+    w = tsum(Timed(A, [0.0, 1.0, 2.5, 7.0]; dim = 2), 2.0)
+    @test parent(w) == cat(sum(A[:, 1:2, :]; dims = 2), A[:, 3:3, :], zeros(2, 1, 3), A[:, 4:4, :]; dims = 2)
+
+    using DimensionalData
+    ds = DimStack((a = DimArray([1.0, 2.0, 3.0], Ti([0.0, 1.0, 2.5])),))
+    @test parent(tsum(ds, 2.0; period = 3.0).a) == [6.0, 3.0]
+
+    t = DateTime(2020) .+ Minute.([1, 2, 5])
+    @test times(tmedian(Timed([1.0, 2.0, 3.0], t), Minute(2))) == DateTime(2020):Minute(2):DateTime(2020, 1, 1, 0, 4)
+end

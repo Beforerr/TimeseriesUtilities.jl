@@ -156,16 +156,6 @@ function _tinterp_nd(interp, A, old_times, new_times, d; kws...)
     return _stack_channels(A, d, [f.(xq) for f in fs])
 end
 
-# Assemble per-channel results (ordered as `vec` of the non-time dims) into `A`'s layout.
-function _stack_channels(A, d, cols)
-    out = similar(A, eltype(first(cols)), ntuple(i -> i == d ? length(first(cols)) : size(A, i), ndims(A)))
-    out3 = _as3d(out, d)
-    for (k, I) in enumerate(CartesianIndices((axes(out3, 1), axes(out3, 3))))
-        out3[I[1], :, I[2]] = cols[k]
-    end
-    return out
-end
-
 """
     tresample(A, dt; dim=nothing, kws...)
 

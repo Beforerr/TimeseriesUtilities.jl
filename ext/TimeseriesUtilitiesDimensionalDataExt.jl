@@ -17,7 +17,6 @@ import TimeseriesUtilities:
     axiskeys,
     dimnum,
     dropna,
-    groupby_dynamic,
     rebuild,
     rekey,
     sorted_axis,
@@ -34,10 +33,6 @@ tdimnum(x::AbstractDimLike) = @something _dimnum(x, TimeDim) _dimnum(x, DD.Dim{:
 @inline axiskeys(x::AbstractDimLike, dim) = parent(lookup(DD.dims(x, dim)))
 # `DD.dims(x, ::Int)` does not fold a constant index when inferred nested
 @inline axiskeys(x::AbstractDimLike, dim::Integer) = parent(lookup(dims(x)[dim]))
-
-function groupby_dynamic(x::Dimension, args...; kwargs...)
-    return groupby_dynamic(parent(lookup(x)), args...; kwargs...)
-end
 
 _ordered_lookup(lookup::DD.Sampled, ::Val{false}) = DD.rebuild(lookup; order = DD.ForwardOrdered())
 _ordered_lookup(lookup::DD.Sampled, ::Val{true}) = DD.rebuild(lookup; order = DD.ReverseOrdered())
@@ -91,10 +86,10 @@ function dropna(ds::AbstractDimStack; dim = nothing)
     return ds[basetypeof(tdim)(valid_idx)]
 end
 
-function tstat(f, ds::AbstractDimStack, args...; dim = nothing)
+function tstat(f, ds::AbstractDimStack, args...; dim = nothing, kw...)
     d = dimnum(ds, dim)
     return maplayers(ds) do layer
-        tstat(f, layer, args...; dim = d)
+        tstat(f, layer, args...; dim = d, kw...)
     end
 end
 
