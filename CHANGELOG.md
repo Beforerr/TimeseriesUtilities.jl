@@ -15,6 +15,7 @@
 
 ### Removed
 
+- **Breaking**: The SpaceDataModel extension; SpaceDataModel is to implement the container interface for its own variables.
 - **Breaking**: `resolution`; use `cadence`.
 - **Breaking**: `tview(f::Function, t0, t1)`.
 - **Breaking**: `Tinterp`; external interpolators passed as `interp` receive raw time values (`Dates.value`) directly.

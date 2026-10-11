@@ -67,23 +67,6 @@ end
     @test_throws DimensionMismatch mapsamples(dot, E, B[1:3, :])
 end
 
-@testitem "SpaceDataModel variables" begin
-    using Dates
-    import SpaceDataModel as SDM
-
-    struct TimedVar{T, N, A <: AbstractArray{T, N}, D} <: SDM.AbstractDataVariable{T, N}
-        data::A
-        dims::D
-    end
-    SDM.tdimnum(::TimedVar) = 1
-
-    ts = DateTime(2020) .+ Day.(0:2)
-    v = TimedVar([1.0 2.0; 3.0 4.0; 5.0 6.0], (ts, [:a, :b]))
-    @test times(v) == ts
-    @test tclip(v, ts[2], ts[3]) == parent(v)[2:3, :]
-    @test mapsamples((x, t) -> sum(x) + day(t), v, times(v)) == [3.0 + 1, 7.0 + 2, 11.0 + 3]
-end
-
 @testitem "mapsamples performance" begin
     using Dates, Chairmarks, DimensionalData, LinearAlgebra
 
