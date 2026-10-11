@@ -1,31 +1,6 @@
 /ₜ(x, n) = x / n
 /ₜ(x::P, n) where {P <: Dates.AbstractTime} = P(cld(Dates.value(x), n))
 
-# Handle numeric offsets for datetime-like types (default to Unix epoch)
-struct TimeOffsets{T, A <: AbstractArray} <: AbstractVector{T}
-    offsets::A
-    t0::T
-end
-
-TimeOffsets(offsets) = TimeOffsets(offsets, Dates.unix2datetime(0))
-
-Base.size(to::TimeOffsets) = size(to.offsets)
-function Base.getindex(to::TimeOffsets, i::Int)
-    _add(t0, dt) = t0 + dt
-    _add(t0::Dates.AbstractTime, dt::Number) = t0 + round(Nanosecond(round(Int, 1.0e9 * dt)), typeof(t0 - t0))
-    return _add(to.t0, to.offsets[i])
-end
-
-"""
-    tsplit(t0, t1, n::Int)
-    tsplit(t0, t1, dt)
-    tsplit(t0, t1, dtType::Type{<:Period})
-
-Split the range from `t0` to `t1` into `n` parts, `dt`-sized parts, or by period type (e.g., Month, Day).
-"""
-tsplit(t0, t1, dt) = collect(IntervalRange(t0, t1, dt))
-tsplit((t0, t1), arg) = tsplit(t0, t1, arg)
-
 # https://github.com/JuliaStats/Statistics.jl/issues/203
 @inline function _quantile_sorted(v, p::Real)
     n = length(v)
@@ -47,23 +22,6 @@ function stat_relerr(itr, f)
     relerrs = abs.(extrema(itr) .- m) ./ m
     relerr = maximum(relerrs)
     return m, relerr
-end
-
-"""
-    window_bf_sizes(window)
-
-Converts a window specification to backward and forward window sizes.
-
-When window is a positive integer scalar, the window is centered about the current element and contains window-1 neighboring elements.
-If window is even, then the window is centered about the current and previous elements.
-"""
-function window_bf_sizes(window::Integer)
-    return isodd(window) ? (window ÷ 2, window ÷ 2) : (window ÷ 2, window ÷ 2 - 1)
-end
-
-function window_bf_sizes(window)
-    @assert length(window) == 2 "Window must be of length 2"
-    return window
 end
 
 other_dims(A, dim) = filter(!=(dim), ntuple(identity, ndims(A)))

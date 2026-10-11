@@ -14,43 +14,27 @@ using Statistics: mean, median, median!, quantile, middle
 
 export cadence, resolution, samplingrate
 export times, tminimum, tmaximum, targmin, targmax
-export trange, find_continuous_timeranges
-export tinterp, tsync, tresample, tinterp_nans, tfill_gaps
-
-# Time operations
+export trange, find_continuous_timeranges, ContinuousTimeRanges, tsplit, IntervalRange
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
-# Linear Algebra
-export proj, sproj, oproj
-export mapsamples
-export tgroupby
-# Statistics
+export mapsamples, tgroupby, smooth
 export tsum, tmean, tmedian, tstd, tsem, tvar
-# Derivatives
-export tderiv, tsubtract
-
-# Data cleaning
-export smooth
-export dropna
+export tderiv, tsubtract, proj, sproj, oproj
+export tinterp, tsync, tresample
+export tinterp_nans, tfill_gaps, dropna
 export find_outliers, replace_outliers!, replace_outliers
-
-export tsplit, IntervalRange
+export tfilter, pspectrum
 
 include("api.jl")
-include("sliding.jl")
-include("timerange.jl"); export ContinuousTimeRanges
-include("timeseries.jl")
-include("operations.jl")
+include("utils.jl")
+include("coords.jl")
+include("windows.jl")
+include("select.jl")
 include("samples.jl")
-include("groupby.jl")
-include("reduce.jl")
 include("stats.jl")
 include("algebra.jl")
-include("lazyoperations.jl")
 include("interp.jl")
+include("gaps.jl")
 include("outliers.jl")
-include("utils.jl")
-include("timefrequency.jl"); export tfilter, pspectrum
-
-include("compat.jl")
+include("spectral.jl")
 
 end

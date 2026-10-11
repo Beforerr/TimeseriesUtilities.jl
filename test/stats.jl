@@ -1,26 +1,3 @@
-@testitem "groupby_dynamic" begin
-    using Dates
-    using TimeseriesUtilities: GroupByDynamic, groupby_dynamic
-
-    times = 1:1000
-    dt = 24
-    @test first.(collect(GroupByDynamic(times, dt))) == first(groupby_dynamic(times, dt))
-    @test length(groupby_dynamic(times, dt)[1]) == 42
-    times = Hour.(times)
-    @test length(groupby_dynamic(times, Hour(dt))[1]) == 42
-    times += DateTime(2010)
-    @test length(groupby_dynamic(times, Hour(dt))[1]) == 42
-
-    using JET
-    @test_opt groupby_dynamic(times, Hour(dt))
-    @test_call groupby_dynamic(times, Hour(dt))
-
-    using Chairmarks
-    verbose = true
-    verbose && @info "groupby_dynamic" @b(groupby_dynamic($times, Hour($dt)))
-    @test @b(groupby_dynamic($times, Hour($dt))).allocs <= 4
-end
-
 @testitem "timeseries statistics" begin
     using Dates
     using Statistics

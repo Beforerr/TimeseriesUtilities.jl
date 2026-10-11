@@ -69,27 +69,6 @@ end
     @test tview(f_dim2, 1.0, 3.0; dim = 1) == (1.0, 3.0, 1) # explicit dim forwarded
 end
 
-@testitem "dropna" begin
-    using DimensionalData
-
-    t = Ti(2:5)
-    y = Y([:x, :y])
-    ds = DimStack(
-        (
-            a = DimArray([1.0, NaN, 3.0, 4.0], (t,)),
-            b = DimArray([1.0 5.0; 2.0 NaN; 3.0 7.0; 4.0 8.0], (t, y)),
-        )
-    )
-
-    a_clean = dropna(ds.a)
-    @test a_clean == [1.0, 3.0, 4.0]
-    @test a_clean.dims[1].val == [2, 4, 5]
-    result = dropna(ds)
-    @test dims(result, Ti).val == [2, 4, 5]
-    @test result.a == [1.0, 3.0, 4.0]
-    @test result.b == [1.0 5.0; 3.0 7.0; 4.0 8.0]
-end
-
 @testitem "AxisKeys time operations" begin
     using AxisKeys
     using Chairmarks
@@ -136,7 +115,6 @@ end
     @test v2 == c2
 end
 
-
 @testitem "tclips, tviews" begin
     using DimensionalData
 
@@ -161,7 +139,6 @@ end
     @test_opt tclips(da1, da2)
     @test_call tclips(da1, da2)
 end
-
 
 @testitem "tselect" begin
     using DimensionalData

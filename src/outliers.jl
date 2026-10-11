@@ -223,3 +223,20 @@ end
 Non-mutable version of [`replace_outliers!`](@ref).
 """
 replace_outliers(A, args...; kw...) = replace_outliers!(copy(A), args...; kw...)
+
+"""
+    window_bf_sizes(window)
+
+Converts a window specification to backward and forward window sizes.
+
+When window is a positive integer scalar, the window is centered about the current element and contains window-1 neighboring elements.
+If window is even, then the window is centered about the current and previous elements.
+"""
+function window_bf_sizes(window::Integer)
+    return isodd(window) ? (window ÷ 2, window ÷ 2) : (window ÷ 2, window ÷ 2 - 1)
+end
+
+function window_bf_sizes(window)
+    @assert length(window) == 2 "Window must be of length 2"
+    return window
+end

@@ -13,14 +13,3 @@ end
     @test_throws ArgumentError times(rand(2, 5))
     @test rebuild([1, 2, 3], 2:4, 1, 1:3) == 2:4
 end
-
-@testitem "TimeOffsets" begin
-    using Dates
-    using TimeseriesUtilities: TimeOffsets
-    to = TimeOffsets(Day.(0:3), DateTime(2020, 1, 1))
-    @test length(to) == 4
-    @test to[[1, 4]] == DateTime.(2020, 1, [1, 4])
-    to = TimeOffsets(1:10)
-    @test length(to) == 10
-    @test to[[1, 10]] == DateTime.(1970, 1, 1) .+ Second.([1, 10])
-end
