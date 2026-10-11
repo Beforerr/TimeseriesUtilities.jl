@@ -16,7 +16,9 @@
     da3 = DimArray([1.0 4.0; 2.0 5.0; 3.0 6.0], (Ti(times), Y([10, 20])))
     @test tinterp(da3, t2) ≈ [1.25 4.25; 2.75 5.75]
 
-    @test tresample([0.0, 1.0, 2.0], [0.0, 1.0, 2.0], 1.0) ≈ [0.0, 1.0, 2.0]
+    # a scalar time selects a sample
+    t1 = DateTime(2020, 1, 1, 12)
+    @test tinterp(da3, t1) ≈ [1.5, 4.5] && dims(tinterp(da3, t1)) == dims(da3, (Y,))
 end
 
 @testitem "DataInterpolations compatibility" begin
@@ -31,7 +33,7 @@ end
     for interp in (LinearInterpolation, TimeseriesUtilities.LinearInterpolation)
         @test tinterp(dd, [DateTime(2020, 1, 2, 12)]; interp) == [1.5]
     end
-    @test tinterp([0.0, 1.0, 2.0], [0, 1, 2], [0.5]; interp = LinearInterpolation) == [0.5]
+    @test parent(tinterp(Timed([0.0, 1.0, 2.0], [0, 1, 2]), [0.5]; interp = LinearInterpolation)) == [0.5]
 
     before = DateTime(2019, 12, 31)
     @test tinterp(da, before; extrapolation = true) ≈ -1.0
@@ -50,7 +52,7 @@ end
     t = cumsum(rand(50) .+ 0.1)
     u = sin.(t)
     q = [t[1]; sort(t[1] .+ (t[end] - t[1]) .* rand(200)); t[end]; t[3]; t[3]; t[20]]
-    @test tinterp(u, t, q) ≈ LinearInterpolation(u, t).(q)
+    @test parent(tinterp(Timed(u, t), q)) ≈ LinearInterpolation(u, t).(q)
 end
 
 @testitem "FastInterpolations extension" begin
@@ -63,11 +65,11 @@ end
     A = randn(2, length(t), 3)  # time on dim 2, channels on dims 1 and 3
     for f in (cubic_interp, pchip_interp)  # `Series` path and per-channel path
         ref = [f(t, A[p, :, r], x) for p in 1:2, x in q, r in 1:3]
-        @test tinterp(A, t, q; interp = f, dim = 2) ≈ ref
-        @test tinterp(permutedims(A, (2, 1, 3)), t, q; interp = f, dim = 1) ≈ permutedims(ref, (2, 1, 3))
+        @test parent(tinterp(Timed(A, t; dim = 2), q; interp = f)) ≈ ref
+        @test parent(tinterp(Timed(permutedims(A, (2, 1, 3)), t; dim = 1), q; interp = f)) ≈ permutedims(ref, (2, 1, 3))
     end
 
-    @test tinterp(t, t, [21.0]; interp = linear_interp, extrapolation = true) ≈ [21.0]
+    @test parent(tinterp(Timed(t, t), [21.0]; interp = linear_interp, extrapolation = true)) ≈ [21.0]
 
     times = DateTime(2020) .+ Hour.(0:3)
     da = DimArray([0.0, 1.0, 4.0, 9.0], (Ti(times),))

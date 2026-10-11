@@ -94,9 +94,9 @@ function (interp::LinearInterpolation)(x)
 end
 
 """
-    tinterp(A, old_times, new_times; interp=LinearInterpolation)
+    tinterp(A, t; interp=LinearInterpolation, dim=nothing, kws...)
 
-Interpolate time series `A` at new time points `new_times`.
+Interpolate `A` at time `t`, or at each of times `t` (keyed by `t`).
 
 The `interp` constructor must accept `(u, t; kws...)` and return a callable object.
 Its syntax is compatible with `DataInterpolations.jl`.
@@ -112,11 +112,13 @@ new_times = DateTime("2023-01-01"):Hour(1):DateTime("2023-01-02")
 tinterp(time_series, new_times; interp = CubicSpline)
 ```
 """
-function tinterp(A, old_times, new_times; interp = LinearInterpolation, dim = nothing, kws...)
-    dim = dimnum(A, dim)
-    new_times isa AbstractArray && return _tinterp_nd(interp, A, old_times, new_times, dim; kws...)
-    out = _tinterp_nd(interp, A, old_times, [new_times], dim; kws...)
-    return ndims(A) == 1 ? only(out) : out
+function tinterp(A, t; interp = LinearInterpolation, dim = nothing, kws...)
+    # not `_ontime`: a closure capturing the `interp` type would not specialize on it
+    d = dimnum(A, dim)
+    data, t0 = unwrap(A), axiskeys(A, d)
+    t isa AbstractArray && return rebuild(A, _tinterp_nd(interp, data, t0, t, d; kws...), d, t)
+    out = _tinterp_nd(interp, data, t0, [t], d; kws...)
+    return ndims(out) == 1 ? only(out) : _dropdim(A, dropdims(out; dims = d), d)
 end
 
 # Fast path for built-in LinearInterpolation: one pass over all channels per query point.
@@ -164,21 +166,13 @@ function _stack_channels(A, d, cols)
     return out
 end
 
-function tinterp(A, t; dim = nothing, kws...)
-    d = dimnum(A, dim)
-    out = tinterp(unwrap(A), axiskeys(A, d), t; dim = d, kws...)
-    return t isa AbstractArray ? rebuild(A, out, d, t) : out
-end
-
 """
-    tresample(A, old_times, freq; kw...)
+    tresample(A, dt; dim=nothing, kws...)
 
-Resample time series `A` onto a regular time grid with the specified frequency `freq`.
+Interpolate `A` onto the regular time grid of step `dt` spanning its times.
 
 See also: [`tinterp`](@ref)
 """
-tresample(A, old_times, freq; kw...) = tinterp(A, old_times, _time_grid(old_times, freq); kw...)
-
 function tresample(A, dt; dim = nothing, kws...)
     d = dimnum(A, dim)
     return tinterp(A, _time_grid(axiskeys(A, d), dt); dim = d, kws...)

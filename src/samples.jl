@@ -17,7 +17,7 @@ Samples are views; for small vectors, converting them to `SVector`s avoids per-s
 _mapsamples(_, _, _, _, d, ::Val{0}) = throw(ArgumentError("dim = $d is out of range"))
 
 function _mapsamples(f, A, args, dim, D::Val{d}) where {d}
-    keys = unwrap(A) === A ? nothing : axiskeys(A, d)
+    keys = _haskeys(A) ? axiskeys(A, d) : nothing
     ys = map(x -> _samples(x, dim, D, size(A, d), keys), args)
     return _rebuild_samples(A, _stack_samples(f, unwrap(A), ys, D), D)
 end
@@ -26,16 +26,16 @@ _valof(::Val{D}) where {D} = D
 
 # per-sample iterator over argument `x`, sliced along its own time dim
 @inline function _samples(x, dim, D, n, keys)
-    bt = Base.broadcastable(x)
+    bt = Base.broadcastable(unwrap(x))
     N = length(axes(bt))  # `ndims` is undefined for tuples
     N == 0 && return Iterators.repeated(bt[])
     # an integer `dim` applies to every argument, so reuse the static dim of `A`
     dx = N == 1 ? Val(1) : dim isa Integer ? D : Val(dimnum(x, dim))
     m = length(axes(bt)[_valof(dx)])
     m == n || throw(DimensionMismatch("argument has $m samples along dimension $(_valof(dx)); A has $n"))
-    isnothing(keys) || unwrap(x) === x || _samekeys(axiskeys(x, _valof(dx)), keys) ||
+    isnothing(keys) || !_haskeys(x) || _samekeys(axiskeys(x, _valof(dx)), keys) ||
         throw(DimensionMismatch("argument time keys differ from those of A; align with `tinterp` or `tsync` first"))
-    return N == 1 ? unwrap(bt) : eachslice(unwrap(bt); dims = _valof(dx))
+    return N == 1 ? bt : eachslice(bt; dims = _valof(dx))
 end
 
 _samekeys(a, b) = a === b || a == b
@@ -116,7 +116,7 @@ function _setsample!(out, k, y, ::Val{P}) where {P}
 end
 
 function _rebuild_samples(A, data, ::Val{D}) where {D}
-    unwrap(A) === A && return data
+    _haskeys(A) || return data
     size(data) == size(A) && return rebuild(A, data)
     p = _timepos(D, ndims(data) - 1)
     newdims = Base.setindex(ntuple(Returns(nothing), Val(ndims(data))), Val(D), p)

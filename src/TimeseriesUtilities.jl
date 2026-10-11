@@ -13,6 +13,7 @@ using NaNStatistics
 using Statistics: mean, median, median!, quantile, middle
 
 export cadence, samplingrate
+export Timed
 export times, tminimum, tmaximum, targmin, targmax
 export trange, find_continuous_timeranges, ContinuousTimeRanges, tsplit, IntervalRange
 export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
@@ -25,6 +26,7 @@ export find_outliers, replace_outliers!, replace_outliers
 export tfilter, pspectrum
 
 include("api.jl")
+include("timed.jl")
 include("utils.jl")
 include("coords.jl")
 include("windows.jl")

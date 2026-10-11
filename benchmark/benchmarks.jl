@@ -36,7 +36,7 @@ const smooth_dimarray_bench = DimArray(smooth_data_bench, (Ti(smooth_times_bench
 
 SUITE["smooth"] = BenchmarkGroup()
 SUITE["smooth"]["sample_window"] = @benchmarkable smooth($smooth_data_bench, 25; dim = 1)
-SUITE["smooth"]["time_window"] = @benchmarkable smooth($smooth_data_bench, $smooth_times_bench, 0.1; dim = 1)
+SUITE["smooth"]["time_window"] = @benchmarkable smooth($(Timed(smooth_data_bench, smooth_times_bench; dim = 1)), 0.1)
 SUITE["smooth"]["dimarray_time_window"] = @benchmarkable smooth($smooth_dimarray_bench, 0.1)
 
 const samples_times_bench = collect(1.0:10_000.0)

@@ -47,35 +47,24 @@ function Base.getindex(wv::WindowedView{dim}, i::Int) where {dim}
 end
 
 """
-    smooth(data, times, window; dim=nothing)
-    smooth(data, window; dim=nothing)
+    smooth(x, window; dim=nothing, op=nanmean)
 
-Smooths a time series by computing a moving average over a sliding window.
-Edge windows are truncated, so the output has the same size as the input.
+Moving `op` of `x` along `dim` over the windows `[c - before, c + after)` around each coordinate `c`;
+a scalar `window` is split evenly into `before` and `after`.
+Edge windows are truncated, so the output has the size of `x`.
 
-Each window covers the half-open interval `[coord - before, coord + after)`.
-A scalar `window` is interpreted as a coordinate span along the smoothed axis.
-
-# Arguments
-- `dim`: Dimension to smooth along; defaults to the time dimension
-- `op=nanmean`: Function used to aggregate each window
+Coordinates are the axis keys of `x`, or sample indices for a plain array.
 """
-@inline function smooth(data, coords, window; dim = nothing, op = nanmean)
-    dim = dimnum(data, dim)
-    length(coords) == size(data, dim) || throw(DimensionMismatch("length(coords) must match size(data, dim)"))
-    issorted(coords) || throw(ArgumentError("coords must be sorted"))
-    before, after = _window_offsets(window, eltype(coords))
-    windows = PointWindows(coords, before, after)
-    return mapslices(data; dims = dim) do slice
+function smooth(x, window; dim = nothing, op = nanmean)
+    d = dimnum(x, dim)
+    coords = _haskeys(x) ? axiskeys(x, d) : axes(x, d)
+    issorted(coords) || throw(ArgumentError("coordinates must be sorted"))
+    windows = PointWindows(coords, _window_offsets(window, eltype(coords))...)
+    out = mapslices(unwrap(x); dims = d) do slice
         op.(WindowedView{1}(slice, coords, windows))
     end
+    return rebuild(x, out)
 end
-
-function smooth(data, window; dim = nothing, kw...)
-    d = dimnum(data, dim)
-    return smooth(data, axes(data, d), window; dim = d, kw...)
-end
-
 
 function _window_offsets(window::Tuple, _)
     @assert length(window) == 2

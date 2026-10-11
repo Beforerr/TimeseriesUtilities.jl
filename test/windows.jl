@@ -25,12 +25,16 @@ end
     data = [1.0 10.0; 2.0 20.0; 3.0 30.0; 4.0 40.0]
     times = [0.0, 1.0, 3.0, 6.0]
 
+    # plain arrays smooth over sample indices
     @test smooth(data, 3; dim = 1) == [1.5 15.0; 2.0 20.0; 3.0 30.0; 3.5 35.0]
-    @test smooth(data, times, 2.0; dim = 1) == [1.0 10.0; 1.5 15.0; 3.0 30.0; 4.0 40.0]
-    @test smooth(data', times, 2.0; dim = 2) == [1.0 1.5 3.0 4.0; 10.0 15.0 30.0 40.0]
     @test smooth(data', 3; dim = 2) == [1.5 2.0 3.0 3.5; 15.0 20.0 30.0 35.0]
+    @test parent(smooth(Timed(data, times; dim = 1), 2.0)) == [1.0 10.0; 1.5 15.0; 3.0 30.0; 4.0 40.0]
+    @test parent(smooth(Timed(data', times; dim = 2), 2.0)) == [1.0 1.5 3.0 4.0; 10.0 15.0 30.0 40.0]
+    # every backend smooths over its keys
+    using AxisKeys
+    @test smooth(KeyedArray(data; time = times, c = 1:2), 2.0) == [1.0 10.0; 1.5 15.0; 3.0 30.0; 4.0 40.0]
 
-    explicit_left = smooth(data, times, (2.0, 0.0); dim = 1)
+    explicit_left = parent(smooth(Timed(data, times; dim = 1), (2.0, 0.0)))
     @test isnan(explicit_left[1, 1])
     @test isnan(explicit_left[1, 2])
 
@@ -43,9 +47,9 @@ end
     @test parent(dims(smoothed, Ti)) == datetimes
 
     ms = t0 .+ Millisecond.(0:5)
-    @test smooth(1.0:6, ms, Millisecond(3)) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]
-    @test smooth(1.0:6, ms, Millisecond(5)) == [2.0, 2.5, 3.0, 4.0, 4.5, 5.0]
-    @test smooth(1.0:6, Date(2020) .+ Day.(0:5), Day(3)) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]
+    @test parent(smooth(Timed(1.0:6, ms), Millisecond(3))) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]
+    @test parent(smooth(Timed(1.0:6, ms), Millisecond(5))) == [2.0, 2.5, 3.0, 4.0, 4.5, 5.0]
+    @test parent(smooth(Timed(1.0:6, Date(2020) .+ Day.(0:5)), Day(3))) == [1.5, 2.0, 3.0, 4.0, 5.0, 5.5]
 end
 
 @testitem "groupby_dynamic" begin

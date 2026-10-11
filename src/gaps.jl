@@ -5,8 +5,8 @@ Remove slices containing NaN values along dimension `dim`.
 """
 @inline function dropna(A; dim = nothing)
     d = dimnum(A, dim)
-    idxs = vec(all(!isnan, A; dims = other_dims(A, d)))
-    return selectdim(A, d, idxs)
+    idxs = vec(all(!isnan, unwrap(A); dims = other_dims(A, d)))
+    return @view A[_selectors(A, d, idxs)...]
 end
 
 """
@@ -14,13 +14,12 @@ end
 
 Interpolate only the NaN values in `A` along dimension `dim`.
 """
-function tinterp_nans(A; dim = nothing, kwargs...)
-    dims = dimnum(A, dim)
-    t = axiskeys(A, dims)
-    out = mapslices(parent(A); dims) do slice
-        interpolate_nans!(slice, t; kwargs...)
+tinterp_nans(A; dim = nothing, kwargs...) = _ontime(A, dim) do data, t, d
+    x = rawview(t)
+    out = mapslices(data; dims = d) do slice
+        interpolate_nans!(slice, x; kwargs...)
     end
-    return rebuild(A, out, dims, t)
+    return out, t
 end
 
 # Interpolate only the NaN values in `u` along `t`.
@@ -38,13 +37,9 @@ function interpolate_nans!(u, t; interp = LinearInterpolation)
 end
 
 
-# Keeps `dt` disjoint from time vectors so the optional positional `dt` dispatches unambiguously.
-const _Step = Union{Dates.Period, Real}
-
 """
     tfill_gaps(t, [dt]; max_gap = nothing) -> t_new
-    tfill_gaps(A, [dt]; fill = NaN, max_gap = nothing, dim = nothing) -> typeof(A)
-    tfill_gaps(A, t, [dt]; fill = NaN, max_gap = nothing, dim = nothing) -> (A_new, t_new)
+    tfill_gaps(A, [dt]; fill = NaN, max_gap = nothing, dim = nothing)
 
 Insert missing timestamps (new samples set to `fill`); originals are kept exactly.
 A gap `Δ` gets `round(Δ / dt) - 1` points at `t[i] + k * dt`; gaps `Δ > max_gap` are left open.
@@ -54,19 +49,12 @@ A gap `Δ` gets `round(Δ / dt) - 1` points at `t[i] + k * dt`; gaps `Δ > max_g
 tfill_gaps(da, Second(1); max_gap = Minute(5)) |> tinterp_nans   # fill short gaps, then interpolate
 ```
 """
-function tfill_gaps(t::AbstractVector{<:AbstractTime}, dt::_Step = cadence(t; check = false); max_gap = nothing)
+function tfill_gaps(t::AbstractVector{<:AbstractTime}, dt = cadence(t; check = false); max_gap = nothing)
     fillers, n_new = _gap_fillers(t, dt, max_gap)
     return _fill_timestamps(t, fillers, n_new, dt)
 end
 
-function tfill_gaps(A, dt::Union{_Step, Nothing} = nothing; dim = nothing, kws...)
-    d = dimnum(A, dim)
-    out, t_new = _tfill_gaps(unwrap(A), axiskeys(A, d), d, dt; kws...)
-    return rebuild(A, out, d, t_new)
-end
-
-tfill_gaps(A::AbstractArray, t::AbstractVector, dt::Union{_Step, Nothing} = nothing; dim = nothing, kws...) =
-    _tfill_gaps(A, t, dimnum(A, dim), dt; kws...)
+tfill_gaps(A, dt = nothing; dim = nothing, kws...) = _ontime((data, t, d) -> _tfill_gaps(data, t, d, dt; kws...), A, dim)
 
 # Counting first and writing into exactly-sized buffers beats a single push!-pass.
 function _gap_fillers(t, dt, max_gap)

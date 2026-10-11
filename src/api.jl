@@ -1,6 +1,7 @@
-# Common API for different types of arrays
-# AxisKeys.jl: https://github.com/mcabbott/AxisKeys.jl
-# DimensionalData.jl: https://github.com/rafaqz/DimensionalData.jl
+# Backend interface. A container backend (an extension, or `Timed` for plain arrays) implements
+# `tdimnum`, `dimnum` for its dimension-name types, `axiskeys`, `unwrap`, `rebuild` and `rekey`,
+# plus indexing (`getindex`/`view` with one index per dimension) that keeps the keys of the kept axes.
+# Operations are written against these hooks only; see `_ontime` for the usual shape.
 
 """
     tdimnum(x)
@@ -22,19 +23,45 @@ dimnum(_, dim::Integer) = dim
 dimnum(x, ::Nothing) =
     @something tdimnum(x) throw(ArgumentError("$(typeof(x)) has no time dimension; pass `dim`"))
 
-function axiskeys end
+"""
+    axiskeys(x, dim::Integer)
 
-# Containers without a `rebuild` method degrade to their data, dropping their axis keys.
-rebuild(x, data) = data
-# rebuild multiple dimensions; each entry of `dims` is a `Val{i}` (dimension `i` of `x`, static so
-# the result type is inferable), a `Symbol` (new named dimension) or `nothing` (new anonymous dimension)
-rebuild(x, data, dims, keys) = data
-# rebuild one dimension with new data and keys
-rebuild(x, data, dim::Integer, key) = data
+Coordinate values along dimension `dim` of a keyed container.
+"""
+axiskeys(x, _) = throw(ArgumentError("$(typeof(x)) has no axis keys; wrap it with `Timed(x, t)`"))
 
-# Replace the keys of dimension `dim`
-rekey(x, dim, keys) = throw(ArgumentError("$(typeof(x)) has no axis keys to replace"))
+"""
+    unwrap(x)
 
+Underlying array of container `x` (sharing memory), or `x` itself when it is not a container.
+"""
+unwrap(x) = x
+
+_haskeys(x) = unwrap(x) !== x
+
+"""
+    rebuild(x, data)
+    rebuild(x, data, dim::Integer, keys)
+    rebuild(x, data, dims::Tuple, keys::Tuple)
+
+Container like `x` holding `data`: with the axes of `x`; with the keys of dimension `dim` replaced;
+or with new axes `dims`, each a `Val(i)` (dimension `i` of `x`, static so the result is inferable),
+a `Symbol` (new named dimension) or `nothing` (new anonymous dimension), with coordinates `keys`.
+
+Plain arrays rebuild to `data`; containers without a method throw rather than silently drop their keys.
+"""
+rebuild(x, data) = _norebuild(x, data)
+rebuild(x, data, _, _) = _norebuild(x, data)
+_norebuild(x, data) = _haskeys(x) ? throw(ArgumentError("$(typeof(x)) has no `rebuild` method")) : data
+
+"""
+    rekey(x, dim::Integer, keys)
+
+`x` with the keys of dimension `dim` replaced.
+"""
+rekey(x, _, _) = throw(ArgumentError("$(typeof(x)) has no axis keys to replace"))
+
+# Hook for backends whose lookups record sort order (DimensionalData).
 sorted_axis(sorted, dim; rev = false) = sorted
 
 """
@@ -44,12 +71,20 @@ Time coordinate of `x`: the keys of its time dimension (or of `dim`).
 """
 times(x, dim = nothing) = axiskeys(x, dimnum(x, dim))
 
+# Apply `f(data, t, d)` to the underlying data of `A` and the keys `t` of dimension `d`,
+# and rebuild `A` from the returned `(data, t)`.
+@inline function _ontime(f::F, A, dim) where {F}
+    d = dimnum(A, dim)
+    out, t = f(unwrap(A), axiskeys(A, d), d)
+    return rebuild(A, out, d, t)
+end
+
+# Rebuild a reduction over dimension `d` of `x` with the remaining axes.
+function _dropdim(x, data, d)
+    _haskeys(x) || return data
+    others = other_dims(x, d)
+    return rebuild(x, data, map(Val, others), map(i -> axiskeys(x, i), others))
+end
+
 _seconds(dt::Period) = dt / Second(1)
 _seconds(dt) = dt
-
-"""
-    unwrap(x)
-
-Return the innermost object (array) of wrapped `x` with similar behavior (e.g. same size, same type, etc.)
-"""
-unwrap(x) = x

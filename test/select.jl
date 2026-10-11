@@ -129,10 +129,8 @@ end
     # Test with numeric time dimension
     times = [1.0, 3.0, 5.0, 7.0, 9.0]
 
-    @test_throws MethodError tsort(times)
-    @test_throws MethodError tclip(times, 3.0, 7.0)
-    @test_throws MethodError tview(times, 3.0, 7.0)
-    @test_throws MethodError tselect(times, 5.0)
+    @test_throws ArgumentError tclip(times, 3.0, 7.0)
+    @test tselect(Timed(times, times), 5.9) == 5.0
 
     values = [10.0, 20.0, 30.0, 40.0, 50.0]
     da = DimArray(values, (Ti(times),))

@@ -24,14 +24,11 @@ function tstat end
 
 function tstat(f, x; dim = nothing)
     d = dimnum(x, dim)
-    return ndims(x) == 1 ? f(x) : f(x; dim = d)
+    data = unwrap(x)
+    return ndims(data) == 1 ? f(data) : _dropdim(x, f(data; dim = d), d)
 end
 
-function tstat(f, x, dt; dim = nothing)
-    d = dimnum(x, dim)
-    out, s = stat1d(f, unwrap(x), axiskeys(x, d), dt, d)
-    return rebuild(x, out, d, s)
-end
+tstat(f, x, dt; dim = nothing) = _ontime((data, t, d) -> stat1d(f, data, t, dt, d), x, dim)
 
 tstat_doc(sym, desc = sym) = """
     $(Symbol(:t, sym))(x, [dt]; dim=nothing)

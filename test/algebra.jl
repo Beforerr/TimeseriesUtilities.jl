@@ -8,27 +8,15 @@ end
     using Unitful
 
     # Test with simple arrays and numeric times
-    data = (1:5) .^ 2
-    times = 1:5
-    result = tderiv(data, times)
-    expected = (1:4) .* 2 .+ 1  # derivative of x^2 is 2x +1
-    @test result == expected
+    data = Timed((1:5) .^ 2, 1:5)
+    result = tderiv(data)
+    @test parent(result) == (1:4) .* 2 .+ 1  # derivative of x^2 is 2x +1
+    @test times(result) == 1:4
 
-    # Test with 2D array along different dimensions
     data2d = [1.0 2.0; 4.0 8.0; 9.0 18.0; 16.0 32.0]  # [x^2 2x^2] for x = 1,2,3,4
-    result2d = tderiv(data2d, 1:4; dim = 1)
-    expected2d = [3.0 6.0; 5.0 10.0; 7.0 14.0]  # derivatives along time dimension
-    @test result2d == expected2d
-
-    # Test along second dimension
-    data_dim2 = [1.0 4.0 9.0; 2.0 8.0 18.0]
-    times_dim2 = [1.0, 2.0, 3.0]
-    result_dim2 = tderiv(data_dim2, times_dim2; dim = 2)
-    expected_dim2 = [3.0 5.0; 6.0 10.0]  # derivatives along second dimension
-    @test result_dim2 == expected_dim2
-
-    data_view = @view data2d[2:4, :]
-    @test tderiv(data_view, 2:4; dim = 1) == [5.0 10.0; 7.0 14.0]
+    @test parent(tderiv(Timed(data2d, 1:4; dim = 1))) == [3.0 6.0; 5.0 10.0; 7.0 14.0]
+    @test parent(tderiv(Timed(permutedims(data2d), 1.0:4; dim = 2))) == [3.0 5.0 7.0; 6.0 10.0 14.0]
+    @test parent(tderiv(Timed((@view data2d[2:4, :]), 2:4; dim = 1))) == [5.0 10.0; 7.0 14.0]
 
     # Test with DimensionalData arrays
     t = Ti(1.0:1.0:5.0)
@@ -45,12 +33,7 @@ end
     # Test with Date times (returns values per second)
     date_times = [Date(2020, 1, 1), Date(2020, 1, 2), Date(2020, 1, 3)]
     data_dates = [1.0, 4.0, 9.0]
-    result_dates = tderiv(data_dates, date_times)
-    @test result_dates[1] == 3.0 / 86400
-    @test result_dates[2] == 5.0 / 86400
-
-    # Test error handling
-    @test_throws ArgumentError tderiv([1, 2, 3], [1, 2, 3]; dim = 2)  # dimension out of range
+    @test parent(tderiv(Timed(data_dates, date_times))) == [3.0, 5.0] ./ 86400
 
     # Test performance (should have minimal allocations)
     using Chairmarks
@@ -66,8 +49,8 @@ end
 
     # Test type inference
     using JET
-    @test_opt ignored_modules = (Base,) tderiv(data, times)
-    @test_call ignored_modules = (Base,) tderiv(data, times)
+    @test_opt ignored_modules = (Base,) tderiv(data)
+    @test_call ignored_modules = (Base,) tderiv(data)
     @test_opt tderiv(A)
     @test_call ignored_modules = (Base,) tderiv(A)
 end

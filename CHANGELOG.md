@@ -2,16 +2,30 @@
 
 ## Unreleased
 
+### Added
+
+- `Timed(data, t; dim)` attaches times to a plain array; every operation accepts and returns it. Take results apart with `data, t = x`.
+
 ### Changed
 
+- **Breaking**: Explicit-times forms are removed; wrap plain arrays with `Timed` instead: `tinterp(A, t, t_new)`, `tresample(A, t, dt)`, `tfill_gaps(A, t, [dt])`, `smooth(A, t, window)`, `tderiv(A, t)`, `tfilter(A, t, Wn1, Wn2)`, `pspectrum(A, t)`. `tfill_gaps(t, [dt])` on time vectors stays.
+- **Breaking**: Operations on plain arrays that need time keys throw `ArgumentError` instead of `MethodError`.
+- **Breaking**: Containers that unwrap to other data but lack a `rebuild` method throw instead of returning plain data.
+- **Breaking**: `smooth(x, window)` windows over the axis keys of every container (it used sample indices for `KeyedArray`); plain arrays still use sample indices.
+- **Breaking**: `tinterp(A, t)` at a single time on a multidimensional `A` returns the sample without the time axis.
+- Full reductions (`tmean(x)` etc.) keep the remaining axes of `KeyedArray` as they do for `DimArray`.
 - **Breaking**: `cadence`, `resolution`, `samplingrate`, and `find_continuous_timeranges` take time coordinates only now; pass `times(x)` for a container.
 - **Breaking**: Rename `timerange(x)` to `trange(x)`; it accepts containers only. `common_timerange(xs...)` becomes `trange(xs...)`.
 - **Breaking**: `times(x)` on a plain array errors instead of returning `x`; so do `tminimum`, `tmaximum`, `targmin`, and `targmax`.
-- **Breaking**: Plain arrays with more than one dimension have no default time dimension: calls without `dim`, including explicit-times forms like `tinterp(A, t, t_new)`, throw `ArgumentError`. Plain vectors are unaffected.
+- **Breaking**: Plain arrays with more than one dimension have no default time dimension: calls without `dim` throw `ArgumentError`. Plain vectors are unaffected.
 - **Breaking**: `mapsamples(f, A, args...)` calls `f` with the matching sample of each argument, each sliced along its own time dimension. Time is no longer passed implicitly: `mapsamples(f, A)` becomes `mapsamples(f, A, times(A))`. Keyed arguments must share the time keys of `A`.
 - **Breaking**: Remove the `trange` keyword of `tclips` and `tviews`; use `tclip.(xs, Ref(tr))`.
 - **Breaking**: `samplingrate(ts)` is defined without Unitful and returns hertz as a plain number.
 - `times(x, dim)` is generic over `axiskeys` and `tdimnum`; container backends no longer define `times`.
+
+### Fixed
+
+- `tderiv` along a dimension other than the first no longer divides by time differences laid along the first.
 
 ### Removed
 

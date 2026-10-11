@@ -4,8 +4,8 @@
 Subtract a statistic `op` along time dimension (or `dim`) from `x`.
 """
 function tsubtract(x, op = nanmedian; dim = nothing)
-    dims = dimnum(x, dim)
-    return x .- op(parent(x); dims)
+    data = unwrap(x)
+    return rebuild(x, data .- op(data; dims = dimnum(x, dim)))
 end
 
 _deriv_tfunc(T1::Type, T2::Type) = identity
@@ -22,26 +22,24 @@ function _tderiv(A, times; dim = 1)
     r = Base.axes(A)
     r0 = ntuple(i -> i == dim ? UnitRange(1, last(r[i]) - 1) : UnitRange(r[i]), N)
     r1 = ntuple(i -> i == dim ? UnitRange(2, last(r[i])) : UnitRange(r[i]), N)
-    rt0 = r0[dim]
-    rt1 = r1[dim]
     tfunc = _deriv_tfunc(A, times)
-    return (view(A, r1...) .- view(A, r0...)) ./ tfunc.(view(times, rt1) .- view(times, rt0))
+    # times vary along `dim` only
+    shape = ntuple(i -> i == dim ? length(r0[dim]) : 1, N)
+    t0, t1 = reshape(view(times, r0[dim]), shape), reshape(view(times, r1[dim]), shape)
+    return (view(A, r1...) .- view(A, r0...)) ./ tfunc.(t1 .- t0)
 end
 
 """
-    tderiv(A, times; dim=1)
-    tderiv(A; dim=nothing)
+    tderiv(A; dim=nothing, lazy=false)
 
-Compute the time derivative of `A`. Set `lazy=true` for lazy evaluation.
+Forward-difference time derivative of `A`, keyed by the left time of each pair;
+`Date`/`DateTime` differences are taken in seconds. `lazy=true` returns a lazy array.
 
 See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_modules/pyspedas/analysis/deriv_data.html)
 """
-@inline function tderiv(A, times = nothing; lazy = false, dim = nothing, kw...)
-    dim = dimnum(A, dim)
+@inline function tderiv(A; lazy = false, dim = nothing)
     f = lazy ? DiffQ : _tderiv
-    times = @something times axiskeys(A, dim)
-    out = f(unwrap(A), times; dim)
-    return rebuild(A, out, dim, @view times[1:(end - 1)])
+    return _ontime((data, t, d) -> (f(data, t; dim = d), @view t[1:(end - 1)]), A, dim)
 end
 
 """

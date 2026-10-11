@@ -72,8 +72,9 @@ _tclips(f, tr, xs...) = map(x -> f(x, tr...), xs)
 Mask all data values within the specified time range(s) `(t0, t1)` / `its` with NaN.
 """
 function tmask!(A, t0, t1; dim = nothing)
-    nan = eltype(A)(NaN)
-    tview(A, t0, t1; dim) .= nan
+    d = dimnum(A, dim)
+    data = unwrap(A)
+    view(data, _selectors(data, d, _search_range(axiskeys(A, d), t0, t1))...) .= eltype(data)(NaN)
     return A
 end
 
@@ -89,7 +90,7 @@ end
 
 Non-mutable version of `tmask!`. See also [`tmask!`](@ref).
 """
-tmask(A, args...; kwargs...) = tmask!(copy(A), args...; kwargs...)
+tmask(A, args...; kwargs...) = tmask!(rebuild(A, copy(unwrap(A))), args...; kwargs...)
 
 function tselect(A, t; dim = nothing)
     d = dimnum(A, dim)
@@ -113,7 +114,7 @@ With `δt`, restricts the search to `[t-δt, t+δt]` and returns `missing` if th
 """
 function tselect(A, t, δt; dim = nothing)
     tmp = tview(A, t - δt, t + δt; dim)
-    return isempty(tmp) ? missing : tselect(tmp, t; dim)
+    return isempty(unwrap(tmp)) ? missing : tselect(tmp, t; dim)
 end
 
 """
