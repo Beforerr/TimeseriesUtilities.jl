@@ -38,8 +38,11 @@ Forward-difference time derivative of `A`, keyed by the left time of each pair;
 See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_modules/pyspedas/analysis/deriv_data.html)
 """
 @inline function tderiv(A; lazy = false, dim = nothing)
+    # not `_ontime`: a closure capturing the `DiffQ` type would not specialize on it
+    d = dimnum(A, dim)
     f = lazy ? DiffQ : _tderiv
-    return _ontime((data, t, d) -> (f(data, t; dim = d), @view t[1:(end - 1)]), A, dim)
+    t = axiskeys(A, d)
+    return rebuild(A, f(unwrap(A), t; dim = d), d, @view t[1:(end - 1)])
 end
 
 """

@@ -29,7 +29,7 @@ function Timed(data, t; dim = nothing)
 end
 
 # `data, t = x` lowers to `indexed_iterate`; defining `iterate` instead would make `Timed` a collection.
-Base.indexed_iterate(x::Timed, i::Int, _ = 1) =
+Base.indexed_iterate(x::Timed, i::Int, state = 1) =
     i == 1 ? (x.data, 2) : i == 2 ? (times(x), 3) : throw(BoundsError(x, i))
 
 Base.parent(x::Timed) = x.data
@@ -55,7 +55,7 @@ _timed(D::Int, data, keys) = Timed{D}(data, keys)
 
 # position of `v` in `dims`, by recursion so it folds to a constant for static `dims`
 @inline _findval(v, dims::Tuple, i = 1) = first(dims) === v ? i : _findval(v, Base.tail(dims), i + 1)
-_findval(_, ::Tuple{}, _ = 1) = nothing
+_findval(v, ::Tuple{}, i = 1) = nothing
 
 Base.getindex(x::Timed, I...) = _index(getindex, x, I)
 Base.view(x::Timed, I...) = _index(view, x, I)
