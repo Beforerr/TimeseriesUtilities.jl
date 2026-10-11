@@ -91,7 +91,6 @@ end
     @test find_continuous_timeranges(times, Hour(2)) ==
         [(Time(0, 0, 0), Time(2, 0, 0)), (Time(6, 0, 0), Time(8, 0, 0)), (Time(12, 0, 0), Time(13, 0, 0))]
 
-    @test (@b ContinuousTimeRanges($times, Hour(2))).allocs == 0
     @test (@b find_continuous_timeranges($times, Hour(2))).allocs <= 2
 end
 

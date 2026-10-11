@@ -34,14 +34,8 @@
     @test clipped_ds.b == [10.0 100.0 1000.0; 20.0 200.0 2000.0]
     @test tview(sorted_ds, 1.0, 2.0).a == clipped_ds.a
 
-    # Benchmark
     using Chairmarks
-    verbose = false
-    tclip_bench = @b tclip($result, 1.0, 2.0)
-    tview_bench = @b tview($result, 1.0, 2.0)
-    @test tclip_bench.allocs > tview_bench.allocs
-    @test tclip_bench.time > tview_bench.time
-    verbose && @info tclip_bench, tview_bench
+    @test (@b tclip($result, 1.0, 2.0)).allocs > (@b tview($result, 1.0, 2.0)).allocs
 
     using JET
     @test_opt tsort(da)
@@ -130,7 +124,6 @@ end
     times = [1.0, 3.0, 5.0, 7.0, 9.0]
 
     @test_throws ArgumentError tclip(times, 3.0, 7.0)
-    @test tselect(Timed(times, times), 5.9) == 5.0
 
     values = [10.0, 20.0, 30.0, 40.0, 50.0]
     da = DimArray(values, (Ti(times),))

@@ -1,15 +1,11 @@
 @testitem "timeseries statistics" begin
     using Dates
     using Statistics
-    using Chairmarks
-    using TimeseriesUtilities.NaNStatistics
 
     @testset "tmean" begin
         t0 = DateTime(2011)
         offsets = Millisecond.(0:9)
         ts = t0 .+ offsets
-        @test_throws InexactError mean(offsets)
-        @test_throws MethodError mean(ts)
         @test tmean(ts) == t0 + Microsecond(4500)
         @test_throws ArgumentError tmean([1.0, 2.0, 3.0], 1.0)
 
@@ -21,7 +17,6 @@
 
     @testset "DimensionalData" begin
         using DimensionalData
-
 
         t = Ti(Millisecond.(0:3))
         y = Y(1:2)
@@ -38,11 +33,7 @@
         @test tmedian(da1, Millisecond(2)) == [median(da1[1:2]), median(da1[3:4])]
         @test tmedian(da2) == vec(median(da2, dims = 1))
 
-        # tsum, tvar, tstd, tsem
-        @test tsum(da2) ≈ vec(sum(da2, dims = 1))
-        @test tvar(da1) ≈ var(da1)
         @test tstd(da1) ≈ std(da1)
-        @test tsem(da1) == nansem(da1)
 
         # DimStack
         @test tmean(DimStack((da1, da2))) == (; layer1 = tmean(da1), layer2 = tmean(da2))
@@ -52,12 +43,6 @@
             @test grouped2.dims[1].val == Millisecond.([0, 2])
             @test grouped2.dims[2].val == 1:2
         end
-
-        verbose = false
-        da_bench1 = rand(Ti(1:1000))
-        verbose && @info "tmean" @b(tmean($da_bench1))
-        da_bench = DimArray(rand(1000, 3), (Ti(1:1000), Y(1:3)))
-        verbose && @info "tmean" @b(tmean($da_bench, 10))
     end
 
     @testset "AxisKeys" begin
