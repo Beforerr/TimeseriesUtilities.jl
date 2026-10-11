@@ -17,12 +17,10 @@ Base.getindex(pw::PointWindows, i::Int) = _point_window(pw.coords[i], pw.before,
 
 
 """
-    WindowedView(data, coords, windows; dim=1)
-    WindowedView(data, coords, before, after; dim=1)
+    WindowedView{dim}(data, coords, windows)
 
-`AbstractVector` of views into `data`, one per time window. `wv[i]` returns the slice of `data` along dimension `dim` whose `coords` fall within the i-th window.
-
-`windows` is any indexable source of `(t_start, t_stop)` pairs (e.g. `TimeRanges`). The `before`/`after` form builds a symmetric window around each point in `coords`. Requires `coords` to be sorted.
+Vector of views of `data`, one per window: element `i` holds the samples along `dim` whose sorted `coords`
+fall in `[t_start, t_stop)` of `windows[i]`.
 """
 struct WindowedView{dim, T, D, C, W} <: AbstractVector{T}
     data::D

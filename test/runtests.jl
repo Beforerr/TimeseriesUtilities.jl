@@ -7,6 +7,11 @@ using TestItems, TestItemRunner
     Aqua.test_all(TimeseriesUtilities)
 end
 
+@testitem "README covers exports" begin
+    readme = read(joinpath(pkgdir(TimeseriesUtilities), "README.md"), String)
+    @test filter(n -> !occursin(Regex("`\\Q$n\\E(?![\\w!])"), readme), setdiff(names(TimeseriesUtilities), [:TimeseriesUtilities])) == Symbol[]
+end
+
 @testitem "api" begin
     using TimeseriesUtilities: axiskeys, rebuild, unwrap
     @test_throws ArgumentError axiskeys([1, 2, 3], 1)

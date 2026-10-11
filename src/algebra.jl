@@ -34,8 +34,6 @@ end
 
 Forward-difference time derivative of `A`, keyed by the left time of each pair;
 `Date`/`DateTime` differences are taken in seconds. `lazy=true` returns a lazy array.
-
-See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_modules/pyspedas/analysis/deriv_data.html)
 """
 @inline function tderiv(A; lazy = false, dim = nothing)
     # not `_ontime`: `lazy` would not fold inside closure, so result type would be a `Union`
@@ -45,25 +43,13 @@ See also: [deriv_data - PySPEDAS](https://pyspedas.readthedocs.io/en/latest/_mod
     return rebuild(A, f(unwrap(A), t; dim = d), d, @view t[1:(end - 1)])
 end
 
-"""
-    proj(a, b)
-
-Vector projection of a vector `a` on (or onto) a nonzero vector `b`.
-
-# References: [Wikipedia](https://en.wikipedia.org/wiki/Vector_projection)
-
-See also: [`sproj`](@ref), [`oproj`](@ref)
-"""
+"""Vector projection of a `a` onto `b`."""
 proj(a, b) = (a ⋅ b / (b ⋅ b)) .* b
 
-"""
-Vector rejection
-"""
+"""Vector rejection"""
 oproj(a, b) = a .- (a ⋅ b / (b ⋅ b)) .* b
 
-"""
-Scalar projection
-"""
+"""Scalar projection"""
 sproj(a, b) = dot(a, b) / norm(b)
 
 # https://github.com/JuliaArrays/LazyArrays.jl/blob/master/src/lazyoperations.jl

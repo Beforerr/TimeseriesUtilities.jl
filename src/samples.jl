@@ -2,6 +2,7 @@
     mapsamples(f, A, args...; dim=nothing)
 
 Apply `f` to each sample of `A` and the matching samples of `args`, and stack results along time.
+Each argument is sliced along its own time dimension, and keyed ones must share the time keys of `A`; arguments without axes (scalars, `Ref(v)`) are passed whole to every call.
 
 Time sits at position `dim` of the result, clamped to last when results have too few axes.
 Results the size of a sample keep the other axes of `A`; other results get anonymous axes.

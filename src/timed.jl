@@ -4,10 +4,6 @@
 
 Plain array `data` with times `t` along dimension `dim` (optional for vectors); operations return a `Timed`.
 `Timed{D}(data, keys)` takes keys for every axis, `D` being the time axis.
-
-Supports this package's operations and indexing with one index per dimension. It is not an `AbstractArray`,
-so other array code (broadcasting, `sum`, plotting) throws rather than silently dropping the times;
-take it apart first with `data, t = x`.
 """
 struct Timed{D, A, K <: Tuple}
     data::A
