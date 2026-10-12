@@ -62,7 +62,7 @@ Functions are listed by call signature; keyword `dim = nothing` (time dimension)
   `interp` is any constructor `interp(u, t; kws...)` returning a callable, e.g. DataInterpolations' `CubicSpline`, or FastInterpolations' `cubic_interp` etc. (fast multi-channel path).
 - `tresample(x, dt; kws...)`: `tinterp` onto a regular grid of step `dt` (also a Unitful time or frequency).
 - `tsync(x, ys...)`: clip `x` to the common range and interpolate each of `ys` onto its times; returns `(x′, ys′...)`.
-- `tfill_gaps(x, [dt]; fill = NaN, max_gap)`: insert missing timestamps on a `dt` (default `cadence`) grid, new samples `fill`; gaps longer than `max_gap` stay open. `tfill_gaps(t, [dt])` on a time vector returns the new times.
+- `tfill_gaps(x, [dt]; fill = NaN, max_gap)`: insert missing timestamps on a `dt` (default `cadence`) grid, new samples `fill`; gaps longer than `max_gap` stay open.
 - `tinterp_nans(x; interp)`: interpolate NaN values from their non-NaN neighbors.
 
 ### Statistics

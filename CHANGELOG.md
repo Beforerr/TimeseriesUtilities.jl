@@ -9,7 +9,7 @@
 
 ### Changed
 
-- **Breaking**: Explicit-times forms are removed; wrap plain arrays with `Timed` instead: `tinterp(A, t, t_new)`, `tresample(A, t, dt)`, `tfill_gaps(A, t, [dt])`, `smooth(A, t, window)`, `tderiv(A, t)`, `tfilter(A, t, Wn1, Wn2)`, `pspectrum(A, t)`. `tfill_gaps(t, [dt])` on time vectors stays.
+- **Breaking**: Explicit-times forms are removed; wrap plain arrays with `Timed` instead: `tinterp(A, t, t_new)`, `tresample(A, t, dt)`, `tfill_gaps(A, t, [dt])`, `smooth(A, t, window)`, `tderiv(A, t)`, `tfilter(A, t, Wn1, Wn2)`, `pspectrum(A, t)`.
 - **Breaking**: Operations on plain arrays that need time keys throw `ArgumentError` instead of `MethodError`.
 - **Breaking**: Containers that unwrap to other data but lack a `rebuild` method throw instead of returning plain data.
 - **Breaking**: `smooth(x, window)` windows over the axis keys of every container (it used sample indices for `KeyedArray`); plain arrays still use sample indices.
@@ -44,6 +44,7 @@
 - **Breaking**: `Tinterp`; external interpolators passed as `interp` receive raw time values (`Dates.value`) directly.
 - **Breaking**: `time_grid`; use `tresample(A, dt)` or `range(trange(x)...; step = dt)`.
 - **Breaking**: `tnorm`, `tdot`, `tcross`, `tsproj`, `tproj`, `toproj`, `tnorm_combine`; use `mapsamples(norm, B)`, `mapsamples(cross, E, B)`, `mapsamples(oproj, A, B)`, ...
+- **Breaking**: `tfill_gaps(t, [dt])` on time vectors; use `tfill_gaps(x, [dt])` on a container.
 
 ## v0.2.0
 
