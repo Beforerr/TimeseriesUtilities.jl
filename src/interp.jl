@@ -178,7 +178,7 @@ end
 
 
 """
-    tsync(A, Bs...)
+    tsync(A, Bs...; dim=nothing, kws...)
 
 Synchronize multiple time series to have the same time points.
 
@@ -186,7 +186,7 @@ This function aligns time series `Bs...` to match time points of `A` by:
 
  1. Finding common time range between all time series
  2. Extracting subset of `A` within common range
- 3. Interpolating each series in `Bs...` to match the time points of the subset of `A`
+ 3. Interpolating each series in `Bs...` to match the time points of the subset of `A`, with [`tinterp`](@ref)`(B, t; kws...)`
 
 # Examples
 
@@ -194,12 +194,12 @@ This function aligns time series `Bs...` to match time points of `A` by:
 A_sync, B_sync, C_sync = tsync(A, B, C)
 ```
 """
-function tsync(A, Bs...)
-    tr = @something trange(A, Bs...) throw(ArgumentError("No common time range found"))
-    A_tsync = tclip(A, tr...)
-    tstamps = times(A_tsync)
+function tsync(A, Bs...; dim = nothing, kws...)
+    tr = @something trange(A, Bs...; dim) throw(ArgumentError("No common time range found"))
+    A_tsync = tclip(A, tr...; dim)
+    tstamps = times(A_tsync, dim)
     Bs_syncs = map(Bs) do B
-        tinterp(B, tstamps)
+        tinterp(B, tstamps; dim, kws...)
     end
     return A_tsync, Bs_syncs...
 end

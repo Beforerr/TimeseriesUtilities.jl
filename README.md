@@ -37,7 +37,7 @@ v = mapsamples((e, b) -> cross(e, b) / dot(b, b), x, B)  # (x × B) / |B|² per 
 
 ## API
 
-Functions are listed by call signature; keyword `dim = nothing` (time dimension) is accepted everywhere and omitted below.
+Functions are listed by call signature; keyword `dim = nothing` (time dimension) is accepted by every function taking a container and omitted below.
 
 ### Time coordinates
 
@@ -58,10 +58,10 @@ Functions are listed by call signature; keyword `dim = nothing` (time dimension)
 
 ### Resampling and gaps
 
-- `tinterp(x, t_new; interp = LinearInterpolation, extrapolation = false)`: interpolate at `t_new` (a vector, keyed by `t_new`) or at a single time (sample without the time axis).
+- `tinterp(x, t_new; interp = LinearInterpolation, extrapolation = false)`: interpolate at `t_new` (a vector, keyed by `t_new` or at a single time without time axis).
   `interp` is any constructor `interp(u, t; kws...)` returning a callable, e.g. DataInterpolations' `CubicSpline`, or FastInterpolations' `cubic_interp` etc. (fast multi-channel path).
 - `tresample(x, dt; kws...)`: `tinterp` onto a regular grid of step `dt` (also a Unitful time or frequency).
-- `tsync(x, ys...)`: clip `x` to the common range and interpolate each of `ys` onto its times; returns `(x′, ys′...)`.
+- `tsync(x, ys...; kws...)`: clip `x` to the common range and interpolate each of `ys` onto its times with `tinterp(y, t; kws...)`; returns `(x′, ys′...)`.
 - `tfill_gaps(x, [dt]; fill = NaN, max_gap)`: insert missing timestamps on a `dt` (default `cadence`) grid, new samples `fill`; gaps longer than `max_gap` stay open.
 - `tinterp_na(x; interp)`: interpolate NaN values from their non-NaN neighbors.
 
