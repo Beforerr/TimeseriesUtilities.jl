@@ -48,3 +48,12 @@ end
     @test_opt tderiv(A)
     @test_call ignored_modules = (Base,) tderiv(A)
 end
+
+@testitem "tsubtract" begin
+    x = Timed([1.0 10.0 100.0; 3.0 30.0 300.0], [0.0, 1.0, 2.0]; dim = 2)
+    @test parent(tsubtract(first, x)) == [0.0 9.0 99.0; 0.0 27.0 297.0]
+    @test parent(tsubtract(sum, Timed([1.0, 2.0, 3.0], 1:3))) == [-5.0, -4.0, -3.0]
+    # running median over 3 samples leaves the spike
+    using Statistics: median
+    @test parent(tsubtract(median, Timed([1.0, 2.0, 10.0, 4.0, 5.0], 1:5), 3)) == [-0.5, 0.0, 6.0, -1.0, 0.5]
+end
