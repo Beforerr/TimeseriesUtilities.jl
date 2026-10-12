@@ -78,7 +78,7 @@ Moving statistic `f` of `x` along `dim` over the windows `[c - before, c + after
 a scalar `window` is split evenly into `before` and `after`. `f` receives one channel's samples in a window as a vector.
 Edge windows are truncated, so the output has the size of `x`.
 
-Coordinates are the axis keys of `x`, or sample indices for a plain array.
+Coordinates are the axis keys of `x`; for a plain array they are sample indices, so `window` counts samples.
 """
 smooth(x, window; dim = nothing) = smooth(nanmean, x, window; dim)
 
