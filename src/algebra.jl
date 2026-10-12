@@ -1,11 +1,14 @@
 """
-    tsubtract(x, op=nanmedian; dim=nothing)
+    tsubtract(f, x, [window]; dim=nothing)
 
-Subtract a statistic `op` along time dimension (or `dim`) from `x`.
+Subtract from each channel of `x` its statistic `f` along time (or `dim`) over all samples, or with `window`.
 """
-function tsubtract(x, op = nanmedian; dim = nothing)
+function tsubtract(f, x, window = nothing; dim = nothing)
     data = unwrap(x)
-    return rebuild(x, data .- op(data; dims = dimnum(x, dim)))
+    isnothing(window) || return rebuild(x, data .- unwrap(smooth(f, x, window; dim)))
+    d = dimnum(x, dim)
+    stats = _map(f, eachslice(data; dims = other_dims(data, d)))
+    return rebuild(x, data .- reshape(stats, Base.setindex(size(data), 1, d)))
 end
 
 _deriv_tfunc(T1::Type, T2::Type) = identity
