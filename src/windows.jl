@@ -72,19 +72,21 @@ _floor(t, dt) = floor(t, dt)
 _floor(i::Number, di) = i - mod(i, di)
 
 """
-    smooth(x, window; dim=nothing, op=nanmean)
+    smooth([f=nanmean], x, window; dim=nothing)
 
-Moving `op` of `x` along `dim` over the windows `[c - before, c + after)` around each coordinate `c`;
-a scalar `window` is split evenly into `before` and `after`.
+Moving statistic `f` of `x` along `dim` over the windows `[c - before, c + after)` around each coordinate `c`;
+a scalar `window` is split evenly into `before` and `after`. `f` receives one channel's samples in a window as a vector.
 Edge windows are truncated, so the output has the size of `x`.
 
 Coordinates are the axis keys of `x`, or sample indices for a plain array.
 """
-function smooth(x, window; dim = nothing, op = nanmean)
+smooth(x, window; dim = nothing) = smooth(nanmean, x, window; dim)
+
+function smooth(f, x, window; dim = nothing)
     d = dimnum(x, dim)
     windows = _point_windows(x, d, window)
     out = mapslices(unwrap(x); dims = d) do slice
-        op.(WindowedView{1}(slice, windows.coords, windows))
+        f.(WindowedView{1}(slice, windows.coords, windows))
     end
     return rebuild(x, out)
 end

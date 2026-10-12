@@ -72,7 +72,7 @@ Functions are listed by call signature; keyword `dim = nothing` (time dimension)
 - `tmean`, `tmedian`, `tsum`, `tvar`, `tstd`, `tsem`, `tminimum`, `tmaximum`: `tstat` with the NaN-skipping statistic, same signatures minus `f`.
 - `targmin(x)`, `targmax(x)`: time of each channel's minimum/maximum, ignoring NaNs; `missing` for an all-NaN channel.
 - `twindows(x, every; period, start_by)`: `(ws, starts)`, views of `x` over the same windows.
-- `smooth(x, window; op = nanmean)`: moving `op` over `[c - window/2, c + window/2)` around each time (`window` may be `(before, after)`); same size as `x`.
+- `smooth([f], x, window)`: moving `f` (default `nanmean`) over `[c - window/2, c + window/2)` around each time (`window` may be `(before, after)`); same size as `x`.
 - `tsubtract(x, op = nanmedian)`: subtract the per-channel statistic `op`.
 
 ```julia

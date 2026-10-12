@@ -27,6 +27,8 @@ end
     using AxisKeys
     @test smooth(KeyedArray(data; time = times, c = 1:2), 2.0) == [1.0 10.0; 1.5 15.0; 3.0 30.0; 4.0 40.0]
 
+    @test parent(smooth(maximum, Timed(data, times; dim = 1), 2.0)) == [1.0 10.0; 2.0 20.0; 3.0 30.0; 4.0 40.0]
+
     explicit_left = parent(smooth(Timed(data, times; dim = 1), (2.0, 0.0)))
     @test isnan(explicit_left[1, 1])
     @test isnan(explicit_left[1, 2])
