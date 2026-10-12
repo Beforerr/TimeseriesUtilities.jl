@@ -23,6 +23,7 @@ Operations act along the time dimension, or along `dim` (an index, a `KeyedArray
 Times may be `DateTime`/`Date` or numbers. Periods (`dt`, `every`, `window`) are `Dates.Period`s for date times and numbers for numeric times.
 Missing data is `NaN`: statistics skip NaNs, and `despike`/`tmask` write them.
 Any per-sample function lifts to a container with `mapsamples`, which keeps the container and its times.
+Plain arrays (with `dim` unless a vector) work where no times are needed: statistics over all samples, `tsubtract`, `mapsamples`, `smooth`, `outlier_mask` and `despike`, whose `window` then counts samples.
 
 ```julia
 using TimeseriesUtilities, Dates, LinearAlgebra
