@@ -28,7 +28,7 @@ Any per-sample function lifts to a container with `mapsamples`, which keeps the 
 using TimeseriesUtilities, Dates, LinearAlgebra
 t = DateTime(2020) .+ Second.([0, 1, 2, 5, 6])
 x = Timed(rand(5, 3), t; dim = 1)                # 5 samples × 3 channels
-y = tfill_gaps(x) |> tinterp_nans                 # insert samples at 3 s and 4 s, interpolate them
+y = tfill_gaps(x) |> tinterp_na                  # insert samples at 3 s and 4 s, interpolate them
 data, t_m = tmean(y, Second(2))                           # 2 s window means, keyed by window start
 B = Timed(rand(5, 3), t; dim = 1)
 v = mapsamples((e, b) -> cross(e, b) / dot(b, b), x, B)  # (x × B) / |B|² per sample: 5×3, keyed by t
@@ -63,7 +63,7 @@ Functions are listed by call signature; keyword `dim = nothing` (time dimension)
 - `tresample(x, dt; kws...)`: `tinterp` onto a regular grid of step `dt` (also a Unitful time or frequency).
 - `tsync(x, ys...)`: clip `x` to the common range and interpolate each of `ys` onto its times; returns `(x′, ys′...)`.
 - `tfill_gaps(x, [dt]; fill = NaN, max_gap)`: insert missing timestamps on a `dt` (default `cadence`) grid, new samples `fill`; gaps longer than `max_gap` stay open.
-- `tinterp_nans(x; interp)`: interpolate NaN values from their non-NaN neighbors.
+- `tinterp_na(x; interp)`: interpolate NaN values from their non-NaN neighbors.
 
 ### Statistics
 
@@ -86,7 +86,7 @@ targmax(x)                                     # time of each channel's maximum
 ### Cleaning
 
 - `outlier_mask(x, [window]; threshold = 3)`: `true` where a value is more than `threshold` scaled MADs from the median, globally or over a moving `window`.
-- `despike(x, [window]; threshold = 3)`: set those values to NaN (`despike!` in place). Typical: `despike(x, Second(10)) |> tinterp_nans`.
+- `despike(x, [window]; threshold = 3)`: set those values to NaN (`despike!` in place). Typical: `despike(x, Second(10)) |> tinterp_na`.
 
 ### Per-sample operations
 

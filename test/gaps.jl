@@ -50,7 +50,7 @@ end
     @test isequal(parent(da), [1.0, 2.0, NaN, 4.0])
 end
 
-@testitem "tinterp_nans" begin
+@testitem "tinterp_na" begin
     using Dates, DimensionalData
     using TimeseriesUtilities
 
@@ -60,7 +60,7 @@ end
     da = DimArray(data, (Ti(times),))
 
     # Interpolate NaN values
-    result = tinterp_nans(da)
+    result = tinterp_na(da)
 
     @test result == [1.0, 2.0, 3.0, 4.0, 5.0]
     @test result isa DimArray
@@ -69,7 +69,7 @@ end
 
     data2 = [1.0 10.0; NaN NaN; NaN 30.0; 4.0 40.0; 5.0 50.0]
     da2 = DimArray(data2, (Ti(times), Y([:a, :b])))
-    result2 = tinterp_nans(da2)
+    result2 = tinterp_na(da2)
     @test result2 ≈ [1.0 10.0; 2.0 20.0; 3.0 30.0; 4.0 40.0; 5.0 50.0]
     @test dims(result2, Ti).val == times
     @test dims(result2, Y).val == [:a, :b]

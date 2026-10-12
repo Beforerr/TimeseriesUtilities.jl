@@ -36,7 +36,7 @@ end
 y_spikey, n_spikes = create_sample_data()
 ```
 
-[`despike`](@ref) sets to NaN the values more than `threshold` scaled median absolute deviations (MAD) from a moving median (a Hampel filter); a global median would miss spikes riding on the slow sine. [`tinterp_nans`](@ref) fills them if needed. A filter-based approach (i.e. low-pass filtering) is also possible.
+[`despike`](@ref) sets to NaN the values more than `threshold` scaled median absolute deviations (MAD) from a moving median (a Hampel filter); a global median would miss spikes riding on the slow sine. [`tinterp_na`](@ref) fills them if needed. A filter-based approach (i.e. low-pass filtering) is also possible.
 
 ```@example spikes
 using TimeseriesUtilities

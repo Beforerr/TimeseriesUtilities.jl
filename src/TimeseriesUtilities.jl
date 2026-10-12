@@ -21,7 +21,7 @@ export mapsamples, smooth, twindows
 export tstat, tsum, tmean, tmedian, tstd, tsem, tvar, tmaximum, tminimum
 export tderiv, tsubtract, proj, sproj, oproj
 export tinterp, tsync, tresample
-export tinterp_nans, tfill_gaps, dropna
+export tinterp_na, tfill_gaps, dropna
 export outlier_mask, despike, despike!
 export tfilter, pspectrum
 

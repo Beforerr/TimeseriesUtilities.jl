@@ -6,15 +6,15 @@ Remove slices containing NaN values along dimension `dim`.
 @inline function dropna(A; dim = nothing)
     d = dimnum(A, dim)
     idxs = vec(all(!isnan, unwrap(A); dims = other_dims(A, d)))
-    return @view A[_selectors(A, d, idxs)...]
+    return A[_selectors(A, d, idxs)...]
 end
 
 """
-    tinterp_nans(A; dim = nothing, kwargs...)
+    tinterp_na(A; dim = nothing, kwargs...)
 
 Interpolate only the NaN values in `A` along dimension `dim`.
 """
-tinterp_nans(A; dim = nothing, kwargs...) = _ontime(A, dim) do data, t, d
+tinterp_na(A; dim = nothing, kwargs...) = _ontime(A, dim) do data, t, d
     x = rawview(t)
     out = mapslices(data; dims = d) do slice
         interpolate_nans!(slice, x; kwargs...)
@@ -43,10 +43,6 @@ end
 Insert missing timestamps (new samples set to `fill`); originals are kept exactly.
 A gap `Δ` gets `round(Δ / dt) - 1` points at `t[i] + k * dt`; gaps `Δ > max_gap` are left open.
 `dt` defaults to [`cadence`](@ref). Float eltypes are kept; others promote to fit `fill`.
-
-```julia
-tfill_gaps(da, Second(1); max_gap = Minute(5)) |> tinterp_nans   # fill short gaps, then interpolate
-```
 """
 tfill_gaps(A, dt = nothing; dim = nothing, kws...) = _ontime((data, t, d) -> _tfill_gaps(data, t, d, dt; kws...), A, dim)
 
