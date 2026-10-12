@@ -38,7 +38,6 @@ end
 
 
 """
-    tfill_gaps(t, [dt]; max_gap = nothing) -> t_new
     tfill_gaps(A, [dt]; fill = NaN, max_gap = nothing, dim = nothing)
 
 Insert missing timestamps (new samples set to `fill`); originals are kept exactly.
@@ -49,12 +48,12 @@ A gap `Δ` gets `round(Δ / dt) - 1` points at `t[i] + k * dt`; gaps `Δ > max_g
 tfill_gaps(da, Second(1); max_gap = Minute(5)) |> tinterp_nans   # fill short gaps, then interpolate
 ```
 """
-function tfill_gaps(t::AbstractVector{<:AbstractTime}, dt = cadence(t; check = false); max_gap = nothing)
+tfill_gaps(A, dt = nothing; dim = nothing, kws...) = _ontime((data, t, d) -> _tfill_gaps(data, t, d, dt; kws...), A, dim)
+
+function fill_times(t, dt = cadence(t; check = false); max_gap = nothing)
     fillers, n_new = _gap_fillers(t, dt, max_gap)
     return _fill_timestamps(t, fillers, n_new, dt)
 end
-
-tfill_gaps(A, dt = nothing; dim = nothing, kws...) = _ontime((data, t, d) -> _tfill_gaps(data, t, d, dt; kws...), A, dim)
 
 # Counting first and writing into exactly-sized buffers beats a single push!-pass.
 function _gap_fillers(t, dt, max_gap)

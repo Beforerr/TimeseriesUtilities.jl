@@ -21,16 +21,16 @@ end
 
 @testitem "tfill_gaps" begin
     using Dates, DimensionalData
-    using TimeseriesUtilities
+    using TimeseriesUtilities: fill_times
 
     d(i, h = 0, m = 0) = DateTime(2020, 1, i, h, m)
 
     # jitter: count by rounding, fillers anchored to left original
-    @test tfill_gaps([d(1), d(1, 23, 59), d(4, 0, 1)], Day(1)) ==
+    @test fill_times([d(1), d(1, 23, 59), d(4, 0, 1)], Day(1)) ==
         [d(1), d(1, 23, 59), d(2, 23, 59), d(4, 0, 1)]
 
     # small gap filled, gap > max_gap left open
-    @test tfill_gaps([d(1), d(3), d(10), d(11)], Day(1); max_gap = Day(2)) ==
+    @test fill_times([d(1), d(3), d(10), d(11)], Day(1); max_gap = Day(2)) ==
         [d(1), d(2), d(3), d(10), d(11)]
 
     # values preserved
