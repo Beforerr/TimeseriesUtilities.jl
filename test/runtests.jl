@@ -13,8 +13,10 @@ end
 end
 
 @testitem "api" begin
-    using TimeseriesUtilities: axiskeys, rebuild, unwrap
+    using TimeseriesUtilities: axiskeys, rebuild, resolve_dim, tdimnum, unwrap
+    using DimensionalData: Ti
     @test_throws ArgumentError axiskeys([1, 2, 3], 1)
+    @test isnothing(tdimnum([1, 2])) && resolve_dim([1, 2], nothing) == 1
     @test_throws ArgumentError times(rand(2, 5))
     @test rebuild([1, 2, 3], 2:4, 1, 1:3) == 2:4
     # a container without `rebuild` must not silently drop its keys
@@ -23,6 +25,9 @@ end
     end
     TimeseriesUtilities.unwrap(w::Wrapped) = w.data
     @test_throws ArgumentError rebuild(Wrapped([1, 2]), [3, 4])
+    # a keyed vector has a time dimension only if it declares one
+    @test_throws ArgumentError resolve_dim(Wrapped([1, 2]), nothing)
+    @test unwrap(Ti(view([1, 2, 3, 4], 2:3))) == [2, 3]
 end
 
 @testitem "Timed" begin

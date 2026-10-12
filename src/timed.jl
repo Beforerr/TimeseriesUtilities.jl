@@ -20,7 +20,7 @@ struct Timed{D, A, K <: Tuple}
 end
 
 function Timed(data, t; dim = nothing)
-    d = dimnum(data, dim)
+    d = resolve_dim(data, dim)
     return Timed{Int(d)}(data, ntuple(i -> i == d ? t : axes(data, i), ndims(data)))
 end
 

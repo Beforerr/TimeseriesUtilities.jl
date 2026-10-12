@@ -24,6 +24,8 @@
 - **Breaking**: Rename `timerange(x)` to `trange(x)`; it accepts containers only. `common_timerange(xs...)` becomes `trange(xs...)`.
 - **Breaking**: `times(x)` on a plain array errors instead of returning `x`; so do `targmin` and `targmax`.
 - **Breaking**: Plain arrays with more than one dimension have no default time dimension: calls without `dim` throw `ArgumentError`. Plain vectors are unaffected.
+- **Breaking**: `dimnum(x, dim)` errors on `nothing`; operations resolve their `dim` keyword with `resolve_dim(x, dim)`, where `nothing` selects the time dimension.
+- **Breaking**: `tdimnum` of a plain vector is `nothing`, so it means a declared time dimension; operations on plain vectors still default to their only dimension. Containers that are vectors need a `tdimnum` method to be used without `dim`.
 - **Breaking**: `mapsamples(f, A, args...)` calls `f` with the matching sample of each argument, each sliced along its own time dimension. Time is no longer passed implicitly: `mapsamples(f, A)` becomes `mapsamples(f, A, times(A))`. Keyed arguments must share the time keys of `A`.
 - **Breaking**: `samplingrate(ts)` is defined without Unitful and returns hertz as a plain number.
 - `times(x, dim)` is generic over `axiskeys` and `tdimnum`; container backends no longer define `times`.

@@ -53,7 +53,7 @@ Windows of `x` as `ws, starts = twindows(x, every)`: `ws[i]` is a view of `x` ov
 on the grid of [`tstat`](@ref); empty windows are kept as empty views.
 """
 function twindows(x, every; period = every, start_by = :window, dim = nothing)
-    d = dimnum(x, dim)
+    d = resolve_dim(x, dim)
     t = axiskeys(x, d)
     windows = _tgrid_windows(t, every, period, start_by)
     return WindowedView{Int(d)}(x, t, windows), windows.coords
@@ -83,7 +83,7 @@ Coordinates are the axis keys of `x`; for a plain array they are sample indices,
 smooth(x, window; dim = nothing) = smooth(nanmean, x, window; dim)
 
 function smooth(f, x, window; dim = nothing)
-    d = dimnum(x, dim)
+    d = resolve_dim(x, dim)
     windows = _point_windows(x, d, window)
     out = mapslices(unwrap(x); dims = d) do slice
         f.(WindowedView{1}(slice, windows.coords, windows))

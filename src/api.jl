@@ -6,22 +6,30 @@
 """
     tdimnum(x)
 
-Index of the time dimension of `x`, or `nothing` if `x` has none.
-A vector's time dimension is assumed to be its only one, multidimensional arrays have no default time dimension.
+Index of the time dimension of `x`, or `nothing` if `x` has none; plain arrays have none.
 """
 tdimnum(x) = nothing
-tdimnum(x::AbstractArray) = ndims(x) == 1 ? 1 : nothing
 
 """
     dimnum(x, dim)
 
-Index of dimension `dim` in `x`; `nothing` selects the time dimension ([`tdimnum`](@ref)).
-
-Containers with named dimensions add methods for their name types.
+Index of dimension `dim` in `x`. Containers with named dimensions add methods for their name types.
 """
 dimnum(_, dim::Integer) = dim
-dimnum(x, ::Nothing) =
-    @something tdimnum(x) throw(ArgumentError("$(typeof(x)) has no time dimension; pass `dim`"))
+
+"""
+    resolve_dim(x, dim = nothing)
+
+Index of the dimension an operation's `dim` keyword selects in `x`.
+"""
+resolve_dim(x, dim) = dimnum(x, dim)
+function resolve_dim(x, ::Nothing = nothing)
+    d = tdimnum(x)
+    isnothing(d) || return d
+    # Containers declare their time dimension; a keyed vector without one is not a time series.
+    x isa AbstractVector && !_haskeys(x) && return 1
+    throw(ArgumentError("$(typeof(x)) has no time dimension; pass `dim`"))
+end
 
 """
     axiskeys(x, dim::Integer)
@@ -70,12 +78,12 @@ sorted_axis(sorted, dim; rev = false) = sorted
 
 Time coordinate of `x`: the keys of its time dimension (or of `dim`).
 """
-times(x, dim = nothing) = axiskeys(x, dimnum(x, dim))
+times(x, dim = nothing) = axiskeys(x, resolve_dim(x, dim))
 
 # Apply `f(data, t, d)` to the underlying data of `A` and the keys `t` of dimension `d`,
 # and rebuild `A` from the returned `(data, t)`.
 @inline function _ontime(f::F, A, dim) where {F}
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     out, t = f(unwrap(A), axiskeys(A, d), d)
     return rebuild(A, out, d, t)
 end

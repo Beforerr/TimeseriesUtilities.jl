@@ -124,7 +124,7 @@ targmin(x; dim = nothing) = _targ(nanargmin, x, dim)
 targmax(x; dim = nothing) = _targ(nanargmax, x, dim)
 
 function _targ(argf::F, x, dim) where {F}
-    t = axiskeys(x, dimnum(x, dim))
+    t = axiskeys(x, resolve_dim(x, dim))
     # `nanargmax` returns 1 for an empty or all-NaN slice
     return tstat(x; dim) do v
         i = isempty(v) ? 0 : argf(v)

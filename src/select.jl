@@ -4,7 +4,7 @@
 Sort `A` along dimension `dim`.
 """
 function tsort(A; dim = nothing, rev = false)
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     keys = axiskeys(A, d)
     return issorted(keys; rev) ? A : begin
             sorted = A[_selectors(A, d, sortperm(keys; rev))...]
@@ -20,7 +20,7 @@ Clip `A` to time range `[t0, t1]` along dimension `dim`.
 `dim` should be sorted before clipping (see [`tsort`](@ref)).
 """
 function tclip(A, t0, t1; dim = nothing)
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     idx = _search_range(axiskeys(A, d), t0, t1)
     return A[_selectors(A, d, idx)...]
 end
@@ -33,7 +33,7 @@ tclip(A, tr; kw...) = tclip(A, tr...; kw...)
 View `A` in time range `[t0, t1]` along dimension `dim`.
 """
 function tview(A, t0, t1; dim = nothing)
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     idx = _search_range(axiskeys(A, d), t0, t1)
     return @view A[_selectors(A, d, idx)...]
 end
@@ -59,7 +59,7 @@ end
 Mask all data values within the specified time range(s) `(t0, t1)` / `its` with NaN.
 """
 function tmask!(A, t0, t1; dim = nothing)
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     data = unwrap(A)
     _check_holds_nan(data, :tmask)
     view(data, _selectors(data, d, _search_range(axiskeys(A, d), t0, t1))...) .= eltype(data)(NaN)
@@ -81,7 +81,7 @@ Copy of `A` (promoted to float) masked by [`tmask!`](@ref).
 tmask(A, args...; kwargs...) = tmask!(_float_copy(A), args...; kwargs...)
 
 function tselect(A, t; dim = nothing)
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     keys = axiskeys(A, d)
     i = if issorted(keys)
         searchsortednearest(keys, t)
@@ -111,7 +111,7 @@ end
 Shift the `dim` of `x` by `t0`.
 """
 function tshift(x, t0 = nothing; dim = nothing)
-    d = dimnum(x, dim)
+    d = resolve_dim(x, dim)
     times = axiskeys(x, d)
     times′ = times .- (@something t0 first(times))
     return rekey(x, d, times′)

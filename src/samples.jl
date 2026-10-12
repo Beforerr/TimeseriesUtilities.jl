@@ -9,7 +9,7 @@ Results the size of a sample keep the other axes of `A`; other results get anony
 
 Samples are views; for small vectors, converting them to `SVector`s avoids per-sample allocation, e.g. `mapsamples((e, b) -> cross(SVector{3}(e), SVector{3}(b)), E, B)`.
 """
-@inline mapsamples(f, A, args...; dim = nothing) = _mapsamples(f, A, args, dim, dimnum(A, dim), Val(ndims(A)))
+@inline mapsamples(f, A, args...; dim = nothing) = _mapsamples(f, A, args, dim, resolve_dim(A, dim), Val(ndims(A)))
 
 # `eachslice` and the rebuild need a static dim: `Val(d)` with a runtime `d` infers `Any`, testing `d == N` for
 # each `N` union-splits, and a constant `d` (default `dim`, wrapper dimension types) folds to one branch.
@@ -29,7 +29,7 @@ end
     N = length(axes(bt))  # `ndims` is undefined for tuples
     N == 0 && return Iterators.repeated(bt[])
     # an integer `dim` applies to every argument, so reuse the static dim of `A`
-    dx = N == 1 ? Val(1) : dim isa Integer ? D : Val(dimnum(x, dim))
+    dx = N == 1 ? Val(1) : dim isa Integer ? D : Val(resolve_dim(x, dim))
     m = length(axes(bt)[_valof(dx)])
     m == n || throw(DimensionMismatch("argument has $m samples along dimension $(_valof(dx)); A has $n"))
     isnothing(keys) || !_haskeys(x) || _samekeys(axiskeys(x, _valof(dx)), keys) ||

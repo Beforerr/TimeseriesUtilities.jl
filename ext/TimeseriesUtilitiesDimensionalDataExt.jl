@@ -18,6 +18,7 @@ import TimeseriesUtilities:
     dimnum,
     dropna,
     rebuild,
+    resolve_dim,
     sorted_axis,
     tdimnum,
     tstat,
@@ -25,7 +26,8 @@ import TimeseriesUtilities:
 
 const AbstractDimLike = Union{AbstractDimArray, AbstractDimStack}
 
-unwrap(x::AbstractDimArray) = parent(x)
+unwrap(x::AbstractDimArray) = parent(x) 
+unwrap(x::Dimension) = (l = lookup(x); l isa DD.Lookup ? parent(l) : l)
 dimnum(x::AbstractDimLike, dim::DD.Dimensions.DimOrDimType) = DD.dimnum(x, dim)
 _dimnum(x, dim) = DD.hasdim(x, dim) ? DD.dimnum(x, dim) : nothing
 tdimnum(x::AbstractDimLike) = @something _dimnum(x, TimeDim) _dimnum(x, DD.Dim{:time}) Some(nothing)
@@ -75,7 +77,7 @@ rebuild(x::AbstractDimArray, data) = DD.rebuild(x, data)
 Remove slices containing NaN values along the `dim` dimension.
 """
 function dropna(ds::AbstractDimStack; dim = nothing)
-    d = dimnum(ds, dim)
+    d = resolve_dim(ds, dim)
     tdim = DD.dims(ds, d)
     odims = otherdims(ds, d)
     valid_idx = mapreduce(.*, values(ds)) do A
@@ -85,7 +87,7 @@ function dropna(ds::AbstractDimStack; dim = nothing)
 end
 
 function tstat(f, ds::AbstractDimStack, args...; dim = nothing, kw...)
-    d = dimnum(ds, dim)
+    d = resolve_dim(ds, dim)
     return maplayers(ds) do layer
         tstat(f, layer, args...; dim = d, kw...)
     end

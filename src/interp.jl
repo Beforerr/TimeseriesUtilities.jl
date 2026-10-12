@@ -113,7 +113,7 @@ tinterp(time_series, new_times; interp = CubicSpline)
 """
 function tinterp(A, t; interp = LinearInterpolation, dim = nothing, kws...)
     # not `_ontime`: a closure would capture `interp` (a type, by default) as `UnionAll`, so the `_tinterp_nd` call would not infer
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     data, t0 = unwrap(A), axiskeys(A, d)
     t isa AbstractArray && return rebuild(A, _tinterp_nd(interp, data, t0, t, d; kws...), d, t)
     out = _tinterp_nd(interp, data, t0, [t], d; kws...)

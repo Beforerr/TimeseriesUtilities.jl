@@ -4,7 +4,7 @@
 Remove slices containing NaN values along dimension `dim`.
 """
 @inline function dropna(A; dim = nothing)
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     idxs = vec(all(!isnan, unwrap(A); dims = other_dims(A, d)))
     return A[_selectors(A, d, idxs)...]
 end

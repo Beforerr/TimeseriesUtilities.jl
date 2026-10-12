@@ -14,13 +14,13 @@ Starts begin at the first time floored to a multiple of `every` (`start_by=:wind
 (`start_by=:datapoint`).
 """
 function tstat(f, x; dim = nothing)
-    d = dimnum(x, dim)
+    d = resolve_dim(x, dim)
     data = unwrap(x)
     return ndims(data) == 1 ? f(data) : _dropdim(x, _map(f, eachslice(data; dims = other_dims(data, d))), d)
 end
 
 function tstat(f, x, every; period = every, start_by = :window, dim = nothing)
-    d = dimnum(x, dim)
+    d = resolve_dim(x, dim)
     data, t = unwrap(x), axiskeys(x, d)
     windows = _tgrid_windows(t, every, period, start_by)
     # index ranges of the windows, searched once for all channels

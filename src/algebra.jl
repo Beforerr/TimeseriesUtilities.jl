@@ -6,7 +6,7 @@ Subtract from each channel of `x` its statistic `f` along time (or `dim`) over a
 function tsubtract(f, x, window = nothing; dim = nothing)
     data = unwrap(x)
     isnothing(window) || return rebuild(x, data .- unwrap(smooth(f, x, window; dim)))
-    d = dimnum(x, dim)
+    d = resolve_dim(x, dim)
     stats = _map(f, eachslice(data; dims = other_dims(data, d)))
     return rebuild(x, data .- reshape(stats, Base.setindex(size(data), 1, d)))
 end
@@ -40,7 +40,7 @@ Forward-difference time derivative of `A`, keyed by the left time of each pair;
 """
 @inline function tderiv(A; lazy = false, dim = nothing)
     # not `_ontime`: `lazy` would not fold inside closure, so result type would be a `Union`
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     f = lazy ? DiffQ : _tderiv
     t = axiskeys(A, d)
     return rebuild(A, f(unwrap(A), t; dim = d), d, @view t[1:(end - 1)])

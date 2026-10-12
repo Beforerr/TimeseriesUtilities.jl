@@ -22,7 +22,7 @@ The statistics are global, or local over a moving `window` around each sample as
 See also: [`despike`](@ref), [isoutlier - MATLAB](https://www.mathworks.com/help/matlab/ref/isoutlier.html)
 """
 function outlier_mask(A, window = nothing; threshold = 3, dim = nothing)
-    d = dimnum(A, dim)
+    d = resolve_dim(A, dim)
     data = unwrap(A)
     mask = similar(data, Bool)
     windows = isnothing(window) ? nothing : _point_windows(A, d, window)
