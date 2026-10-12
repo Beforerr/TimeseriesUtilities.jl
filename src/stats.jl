@@ -37,33 +37,31 @@ The $desc of `x` along time (or `dim`), ignoring NaNs: over all samples or per w
 $note
 """
 
-for (sym, desc, note) in (
-        (:sum, "sum", ""),
-        (:mean, "arithmetic mean", ""),
-        (:median, "median", ""),
-        (:var, "variance", ""),
-        (:std, "standard deviation", ""),
-        (:sem, "standard error of the mean", ""),
-        (:maximum, "maximum", "Empty windows of integer data give `typemin`."),
-        (:minimum, "minimum", "Empty windows of integer data give `typemax`."),
+for (sym, f, desc, note) in (
+        (:sum, :nansum, "sum", ""),
+        (:mean, :_nanmean, "arithmetic mean", ""),
+        (:median, :_nanmedian, "median", ""),
+        (:var, :nanvar, "variance", ""),
+        (:std, :nanstd, "standard deviation", ""),
+        (:sem, :nansem, "standard error of the mean", ""),
+        (:maximum, :nanmaximum, "maximum", "Empty windows of integer data give `typemin`."),
+        (:minimum, :nanminimum, "minimum", "Empty windows of integer data give `typemax`."),
     )
 
-    nanfunc = Symbol(:nan, sym)
     tfunc = Symbol(:t, sym)
     doc = tstat_doc(sym, desc, note)
-    @eval @doc $doc $tfunc(x, arg...; kw...) = tstat($nanfunc, x, arg...; kw...)
+    @eval @doc $doc $tfunc(x, arg...; kw...) = tstat($f, x, arg...; kw...)
 end
+
+_nanmean(x) = nanmean(x)
+_nanmedian(x) = nanmedian(x)
 
 # https://github.com/JuliaLang/julia/issues/54542
 # Reduce offsets from the first element: Float64 of a raw epoch count (≈1.6e18 ns) cannot resolve sub-μs.
-function tmean(x::AbstractArray{<:Dates.TimeType})
-    t0 = first(x)
-    return _shift(t0, mean(t -> Dates.value(t - t0), x))
-end
+_nanmean(x::AbstractArray{<:Dates.TimeType}) = _offset_stat(mean, x)
+_nanmedian(x::AbstractArray{<:Dates.TimeType}) = _offset_stat(median, x)
 
-function tmedian(x::AbstractArray{<:Dates.TimeType})
+function _offset_stat(f, x)
     t0 = first(x)
-    return _shift(t0, median!([Dates.value(t - t0) for t in x]))
+    return t0 + typeof(t0 - t0)(round(Int, f(Dates.value(t - t0) for t in x)))
 end
-
-_shift(t0, Δ) = t0 + typeof(t0 - t0)(round(Int, Δ))

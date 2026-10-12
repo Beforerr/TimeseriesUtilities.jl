@@ -132,6 +132,10 @@ end
     da_multi = tmask(da, [(1.0, 2.0), (4.0, 5.0)])
     @test isequal(da_multi, [NaN, NaN, 30.0, NaN, NaN])
 
+    ints = Timed([1, 2, 3], times[1:3])
+    @test isequal(parent(tmask(ints, 1.0, 2.0)), [NaN, NaN, 3.0])
+    @test_throws ArgumentError tmask!(ints, 1.0, 2.0)
+
     using JET
     @test_opt tmask!(copy(da), 2.0, 4.0)
     @test_call tmask!(copy(da), 2.0, 4.0)

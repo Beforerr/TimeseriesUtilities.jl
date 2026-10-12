@@ -13,6 +13,8 @@
         tn = Timestamp{Nanosecond}(t0) .+ Nanosecond.([0, 1, 2, 3, 10])
         @test tmean(tn) === tn[4]
         @test tmedian(tn) === tn[3]
+        @test parent(tmedian(Timed([ts ts], 1:10; dim = 1))) == [ts[5], ts[5]]
+        @test parent(tmean(Timed(ts, 1:10), 5)) == [ts[3], ts[7], ts[10]]  # windows [0, 5), [5, 10), [10, 15)
     end
 
     @testset "DimensionalData" begin

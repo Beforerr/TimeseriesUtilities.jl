@@ -61,6 +61,7 @@ Mask all data values within the specified time range(s) `(t0, t1)` / `its` with 
 function tmask!(A, t0, t1; dim = nothing)
     d = dimnum(A, dim)
     data = unwrap(A)
+    _check_holds_nan(data, :tmask)
     view(data, _selectors(data, d, _search_range(axiskeys(A, d), t0, t1))...) .= eltype(data)(NaN)
     return A
 end
@@ -75,9 +76,9 @@ end
 """
     tmask(A, args...; kwargs...)
 
-Non-mutable version of `tmask!`. See also [`tmask!`](@ref).
+Copy of `A` (promoted to float) masked by [`tmask!`](@ref).
 """
-tmask(A, args...; kwargs...) = tmask!(rebuild(A, copy(unwrap(A))), args...; kwargs...)
+tmask(A, args...; kwargs...) = tmask!(_float_copy(A), args...; kwargs...)
 
 function tselect(A, t; dim = nothing)
     d = dimnum(A, dim)

@@ -74,3 +74,8 @@ function searchsortednearest(a, x; by = identity, lt = isless, rev = false, dist
     end
     return i
 end
+
+_float_copy(A) = (data = unwrap(A); rebuild(A, copyto!(similar(data, float(eltype(data))), data)))
+
+_check_holds_nan(data, f) = eltype(data) <: Union{AbstractFloat, Complex{<:AbstractFloat}} ||
+    throw(ArgumentError("$(f)! writes NaN, which an array of $(eltype(data)) cannot hold; use $f"))
