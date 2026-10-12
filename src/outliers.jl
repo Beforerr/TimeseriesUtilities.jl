@@ -89,11 +89,7 @@ end
     despike(A, [window]; threshold=3, dim=nothing)
     despike!(A, [window]; threshold=3, dim=nothing)
 
-Set the [`outlier_mask`](@ref) values of `A` to NaN. Fill them with [`tinterp_nans`](@ref):
-
-```julia
-despike(x, Second(10)) |> tinterp_nans
-```
+Set the [`outlier_mask`](@ref) values of `A` to NaN.
 """
 function despike(A, args...; kw...)
     data = unwrap(A)

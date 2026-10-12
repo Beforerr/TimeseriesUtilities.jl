@@ -25,7 +25,7 @@
         x -> tinterp(x, [0.5, 4.5]; interp = QuadraticInterpolation),
         x -> tresample(x, 0.5),
         x -> tfill_gaps(x, 1.0),
-        tinterp_nans,
+        tinterp_na,
         tmean,
         x -> tmean(x, 2.0; period = 3.0),
         x -> tmaximum(x, 2.0),

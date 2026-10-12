@@ -24,7 +24,7 @@ const interp_nans_dimarray_bench = let data = rand(1000, 3)
     DimArray(data, (Ti(1:1000), Y(1:3)))
 end
 
-SUITE["tinterp_nans"] = @benchmarkable tinterp_nans($interp_nans_dimarray_bench)
+SUITE["tinterp_na"] = @benchmarkable tinterp_na($interp_nans_dimarray_bench)
 
 const da1_bench, da2_bench, da3_bench = workload_interp_setup(128)
 

@@ -30,6 +30,7 @@
 - `times(x, dim)` is generic over `axiskeys` and `tdimnum`; container backends no longer define `times`.
 - **Breaking**: `smooth(f, x, window)` takes the moving statistic first, called on each channel's window as a vector; the `op` keyword is removed. `smooth(x, window)` keeps the `nanmean` default.
 - **Breaking**: `tsubtract(f, x, [window])` requires the statistic `f`, called on each channel's samples as a vector instead of `f(data; dims)`; with `window` it subtracts the moving statistic of `smooth(f, x, window)`.
+- **Breaking**: Rename `tinterp_nans` to `tinterp_na`, matching `dropna`.
 
 ### Fixed
 
