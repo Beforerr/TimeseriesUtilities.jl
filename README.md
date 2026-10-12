@@ -50,7 +50,6 @@ Functions are listed by call signature; keyword `dim = nothing` (time dimension)
 ### Selection
 
 - `tclip(x, t0, t1)` / `tview(x, t0, t1)`: copy / view of samples in `[t0, t1]` (times sorted; see `tsort(x; rev)`).
-- `tclips(xs...)` / `tviews(xs...)`: clip / view each of `xs` to their common time range.
 - `tselect(x, t, [δt])`: sample nearest to `t`; with `δt`, only within `[t-δt, t+δt]`, else `missing`.
 - `tmask(x, t0, t1)`, `tmask(x, ranges)`: set samples in the range(s) to NaN (`tmask!` in place).
 - `dropna(x)`: drop samples containing any NaN.
@@ -91,7 +90,6 @@ targmax(x)                                     # time of each channel's maximum
 ### Per-sample operations
 
 - `mapsamples(f, x, args...)`: `f(sample_of_x, samples_of_args...)` per time, stacked along time. `Ref(v)` passes `v` whole to every call.
-- `proj(a, b)`, `oproj(a, b)`, `sproj(a, b)`: vector projection, rejection, scalar projection of `a` on `b` (per sample with `mapsamples`).
 
 ### Derivatives
 

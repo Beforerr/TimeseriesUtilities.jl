@@ -83,38 +83,6 @@ end
     @test tselect(ka2, 2.2) == ka2[2, :]
     @test axiskeys(tclip(ka2, 2.0, 4.0), 1) == [2.0, 3.0, 4.0]
     @test axiskeys(tclip(ka2, 2.0, 4.0), 2) == [:x, :y, :z]
-
-    ka3 = KeyedArray([100.0, 200.0, 300.0]; time = [3.0, 4.0, 5.0])
-    c1, c2 = tclips(sorted, ka3)
-    @test axiskeys(c1, 1) == axiskeys(c2, 1) == [3.0, 4.0, 5.0]
-    v1, v2 = tviews(sorted, ka3)
-    @test v1 == c1
-    @test v2 == c2
-end
-
-@testitem "tclips, tviews" begin
-    using DimensionalData
-
-    da1 = DimArray([10.0, 20.0, 30.0, 40.0, 50.0], (Ti([1.0, 2.0, 3.0, 4.0, 5.0]),))
-    da2 = DimArray([1.0, 2.0, 3.0, 4.0, 5.0], (Ti([2.0, 3.0, 4.0, 5.0, 6.0]),))
-    da3 = DimArray([100.0], (Ti([11.0]),))
-
-    # common range is [2.0, 5.0]
-    c1, c2 = tclips(da1, da2)
-    @test dims(c1, Ti).val == [2.0, 3.0, 4.0, 5.0]
-    @test dims(c2, Ti).val == [2.0, 3.0, 4.0, 5.0]
-    @test c1 == [20.0, 30.0, 40.0, 50.0]
-
-    # tviews — same logic, view semantics
-    v1, v2 = tviews(da1, da2)
-    @test dims(v1, Ti).val == [2.0, 3.0, 4.0, 5.0]
-    @test dims(v2, Ti).val == [2.0, 3.0, 4.0, 5.0]
-
-    @test_throws ArgumentError tclips(da1, da3)
-
-    using JET
-    @test_opt tclips(da1, da2)
-    @test_call tclips(da1, da2)
 end
 
 @testitem "tselect" begin

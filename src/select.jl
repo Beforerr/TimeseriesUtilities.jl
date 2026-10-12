@@ -53,19 +53,6 @@ end
 
 
 """
-    tclips(xs...)
-    tviews(xs...)
-
-Clip (view) each of `xs` to their common time range [`trange`](@ref)`(xs...)`.
-"""
-tclips(xs::Vararg{Any, N}) where {N} = _tclips(tclip, trange(xs...), xs...)
-tviews(xs::Vararg{Any, N}) where {N} = _tclips(tview, trange(xs...), xs...)
-
-_tclips(f, ::Nothing, xs...) = throw(ArgumentError("No common time range found"))
-_tclips(f, tr, xs...) = map(x -> f(x, tr...), xs)
-
-
-"""
     tmask!(A, t0, t1; dim=nothing)
     tmask!(A, its; dim=nothing)
 
