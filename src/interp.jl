@@ -99,7 +99,6 @@ end
 Interpolate `A` at time `t`, or at each of times `t` (keyed by `t`).
 
 The `interp` constructor must accept `(u, t; kws...)` and return a callable object.
-Its syntax is compatible with `DataInterpolations.jl`.
 
 # Examples
 
@@ -152,10 +151,13 @@ end
 function _tinterp_nd(interp, A, old_times, new_times, d; kws...)
     x, xq = _rawtimes(old_times, new_times)
     A3 = _as3d(A, d)
-    ctor = _callable(interp)
-    fs = [ctor(view(A3, p, :, q), x; kws...) for q in axes(A3, 3) for p in axes(A3, 1)]
+    ctor, kw = _callable(interp), _interp_kws(interp; kws...)
+    fs = [ctor(view(A3, p, :, q), x; kw...) for q in axes(A3, 3) for p in axes(A3, 1)]
     return _stack_channels(A, d, [f.(xq) for f in fs])
 end
+
+# Keywords for constructor `interp`; extensions map a `Bool` `extrapolation` to the constructor's own option.
+_interp_kws(interp; kws...) = kws
 
 # A closure capturing type values stores them as `DataType`/`UnionAll` fields
 struct _Ctor{T} end

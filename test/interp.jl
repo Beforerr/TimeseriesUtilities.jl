@@ -38,6 +38,7 @@ end
     before = DateTime(2019, 12, 31)
     @test tinterp(da, before; extrapolation = true) ≈ -1.0
     @test tinterp(da, before; interp = LinearInterpolation, extrapolation = ExtrapolationType.Linear) ≈ -1.0
+    @test tinterp(da, before; interp = LinearInterpolation, extrapolation = true) ≈ -1.0
 
     # per-channel fallback; a spline through linear data is exact
     t3 = [DateTime(2020, 1, i) for i in 1:5]
