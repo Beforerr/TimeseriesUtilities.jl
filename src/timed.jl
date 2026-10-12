@@ -46,6 +46,21 @@ Base.:(==)(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && x.keys == y.keys &&
 Base.isequal(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && isequal(x.keys, y.keys) && isequal(x.data, y.data)
 Base.hash(x::Timed, h::UInt) = hash(x.data, hash(x.keys, hash(tdimnum(x), hash(Timed, h))))
 
+function Base.show(io::IO, x::Timed)
+    print(io, "Timed(", summary(x.data), ", ")
+    _show_span(io, times(x))
+    print(io, "; dim = ", tdimnum(x), ")")
+end
+
+function Base.show(io::IO, m::MIME"text/plain", x::Timed)
+    print(io, "Timed along dimension ", tdimnum(x), ", ")
+    _show_span(io, times(x))
+    println(io)
+    show(io, m, x.data)
+end
+
+_show_span(io, t) = isempty(t) ? print(io, "no times") : print(io, length(t), " times ", first(t), " … ", last(t))
+
 # Without a time axis the result is plain data.
 _timed(::Nothing, data, _) = data
 _timed(::Val{D}, data, keys) where {D} = Timed{D}(data, keys)
