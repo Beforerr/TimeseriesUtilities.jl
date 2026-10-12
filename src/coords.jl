@@ -133,18 +133,18 @@ function _targ(argf::F, x, dim) where {F}
 end
 
 """
-    trange(x)
-    trange(x1, xs...)
+    trange(x; dim=nothing)
+    trange(x1, xs...; dim=nothing)
 
 Time range `(tmin, tmax)` of `x`. With several arguments, their common time range
 (intersection), or `nothing` if they do not overlap.
 """
-trange(x) = extrema(times(x))
+trange(x; dim = nothing) = extrema(times(x, dim))
 
-function trange(x1, xs...)
-    t0, t1 = trange(x1)
+function trange(x1, xs...; dim = nothing)
+    t0, t1 = trange(x1; dim)
     for x in xs
-        _t0, _t1 = trange(x)
+        _t0, _t1 = trange(x; dim)
         t0 = max(t0, _t0)
         t1 = min(t1, _t1)
         t0 > t1 && return nothing
