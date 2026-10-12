@@ -46,13 +46,9 @@ Forward-difference time derivative of `A`, keyed by the left time of each pair;
     return rebuild(A, f(unwrap(A), t; dim = d), d, @view t[1:(end - 1)])
 end
 
-"""Vector projection of a `a` onto `b`."""
+# Vector projection, rejection and scalar projection of `a` on `b`.
 proj(a, b) = (a ⋅ b / (b ⋅ b)) .* b
-
-"""Vector rejection"""
 oproj(a, b) = a .- (a ⋅ b / (b ⋅ b)) .* b
-
-"""Scalar projection"""
 sproj(a, b) = dot(a, b) / norm(b)
 
 # https://github.com/JuliaArrays/LazyArrays.jl/blob/master/src/lazyoperations.jl

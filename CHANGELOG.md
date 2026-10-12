@@ -25,12 +25,12 @@
 - **Breaking**: `times(x)` on a plain array errors instead of returning `x`; so do `targmin` and `targmax`.
 - **Breaking**: Plain arrays with more than one dimension have no default time dimension: calls without `dim` throw `ArgumentError`. Plain vectors are unaffected.
 - **Breaking**: `mapsamples(f, A, args...)` calls `f` with the matching sample of each argument, each sliced along its own time dimension. Time is no longer passed implicitly: `mapsamples(f, A)` becomes `mapsamples(f, A, times(A))`. Keyed arguments must share the time keys of `A`.
-- **Breaking**: Remove the `trange` keyword of `tclips` and `tviews`; use `tclip.(xs, Ref(tr))`.
 - **Breaking**: `samplingrate(ts)` is defined without Unitful and returns hertz as a plain number.
 - `times(x, dim)` is generic over `axiskeys` and `tdimnum`; container backends no longer define `times`.
 - **Breaking**: `smooth(f, x, window)` takes the moving statistic first, called on each channel's window as a vector; the `op` keyword is removed. `smooth(x, window)` keeps the `nanmean` default.
 - **Breaking**: `tsubtract(f, x, [window])` requires the statistic `f`, called on each channel's samples as a vector instead of `f(data; dims)`; with `window` it subtracts the moving statistic of `smooth(f, x, window)`.
 - **Breaking**: Rename `tinterp_nans` to `tinterp_na`, matching `dropna`.
+- **Breaking**: `proj`, `sproj` and `oproj` are no longer exported.
 
 ### Fixed
 
@@ -44,8 +44,9 @@
 - **Breaking**: `tview(f::Function, t0, t1)`.
 - **Breaking**: `Tinterp`; external interpolators passed as `interp` receive raw time values (`Dates.value`) directly.
 - **Breaking**: `time_grid`; use `tresample(A, dt)` or `range(trange(x)...; step = dt)`.
-- **Breaking**: `tnorm`, `tdot`, `tcross`, `tsproj`, `tproj`, `toproj`, `tnorm_combine`; use `mapsamples(norm, B)`, `mapsamples(cross, E, B)`, `mapsamples(oproj, A, B)`, ...
+- **Breaking**: `tnorm`, `tdot`, `tcross`, `tsproj`, `tproj`, `toproj`, `tnorm_combine`; use `mapsamples(norm, B)`, `mapsamples(cross, E, B)`, `mapsamples(TimeseriesUtilities.oproj, A, B)`, ...
 - **Breaking**: `tfill_gaps(t, [dt])` on time vectors; use `tfill_gaps(x, [dt])` on a container.
+- **Breaking**: `tclips` and `tviews`; use `tclip.(xs, Ref(trange(xs...)))` or `tview.(...)`.
 
 ## v0.2.0
 

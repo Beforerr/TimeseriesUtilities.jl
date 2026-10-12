@@ -16,10 +16,10 @@ export cadence, samplingrate
 export Timed
 export times, targmin, targmax
 export trange, find_continuous_timeranges, ContinuousTimeRanges, tsplit, IntervalRange
-export tselect, tclip, tclips, tview, tviews, tmask, tmask!, tsort, tshift
+export tselect, tclip, tview, tmask, tmask!, tsort, tshift
 export mapsamples, smooth, twindows
 export tstat, tsum, tmean, tmedian, tstd, tsem, tvar, tmaximum, tminimum
-export tderiv, tsubtract, proj, sproj, oproj
+export tderiv, tsubtract
 export tinterp, tsync, tresample
 export tinterp_na, tfill_gaps, dropna
 export outlier_mask, despike, despike!
