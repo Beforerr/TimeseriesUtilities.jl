@@ -1,13 +1,13 @@
 """
-    cadence(ts; tol=2, rtol=exp10(-tol-1), check=true)
+    cadence(ts; rtol=1e-3, check=true)
 
 Robust sampling cadence of times `ts` via IQR-trimmed modal clustering on
-positive diffs, refined by the median of values near the modal center.
-With `check=true`, warns on gaps or non-integer-multiple intervals.
+positive diffs, refined by the median of diffs within `rtol` of the modal center.
+With `check=true`, warns on gaps or intervals off integer multiples of the cadence by more than `rtol`.
 """
 cadence(ts::AbstractRange; kwargs...) = step(ts)
 
-function cadence(ts; tol = 2, rtol = exp10(-tol - 1), check = true)
+function cadence(ts; rtol = 1.0e-3, check = true)
     length(ts) > 1 || throw(ArgumentError("at least two time points are required"))
     T = typeof(ts[2] - ts[1])
 
