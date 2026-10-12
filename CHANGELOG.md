@@ -31,6 +31,7 @@
 - **Breaking**: `tsubtract(f, x, [window])` requires the statistic `f`, called on each channel's samples as a vector instead of `f(data; dims)`; with `window` it subtracts the moving statistic of `smooth(f, x, window)`.
 - **Breaking**: Rename `tinterp_nans` to `tinterp_na`, matching `dropna`.
 - **Breaking**: `proj`, `sproj` and `oproj` are no longer exported.
+- **Breaking**: `cadence` drops the `tol` keyword; pass `rtol` (default `1e-3`).
 
 ### Fixed
 
