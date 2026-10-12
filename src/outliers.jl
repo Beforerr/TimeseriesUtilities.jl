@@ -92,15 +92,11 @@ end
 
 Set the [`outlier_mask`](@ref) values of `A` to NaN.
 """
-function despike(A, args...; kw...)
-    data = unwrap(A)
-    return despike!(rebuild(A, copyto!(similar(data, float(eltype(data))), data)), args...; kw...)
-end
+despike(A, args...; kw...) = despike!(_float_copy(A), args...; kw...)
 
 function despike!(A, args...; kw...)
     data = unwrap(A)
-    eltype(data) <: AbstractFloat ||
-        throw(ArgumentError("despike! sets outliers to NaN, which an array of $(eltype(data)) cannot hold; use despike"))
+    _check_holds_nan(data, :despike)
     data[unwrap(outlier_mask(A, args...; kw...))] .= NaN
     return A
 end
