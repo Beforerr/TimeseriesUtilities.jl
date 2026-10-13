@@ -42,9 +42,10 @@ _samekeys(a, b) = a === b || a == b
 # `f::F` forces specialization for Julia 1.10 which dispatches `f(s...)` dynamically otherwise
 function _stack_samples(f::F, A, ys, ::Val{D}) where {F, D}
     xs = eachslice(A; dims = D)
-    isempty(xs) && return _empty_samples(A, Base.promote_op(f, eltype(xs), map(eltype, ys)...), D)
     samples = zip(xs, ys...)
-    s, state = iterate(samples)
+    next = iterate(samples)
+    isnothing(next) && return _empty_samples(A, Base.promote_op(f, eltype(xs), map(eltype, ys)...), D)
+    s, state = next
     y = f(s...)
     P = _slotdim(y, D)
     return _fill_samples!(_similar_samples(A, y, length(xs), P), f, y, samples, state, 1, P)

@@ -45,7 +45,8 @@ Underlying array of container `x` (sharing memory), or `x` itself when it is not
 """
 unwrap(x) = x
 
-_haskeys(x) = unwrap(x) !== x
+# compared by type so it folds at compile time
+_haskeys(x) = typeof(unwrap(x)) !== typeof(x)
 
 """
     rebuild(x, data)

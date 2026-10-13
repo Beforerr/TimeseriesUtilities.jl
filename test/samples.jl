@@ -45,6 +45,10 @@
     @test dimnames(r) == (:time,) && r == [2020, 2021]
     r = mapsamples(x -> x[1:2], ka)
     @test dimnames(r) == (:_, :time) && axiskeys(r, :time) == ts
+
+    using JET
+    @test_call mapsamples(shift, A, ts; dim = 2)
+    @test_opt mapsamples(shift, A, ts; dim = 2)
 end
 
 @testitem "mapsamples over several arrays" begin
