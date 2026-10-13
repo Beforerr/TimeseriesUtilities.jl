@@ -23,7 +23,7 @@ Operations act along the time dimension, or along `dim` (an index, a `KeyedArray
 Times may be `DateTime`/`Date` or numbers. Periods (`dt`, `every`, `window`) are `Dates.Period`s for date times and numbers for numeric times.
 Missing data is `NaN`: statistics skip NaNs, and `despike`/`tmask` write them.
 Any per-sample function lifts to a container with `mapsamples`, which keeps the container and its times.
-Plain arrays (with `dim` unless a vector) work where no times are needed: statistics over all samples, `tsubtract`, `mapsamples`, `smooth`, `outlier_mask` and `despike`, whose `window` then counts samples.
+Plain arrays (with `dim` unless a vector) work where no times are needed: statistics over all samples, `tsubtract`, `mapsamples`, `tsmooth`, `outlier_mask` and `despike`, whose `window` then counts samples.
 
 ```julia
 using TimeseriesUtilities, Dates, LinearAlgebra
@@ -72,7 +72,7 @@ Functions are listed by call signature; keyword `dim = nothing` (time dimension)
 - `tmean`, `tmedian`, `tsum`, `tvar`, `tstd`, `tsem`, `tminimum`, `tmaximum`: `tstat` with the NaN-skipping statistic, same signatures minus `f`.
 - `targmin(x)`, `targmax(x)`: time of each channel's minimum/maximum, ignoring NaNs; `missing` for an all-NaN channel.
 - `twindows(x, every; period, start_by)`: `(ws, starts)`, views of `x` over the same windows.
-- `smooth([f], x, window)`: moving `f` (default `nanmean`) over `[c - window/2, c + window/2)` around each time (`window` may be `(before, after)`); same size as `x`.
+- `tsmooth([f], x, window)`: moving `f` (default `nanmean`) over `[c - window/2, c + window/2)` around each time (`window` may be `(before, after)`); same size as `x`.
 - `tsubtract(f, x, [window])`: subtract each channel's statistic `f` (e.g. `median`, or NaNStatistics' `nanmedian` to skip NaNs), over all samples or moving over `window`.
 
 ```julia

@@ -16,7 +16,7 @@
 
 Boolean mask (like `A`) of the values of each channel of `A` more than `threshold` scaled median absolute deviations
 (MAD) from the median along time (or `dim`); NaNs are never outliers.
-The statistics are global, or local over a moving `window` around each sample as in [`smooth`](@ref)
+The statistics are global, or local over a moving `window` around each sample as in [`tsmooth`](@ref)
 (counted in samples for a plain array).
 
 See also: [`despike`](@ref), [isoutlier - MATLAB](https://www.mathworks.com/help/matlab/ref/isoutlier.html)

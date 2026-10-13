@@ -17,7 +17,7 @@ export Timed
 export times, targmin, targmax
 export trange, find_continuous_timeranges, ContinuousTimeRanges, tsplit, IntervalRange
 export tselect, tclip, tview, tmask, tmask!, tsort, tshift
-export mapsamples, smooth, twindows
+export mapsamples, tsmooth, twindows
 export tstat, tsum, tmean, tmedian, tstd, tsem, tvar, tmaximum, tminimum
 export tderiv, tsubtract
 export tinterp, tsync, tresample

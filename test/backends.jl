@@ -17,7 +17,7 @@
         x -> tmask(x, 1.0, 2.0),
         x -> tshift(x, 1.0),
         dropna,
-        x -> smooth(x, 2.0),
+        x -> tsmooth(x, 2.0),
         tderiv,
         x -> tsubtract(first, x),
         x -> tsubtract(maximum, x, 2.0),

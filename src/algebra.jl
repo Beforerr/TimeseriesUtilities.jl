@@ -5,7 +5,7 @@ Subtract from each channel of `x` its statistic `f` along time (or `dim`) over a
 """
 function tsubtract(f, x, window = nothing; dim = nothing)
     data = unwrap(x)
-    isnothing(window) || return rebuild(x, data .- unwrap(smooth(f, x, window; dim)))
+    isnothing(window) || return rebuild(x, data .- unwrap(tsmooth(f, x, window; dim)))
     d = resolve_dim(x, dim)
     stats = _map(f, eachslice(data; dims = other_dims(data, d)))
     return rebuild(x, data .- reshape(stats, Base.setindex(size(data), 1, d)))
