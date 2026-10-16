@@ -56,6 +56,14 @@ end
     @test parent(tinterp(Timed(u, t), q)) ≈ LinearInterpolation(u, t).(q)
 end
 
+@testitem "exact knots keep their sample next to NaN" begin
+    using TimeseriesUtilities: Timed, tinterp, LinearInterpolation
+    t = [0.0, 1.0, 2.0, 3.0]
+    A = [1.0 2.0; NaN NaN; 3.0 4.0; NaN NaN]
+    @test isequal(parent(tinterp(Timed(A, t; dim = 1), t)), A)
+    @test isequal(LinearInterpolation(A[:, 1], t).(t), A[:, 1])
+end
+
 @testitem "FastInterpolations extension" begin
     using Dates, DimensionalData
     using FastInterpolations

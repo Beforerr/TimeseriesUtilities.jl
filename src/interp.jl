@@ -90,6 +90,9 @@ function (interp::LinearInterpolation)(x)
     t1 = interp.t[i + 1]
     u0 = interp.u[i]
     u1 = interp.u[i + 1]
+    # exact knots return their sample, so NaN neighbors do not leak in
+    x == t0 && return u0
+    x == t1 && return u1
     return u0 + (x - t0) / (t1 - t0) * (u1 - u0)
 end
 
@@ -136,6 +139,13 @@ function _tinterp_linear3!(out3, A3, old_times, new_times, extrapolation)
     hint = 0
     @inbounds for (j, x) in enumerate(new_times)
         i = hint = _interp_segment(old_times, x, extrapolation, hint)
+        k = x == old_times[i] ? i : x == old_times[i + 1] ? i + 1 : 0
+        if k > 0
+            _foreach_pq(A3) do p, q
+                @inbounds out3[p, j, q] = A3[p, k, q]
+            end
+            continue
+        end
         α = (x - old_times[i]) / (old_times[i + 1] - old_times[i])
         β = 1 - α
         _foreach_pq(A3) do p, q
