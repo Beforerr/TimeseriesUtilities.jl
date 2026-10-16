@@ -18,6 +18,7 @@ DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 DimensionalData = "0703355e-b756-11e9-17c0-8b28908087d0"
 FastInterpolations = "9ea80cae-fc13-4c00-8066-6eaedb12f34b"
+IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [extensions]
@@ -26,6 +27,7 @@ TimeseriesUtilitiesDSPExt = "DSP"
 TimeseriesUtilitiesDataInterpolationsExt = "DataInterpolations"
 TimeseriesUtilitiesDimensionalDataExt = "DimensionalData"
 TimeseriesUtilitiesFastInterpolationsExt = "FastInterpolations"
+TimeseriesUtilitiesIntervalSetsExt = "IntervalSets"
 TimeseriesUtilitiesUnitfulExt = "Unitful"
 
 [compat]
@@ -35,6 +37,7 @@ DataInterpolations = "7, 8, 9, 10"
 Dates = "1"
 DimensionalData = "0.29, 0.30"
 FastInterpolations = "0.4"
+IntervalSets = "0.7"
 LinearAlgebra = "1"
 NaNStatistics = "0.6"
 Statistics = "1"

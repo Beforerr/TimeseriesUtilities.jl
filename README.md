@@ -25,7 +25,7 @@ Rules shared by all functions:
 - They act along the time dimension, or along the `dim` keyword: an index, a `KeyedArray` name `Symbol`, or a `DimArray` dimension.
 - Times are `DateTime`/`Date` or numbers. Durations (`dt`, `every`, `window`) are `Dates.Period`s for date times, numbers for numeric times.
 - Missing data is `NaN`: statistics skip it; `despike`, `tmask` and `tfill_gaps` write it.
-- Time ranges `t0, t1` select the closed `[t0, t1]`; windows are half-open `[start, start + period)`.
+- Time ranges `t0, t1` select the closed `[t0, t1]` or an IntervalSets interval; windows are half-open `[start, start + period)`.
 - Selection and windows need sorted times (`tsort`).
 - Operations that need times throw `ArgumentError` on a plain array; wrap it with `Timed`.
 
