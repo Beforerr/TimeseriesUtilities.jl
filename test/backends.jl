@@ -43,3 +43,12 @@
         ref isa Timed && @test times(r) == times(ref)
     end
 end
+
+@testitem "kept axes keep their lookup" begin
+    using DimensionalData
+    using DimensionalData.Lookups: Center, ForwardOrdered, Intervals, Irregular, Sampled, span
+
+    e = Dim{:energy}(Sampled([1.0, 2.0, 5.0]; span = Irregular(0.5, 6.0), sampling = Intervals(Center()), order = ForwardOrdered()))
+    x = DimArray(rand(4, 3), (Ti(1.0:4.0), e))
+    @test span(dims(tmean(x), :energy)) == Irregular(0.5, 6.0)
+end

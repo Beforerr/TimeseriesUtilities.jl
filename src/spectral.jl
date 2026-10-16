@@ -22,9 +22,7 @@ function pspectrum(A; dim = nothing, freqdim = :frequency, kwargs...)
     d = resolve_dim(A, dim)
     spec = _pspectrum(unwrap(A), axiskeys(A, d), d; kwargs...)
     odims = other_dims(A, d)
-    newdims = (freqdim, Val(d), map(Val, odims)...)
-    keys = (spec.freq, spec.time, map(i -> axiskeys(A, i), odims)...)
-    return rebuild(A, spec.power, newdims, keys)
+    return rebuild(A, spec.power, (freqdim => spec.freq, Val(d) => spec.time, map(Val, odims)...))
 end
 
 # Kernels on plain data `A` with times `t` along dimension `d`, defined by the DSP extension.

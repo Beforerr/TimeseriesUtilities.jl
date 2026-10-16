@@ -49,19 +49,25 @@ unwrap(x) = x
 _haskeys(x) = typeof(unwrap(x)) !== typeof(x)
 
 """
-    rebuild(x, data)
+    rebuild(x, data, dims::Tuple)
     rebuild(x, data, dim::Integer, keys)
-    rebuild(x, data, dims::Tuple, keys::Tuple)
+    rebuild(x, data)
 
-Container like `x` holding `data`: with the axes of `x`; with the keys of dimension `dim` replaced;
-or with new axes `dims`, each a `Val(i)` (dimension `i` of `x`, static so the result is inferable),
-a `Symbol` (new named dimension) or `nothing` (new anonymous dimension), with coordinates `keys`.
+Container like `x` holding `data`, with axes `dims`: each `Val(i)` (dimension `i` of `x` as it is,
+with whatever the container attaches to it), `Val(i) => keys` (dimension `i` with new samples),
+`name::Symbol => keys` (new named dimension) or `nothing => keys` (new anonymous dimension).
 
+
+Backends implement the 3-argument form, and the shorthands only where that is cheaper.
 Plain arrays rebuild to `data`; containers without a method throw rather than silently drop their keys.
 """
-rebuild(x, data) = _norebuild(x, data)
-rebuild(x, data, _, _) = _norebuild(x, data)
-_norebuild(x, data) = _haskeys(x) ? throw(ArgumentError("$(typeof(x)) has no `rebuild` method")) : data
+rebuild(x, data) = rebuild(x, data, ntuple(Val, Val(ndims(x))))
+@inline rebuild(x, data, dim, keys) = rebuild(x, data, Base.setindex(ntuple(Val, Val(ndims(x))), Val(dim) => keys, dim))
+rebuild(x, data, _) = _haskeys(x) ? throw(ArgumentError("$(typeof(x)) has no `rebuild` method")) : data
+_axis(d::Val) = d
+_axis(d::Pair) = first(d)
+_axiskeys(x, ::Val{i}) where {i} = axiskeys(x, i)
+_axiskeys(_, d::Pair) = last(d)
 
 """
     rekey(x, dim::Integer, keys)
@@ -93,10 +99,7 @@ _valof(::Val{D}) where {D} = D
 
 # Rebuild a reduction over dimension `d` of `x` with the remaining axes.
 @inline _dropdim(x, data, d) = _haskeys(x) ? _dropdim(x, data, Val(d)) : data
-function _dropdim(x, data, ::Val{d}) where {d}
-    others = map(Val, other_dims(x, d))
-    return rebuild(x, data, others, map(v -> axiskeys(x, _valof(v)), others))
-end
+_dropdim(x, data, ::Val{d}) where {d} = rebuild(x, data, map(Val, other_dims(x, d)))
 
 _seconds(dt::Period) = dt / Second(1)
 _seconds(dt) = dt

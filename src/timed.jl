@@ -38,9 +38,8 @@ unwrap(x::Timed) = x.data
 tdimnum(::Timed{D}) where {D} = D
 axiskeys(x::Timed, d::Integer) = x.keys[d]
 
-rebuild(x::Timed{D}, data) where {D} = Timed{D}(data, x.keys)
-@inline rebuild(x::Timed{D}, data, d::Integer, keys) where {D} = Timed{D}(data, Base.setindex(x.keys, keys, d))
-rebuild(x::Timed{D}, data, dims::Tuple, keys::Tuple) where {D} = _timed(_findval(Val(D), dims), data, keys)
+rebuild(x::Timed{D}, data, dims::Tuple) where {D} =
+    _timed(_findval(Val(D), map(_axis, dims)), data, map(d -> _axiskeys(x, d), dims))
 
 Base.:(==)(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && x.keys == y.keys && x.data == y.data
 Base.isequal(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && isequal(x.keys, y.keys) && isequal(x.data, y.data)
