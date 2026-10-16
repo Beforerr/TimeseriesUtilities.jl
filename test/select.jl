@@ -85,6 +85,18 @@ end
     @test axiskeys(tclip(ka2, 2.0, 4.0), 2) == [:x, :y, :z]
 end
 
+@testitem "IntervalSets ranges" begin
+    using IntervalSets
+
+    x = Timed([10.0, 20.0, 21.0, 30.0, 40.0], [1.0, 2.0, 2.0, 3.0, 4.0])
+    clip(i) = parent(tclip(x, i))
+    @test clip(Interval{:open, :closed}(2.0, 3.0)) == [30.0]
+    @test clip(Interval{:closed, :open}(2.0, 3.0)) == [20.0, 21.0]
+    @test clip(OpenInterval(1.5, 3.5)) == [20.0, 21.0, 30.0]
+    @test isequal(parent(tmask(x, OpenInterval(1.0, 3.0))), [10.0, NaN, NaN, 30.0, 40.0])
+    @test isequal(parent(tmask(x, [OpenInterval(1.0, 3.0), (4.0, 4.0)])), [10.0, NaN, NaN, 30.0, NaN])
+end
+
 @testitem "tselect" begin
     using DimensionalData
 

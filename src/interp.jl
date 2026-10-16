@@ -196,7 +196,7 @@ A_sync, B_sync, C_sync = tsync(A, B, C)
 """
 function tsync(A, Bs...; dim = nothing, kws...)
     tr = @something trange(A, Bs...; dim) throw(ArgumentError("No common time range found"))
-    A_tsync = tclip(A, tr...; dim)
+    A_tsync = tclip(A, tr; dim)
     tstamps = times(A_tsync, dim)
     Bs_syncs = map(Bs) do B
         tinterp(B, tstamps; dim, kws...)

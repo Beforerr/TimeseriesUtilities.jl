@@ -14,61 +14,61 @@ end
 
 """
     tclip(A, t0, t1; dim=nothing)
+    tclip(A, tr; dim=nothing)
 
-Clip `A` to time range `[t0, t1]` along dimension `dim`.
+Clip `A` to time range `[t0, t1]`, or to `tr`, along dimension `dim`.
+`tr` is a `(t0, t1)` tuple or an interval such as `IntervalSets.Interval{:closed, :open}(t0, t1)`.
 
 `dim` should be sorted before clipping (see [`tsort`](@ref)).
 """
-function tclip(A, t0, t1; dim = nothing)
+tclip(A, t0, t1; dim = nothing) = tclip(A, (t0, t1); dim)
+
+function tclip(A, tr; dim = nothing)
     d = resolve_dim(A, dim)
-    idx = _search_range(axiskeys(A, d), t0, t1)
+    idx = _search_range(axiskeys(A, d), tr)
     return A[_selectors(A, d, idx)...]
 end
 
-tclip(A, tr; kw...) = tclip(A, tr...; kw...)
-
 """
     tview(A, t0, t1; dim=nothing)
+    tview(A, tr; dim=nothing)
 
-View `A` in time range `[t0, t1]` along dimension `dim`.
+View `A` in time range `[t0, t1]`, or in `tr` (see [`tclip`](@ref)), along dimension `dim`.
 """
-function tview(A, t0, t1; dim = nothing)
+tview(A, t0, t1; dim = nothing) = tview(A, (t0, t1); dim)
+
+function tview(A, tr; dim = nothing)
     d = resolve_dim(A, dim)
-    idx = _search_range(axiskeys(A, d), t0, t1)
+    idx = _search_range(axiskeys(A, d), tr)
     return @view A[_selectors(A, d, idx)...]
 end
-
-tview(A, tr; kw...) = tview(A, tr...; kw...)
 
 function _selectors(A, d, selector)
     return ntuple(i -> i == d ? selector : Colon(), ndims(A))
 end
 
-function _search_range(keys, t0, t1)
+function _search_range(keys, tr)
     issorted(keys) || throw(ArgumentError("axis keys must be sorted before clipping"))
-    i0 = searchsortedfirst(keys, t0)
-    i1 = searchsortedlast(keys, t1)
-    return i0:i1
+    return _range_indices(keys, tr)
 end
+
+_range_indices(keys, (t0, t1)) = searchsortedfirst(keys, t0):searchsortedlast(keys, t1)
 
 
 """
     tmask!(A, t0, t1; dim=nothing)
-    tmask!(A, its; dim=nothing)
+    tmask!(A, trs; dim=nothing)
 
-Mask all data values within the specified time range(s) `(t0, t1)` / `its` with NaN.
+Set all data values within time range `[t0, t1]`, or within each range of `trs` to NaN.
 """
-function tmask!(A, t0, t1; dim = nothing)
-    d = resolve_dim(A, dim)
-    data = unwrap(A)
-    _check_holds_nan(data, :tmask)
-    view(data, _selectors(data, d, _search_range(axiskeys(A, d), t0, t1))...) .= eltype(data)(NaN)
-    return A
-end
+tmask!(A, t0, t1; dim = nothing) = tmask!(A, ((t0, t1),); dim)
 
-function tmask!(A, its; kw...)
-    for it in its
-        tmask!(A, it...; kw...)
+function tmask!(A, trs; dim = nothing)
+    d = resolve_dim(A, dim)
+    data, keys = unwrap(A), axiskeys(A, d)
+    _check_holds_nan(data, :tmask)
+    for tr in trs
+        view(data, _selectors(data, d, _search_range(keys, tr))...) .= eltype(data)(NaN)
     end
     return A
 end
