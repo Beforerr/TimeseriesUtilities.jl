@@ -8,12 +8,14 @@ on:
       - "src/**"
       - "docs/**"
       - "Project.toml"
+      - "README.md"
     tags: ["*"]
   pull_request:
     paths:
       - "src/**"
       - "docs/**"
       - "Project.toml"
+      - "README.md"
   workflow_dispatch:
 
 concurrency:

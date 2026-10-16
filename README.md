@@ -12,93 +12,136 @@ using Pkg; Pkg.add("TimeseriesUtilities")
 
 ## Data model
 
-Every operation takes a container that carries its time coordinate and returns the same kind of container:
+Every operation takes a container that carries its times and returns the same kind of container:
 
-- `KeyedArray` (AxisKeys.jl): the time dimension is the one named `:time`.
-- `DimArray` (DimensionalData.jl): the time dimension is `Ti` (any `TimeDim`) or `Dim{:time}`.
-- `Timed(data, t; dim)`: wraps a plain array. Take it apart with `data, t = x` (or `parent(x)`, `times(x)`).
-  It is not an `AbstractArray` intentionally, so non-package array code throws instead of silently dropping times.
+- `Timed(data, t; dim)`: a plain array with times `t` along dimension `dim` (optional for vectors).
+  It is not an `AbstractArray`, so array code outside this package throws instead of silently dropping times.
+  Take it apart with `data, t = x` (or `parent(x)`, `times(x)`).
+- `DimArray` (DimensionalData.jl): time is the `Ti` dimension (any `TimeDim`) or `Dim{:time}`.
+- `KeyedArray` (AxisKeys.jl): time is the dimension named `:time`.
 
-Operations act along the time dimension, or along `dim` (an index, a `KeyedArray` name `Symbol`, or a `DimArray` dimension).
-Times may be `DateTime`/`Date` or numbers. Periods (`dt`, `every`, `window`) are `Dates.Period`s for date times and numbers for numeric times.
-Missing data is `NaN`: statistics skip NaNs, and `despike`/`tmask` write them.
-Any per-sample function lifts to a container with `mapsamples`, which keeps the container and its times.
-Plain arrays (with `dim` unless a vector) work where no times are needed: statistics over all samples, `tsubtract`, `mapsamples`, `tsmooth`, `outlier_mask` and `despike`, whose `window` then counts samples.
+Rules shared by all functions:
+
+- They act along the time dimension, or along the `dim` keyword: an index, a `KeyedArray` name `Symbol`, or a `DimArray` dimension.
+- Times are `DateTime`/`Date` or numbers. Durations (`dt`, `every`, `window`) are `Dates.Period`s for date times, numbers for numeric times.
+- Missing data is `NaN`: statistics skip it; `despike`, `tmask` and `tfill_gaps` write it.
+- Time ranges `t0, t1` select the closed `[t0, t1]`; windows are half-open `[start, start + period)`.
+- Selection and windows need sorted times (`tsort`).
+- Operations that need times throw `ArgumentError` on a plain array; wrap it with `Timed`.
+
+## Walkthrough
+
+The data: one hour of a 3-channel signal at 1 s cadence, with two spikes and a 1-minute dropout.
 
 ```julia
-using TimeseriesUtilities, Dates, LinearAlgebra
-t = DateTime(2020) .+ Second.([0, 1, 2, 5, 6])
-x = Timed(rand(5, 3), t; dim = 1)                # 5 samples × 3 channels
-y = tfill_gaps(x) |> tinterp_na                  # insert samples at 3 s and 4 s, interpolate them
-data, t_m = tmean(y, Second(2))                           # 2 s window means, keyed by window start
-B = Timed(rand(5, 3), t; dim = 1)
-v = mapsamples((e, b) -> cross(e, b) / dot(b, b), x, B)  # (x × B) / |B|² per sample: 5×3, keyed by t
+using TimeseriesUtilities, Dates, Random, Statistics, LinearAlgebra
+
+τ = 0:3599                                   # seconds
+data = [sin.(2π .* τ ./ 300) cos.(2π .* τ ./ 300) τ ./ 3600] .+ 0.01 .* randn(Xoshiro(0), 3600, 3);
+data[[500, 2000], 1] .= 8;                   # spikes
+keep = setdiff(1:3600, 1201:1260);           # dropout 00:20:00–00:20:59
+x = Timed(data[keep, :], DateTime(2024) .+ Second.(τ[keep]); dim = 1)
 ```
 
-## API
+### Inspect and select
 
-Functions are listed by call signature; keyword `dim = nothing` (time dimension) is accepted by every function taking a container and omitted below.
+```julia
+A, t = x[1:end, :]                           # indexing along time keeps the times
+x[1, :]                                      # one sample: plain vector
+trange(x)                                    # (2024-01-01T00:00:00, 2024-01-01T00:59:59)
+cadence(t)                                   # Millisecond(1000), robust to gaps and jitter; warns about the gap
+find_continuous_timeranges(t, Second(1))     # [(00:00:00, 00:19:59), (00:21:00, 00:59:59)]
+tclip(x, DateTime(2024, 1, 1, 0, 10), DateTime(2024, 1, 1, 0, 20))   # copy of the samples in [t0, t1]
+tselect(x, DateTime(2024, 1, 1, 0, 30))                  # nearest sample
+tselect(x, DateTime(2024, 1, 1, 0, 20, 30), Second(5))   # missing: no sample within ±5 s
+```
 
-### Time coordinates
+### Clean
 
-- `times(x)`: time keys of `x`.
-- `trange(x)`: `(tmin, tmax)`; `trange(x, ys...)`: common (intersected) range, or `nothing`.
-- `cadence(t)`: robust sampling step of time vector `t` (survives gaps and jitter); `samplingrate(t)`: its inverse in Hz.
-- `find_continuous_timeranges(t, max_dt)` / `ContinuousTimeRanges(t, max_dt)`: `(t0, t1)` spans split at gaps `> max_dt`.
-- `tsplit(t0, t1, n_or_dt_or_PeriodType)`: split `[t0, t1)` into `n` parts, `dt`-sized parts, or calendar periods (e.g. `Month`); `IntervalRange` is its lazy form.
-- `tshift(x, [t0])`: subtract `t0` (default: first time) from the times.
+```julia
+y = despike(x, Minute(5))    # NaN where > 3 scaled MADs from the 5-minute moving median: the 2 spikes
+y = tfill_gaps(y)            # insert the 60 missing times on the cadence grid, as NaN
+y = tinterp_na(y)            # interpolate every NaN from its neighbors: 3600×3, no NaN
+```
 
-### Selection
+`outlier_mask(x, window)` returns the mask instead; `dropna(x)` drops samples containing NaN; `tmask(x, t0, t1)` blanks a known-bad interval.
+Without `window`, `despike` and `outlier_mask` use the global median, which misses spikes riding on slow variations.
 
-- `tclip(x, t0, t1)` / `tview(x, t0, t1)`: copy / view of samples in `[t0, t1]` (times sorted; see `tsort(x; rev)`).
-- `tselect(x, t, [δt])`: sample nearest to `t`; with `δt`, only within `[t-δt, t+δt]`, else `missing`.
-- `tmask(x, t0, t1)`, `tmask(x, ranges)`: set samples in the range(s) to NaN (`tmask!` in place).
-- `dropna(x)`: drop samples containing any NaN.
-- Indexing a container along time keeps the keys: `x[2:4, :]`.
+### Resample and align
 
-### Resampling and gaps
+```julia
+tresample(y, Second(10))                             # linear interpolation onto a 10 s grid: 360×3
+tinterp(y, DateTime(2024, 1, 1, 0, 30, 0, 500))      # one time: plain vector
+v = Timed(randn(Xoshiro(1), 750, 3), DateTime(2024, 1, 1, 0, 5) .+ Second.(2:4:2998); dim = 1)  # 4 s cadence
+ys, vs = tsync(y, v)          # y clipped to the common time range, v interpolated onto its times
+```
 
-- `tinterp(x, t_new; interp = LinearInterpolation, extrapolation = false)`: interpolate at `t_new` (a vector, keyed by `t_new` or at a single time without time axis).
-  `interp` is any constructor `interp(u, t; kws...)` returning a callable, e.g. DataInterpolations' `CubicSpline`, or FastInterpolations' `cubic_interp` etc. (fast multi-channel path).
-- `tresample(x, dt; kws...)`: `tinterp` onto a regular grid of step `dt` (also a Unitful time or frequency).
-- `tsync(x, ys...; kws...)`: clip `x` to the common range and interpolate each of `ys` onto its times with `tinterp(y, t; kws...)`; returns `(x′, ys′...)`.
-- `tfill_gaps(x, [dt]; fill = NaN, max_gap)`: insert missing timestamps on a `dt` (default `cadence`) grid, new samples `fill`; gaps longer than `max_gap` stay open.
-- `tinterp_na(x; interp)`: interpolate NaN values from their non-NaN neighbors.
+Interpolating outside the data's time range throws a `DomainError` unless `extrapolation = true`.
+`interp` swaps the interpolator, e.g. `tinterp(y, t_new; interp = DataInterpolations.CubicSpline)`.
 
 ### Statistics
 
-- `tstat(f, x)`: `f(channel_vector)` per channel over all samples; returns a scalar for a vector, else a container over the remaining axes.
-- `tstat(f, x, every; period = every, start_by = :window)`: per window `[start, start + period)`, starts `every` apart from the first time floored to `every` (`:window`) or from the first time (`:datapoint`); keyed by window start. `period > every` overlaps windows. Empty windows call `f` on an empty vector.
-- `tmean`, `tmedian`, `tsum`, `tvar`, `tstd`, `tsem`, `tminimum`, `tmaximum`: `tstat` with the NaN-skipping statistic, same signatures minus `f`.
-- `targmin(x)`, `targmax(x)`: time of each channel's minimum/maximum, ignoring NaNs; `missing` for an all-NaN channel.
-- `twindows(x, every; period, start_by)`: `(ws, starts)`, views of `x` over the same windows.
-- `tsmooth([f], x, window)`: moving `f` (default `nanmean`) over `[c - window/2, c + window/2)` around each time (`window` may be `(before, after)`); same size as `x`.
-- `tsubtract(f, x, [window])`: subtract each channel's statistic `f` (e.g. `median`, or NaNStatistics' `nanmedian` to skip NaNs), over all samples or moving over `window`.
-
 ```julia
-tmean(x)                                       # one value per channel
-tmaximum(x, Second(2))                         # windows [t0, t0 + 2s), starts on a regular grid
-tstat(v -> count(>(0.5), v), x, Second(2); period = Second(4))  # any `f`, overlapping windows
-ws, starts = twindows(x, Second(2))            # the windows themselves, as views of `x`
-targmax(x)                                     # time of each channel's maximum
+tmean(y)                                       # per channel: plain vector
+tmean(y, Minute(1))                            # 60×3, keyed by window start: [00:00, 00:01), [00:01, 00:02), …
+tstat(c -> quantile(c, 0.9), y, Minute(5); period = Minute(10))  # any f, 10-minute windows every 5 minutes
+tsmooth(y, Minute(1))                          # 1-minute moving mean, same size as y
+tsubtract(median, y, Minute(10))               # subtract the 10-minute moving median
+targmax(y)                                     # time of each channel's maximum
 ```
 
-### Cleaning
-
-- `outlier_mask(x, [window]; threshold = 3)`: `true` where a value is more than `threshold` scaled MADs from the median, globally or over a moving `window`.
-- `despike(x, [window]; threshold = 3)`: set those values to NaN (`despike!` in place). Typical: `despike(x, Second(10)) |> tinterp_na`.
+`f` receives one channel's samples in a window as a vector.
+Window starts are the first time floored to `every`, then every `every` (`start_by = :datapoint` starts at the first time instead);
+empty windows are kept, so `tmean` gives NaN over a dropout.
 
 ### Per-sample operations
 
-- `mapsamples(f, x, args...)`: `f(sample_of_x, samples_of_args...)` per time, stacked along time. `Ref(v)` passes `v` whole to every call.
+```julia
+mapsamples(norm, y)                            # |y| per time: Timed vector
+mapsamples((a, b) -> cross(a, b), vs, ys)      # pairs samples by time: arguments need the same times (tsync first)
+mapsamples(dot, y, Ref([0, 0, 1]))             # Ref passes a value whole to every call
+tderiv(y)                                      # forward difference per second: 3599×3, keyed by the left time
+```
 
-### Derivatives
+### Frequency domain
 
-- `tderiv(x; lazy = false)`: forward difference per second (for date times), keyed by the left time; `lazy = true` returns a lazy array.
+```julia
+using DSP
+tfilter(y, 1 / 600, 1 / 60)                    # zero-phase band-pass between 1/600 and 1/60 Hz
+pspectrum(y; nfft = 512)                       # spectrogram power: Timed 257×13×3, (frequency, time, channel)
+```
 
-### Frequency domain (needs `using DSP`)
+### Other containers
 
-- `tfilter(x, f1, [f2]; designmethod = Butterworth(2))`: zero-phase band-pass between `f1` and `f2` Hz (`f2` defaults to just below Nyquist).
-- `pspectrum(x; nfft = 256, noverlap = nfft ÷ 2, window = hamming)`: spectrogram power with axes (frequency, time, remaining axes of `x`).
+The same calls work on `DimArray` and `KeyedArray`, and return them:
+
+```julia
+using DimensionalData
+xd = DimArray(A, (Ti(t), Dim{:component}([:x, :y, :z])))
+tmean(xd, Minute(30))                          # DimArray over (Ti, component)
+```
+
+Plain arrays work where no times are needed, with `dim` unless a vector: statistics over all samples,
+`mapsamples`, `tsmooth`, `tsubtract`, `outlier_mask` and `despike`, whose `window` then counts samples (`despike(v, 16)`).
+Other array types become containers by implementing the hooks in `src/api.jl`.
+
+## Optional integrations
+
+Loading a package enables:
+
+- AxisKeys.jl, DimensionalData.jl: the containers above.
+- DataInterpolations.jl, FastInterpolations.jl: `interp` constructors.
+- Unitful.jl: `tresample(x, 0.1u"Hz")` or `tresample(x, 10u"s")`.
+- DSP.jl: `tfilter` and `pspectrum`.
+
+## Index
+
+- Time coordinates: `times`, `trange`, `cadence`, `samplingrate`, `find_continuous_timeranges`, `ContinuousTimeRanges`, `tsplit`, `IntervalRange`, `tshift`
+- Selection: `tclip`, `tview`, `tselect`, `tsort`, `tmask`, `tmask!`, `dropna`
+- Resampling and gaps: `tinterp`, `tresample`, `tsync`, `tfill_gaps`, `tinterp_na`
+- Statistics: `tstat`, `tmean`, `tmedian`, `tsum`, `tvar`, `tstd`, `tsem`, `tminimum`, `tmaximum`, `targmin`, `targmax`, `twindows`, `tsmooth`, `tsubtract`
+- Cleaning: `outlier_mask`, `despike`, `despike!`
+- Per sample: `mapsamples`, `tderiv`
+- Frequency domain: `tfilter`, `pspectrum`
 
 Full docstrings: `?name` in the REPL, or the [documentation](https://Beforerr.github.io/TimeseriesUtilities.jl/dev/).
