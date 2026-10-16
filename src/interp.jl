@@ -131,6 +131,7 @@ function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
     old_times, new_times = _commontimes(old_times, new_times)
     out_sz = ntuple(i -> i == d ? length(new_times) : size(A, i), ndims(A))
     out = similar(A, float(eltype(A)), out_sz)
+    old_times == new_times && return copyto!(out, A)
     _tinterp_linear3!(_as3d(out, d), _as3d(A, d), old_times, new_times, extrapolation)
     return out
 end
