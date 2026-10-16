@@ -48,5 +48,5 @@ end
     data, times_ = x
     @test data === A && times_ === t
     @test_throws MethodError collect(x)
-    @test TimeseriesUtilities.tdimnum(TimeseriesUtilities.rebuild(x, A', (Val(2), Val(1)), (t, 1:2))) == 1
+    @test TimeseriesUtilities.tdimnum(TimeseriesUtilities.rebuild(x, A', (Val(2), Val(1)))) == 1
 end

@@ -119,6 +119,5 @@ function _rebuild_samples(A, data, ::Val{D}) where {D}
     _haskeys(A) || return data
     size(data) == size(A) && return rebuild(A, data)
     p = _timepos(D, ndims(data) - 1)
-    newdims = Base.setindex(ntuple(Returns(nothing), Val(ndims(data))), Val(D), p)
-    return rebuild(A, data, newdims, Base.setindex(axes(data), axiskeys(A, D), p))
+    return rebuild(A, data, Base.setindex(map(ax -> nothing => ax, axes(data)), Val(D), p))
 end

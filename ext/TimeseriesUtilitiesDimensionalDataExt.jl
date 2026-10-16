@@ -59,17 +59,14 @@ _span(keys::AbstractRange) = DD.Regular(step(keys))
 _span(keys) = DD.Irregular((nothing, nothing))
 _rekey(l::DD.Sampled, keys) = DD.rebuild(l; data = keys, span = _span(keys))
 _rekey(l, keys) = DD.rebuild(l; data = keys)
+_newdim(x, ::Val{i}) where {i} = dims(x)[i]
+_newdim(x, (d, keys)::Pair) = _newdim(x, d, keys)
 _newdim(x, ::Val{i}, keys) where {i} = _newdim(x, dims(x)[i], keys)
 _newdim(_, dim::Dimension, keys) = DD.rebuild(dim, _rekey(lookup(dim), keys))
 _newdim(_, name::Symbol, keys) = DD.format(DD.Dim{name}(keys), axes(keys, 1))
 _newdim(_, ::Nothing, keys) = DD.format(DD.AnonDim(keys), axes(keys, 1))
 
-@inline rebuild(x::AbstractDimArray, data, dim::Integer, keys) =
-    DD.rebuild(x, data, Base.setindex(dims(x), _newdim(x, dims(x)[dim], keys), dim))
-rebuild(x::AbstractDimArray, data, newdims, keys) =
-    DD.rebuild(x, data, map((d, k) -> _newdim(x, d, k), newdims, keys))
-
-rebuild(x::AbstractDimArray, data) = DD.rebuild(x, data)
+rebuild(x::AbstractDimArray, data, newdims::Tuple) = DD.rebuild(x, data, map(d -> _newdim(x, d), newdims))
 
 """
     dropna(ds::AbstractDimStack; dim=nothing)

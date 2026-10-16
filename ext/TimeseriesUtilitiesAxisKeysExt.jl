@@ -8,6 +8,7 @@ import TimeseriesUtilities:
     tdimnum,
     unwrap
 using AxisKeys: KeyedArray
+using TimeseriesUtilities: _axis, _axiskeys
 
 unwrap(x::KeyedArray) = AxisKeys.keyless_unname(x)
 dimnum(x::KeyedArray, name::Symbol) = AxisKeys.dim(x, name)
@@ -21,11 +22,6 @@ _name(_, ::Nothing) = :_
 # `NamedDimsArray` accepts repeated `:_` names, keyword construction does not
 @inline _keyed(data, names, keys) = KeyedArray(AxisKeys.NamedDims.NamedDimsArray(data, names), keys)
 
-@inline rebuild(x::KeyedArray, data, dim::Integer, keys) =
-    _keyed(data, AxisKeys.dimnames(x), Base.setindex(AxisKeys.axiskeys(x), keys, dim))
-
-rebuild(x::KeyedArray, data) = _keyed(data, AxisKeys.dimnames(x), AxisKeys.axiskeys(x))
-
-rebuild(x::KeyedArray, data, dims, keys) = _keyed(data, map(d -> _name(x, d), dims), keys)
+rebuild(x::KeyedArray, data, dims::Tuple) = _keyed(data, map(d -> _name(x, _axis(d)), dims), map(d -> _axiskeys(x, d), dims))
 
 end
