@@ -143,6 +143,7 @@ end
     # array of intervals
     da_multi = tmask(da, [(1.0, 2.0), (4.0, 5.0)])
     @test isequal(da_multi, [NaN, NaN, 30.0, NaN, NaN])
+    @test_throws ArgumentError tmask(DimArray([1.0, 2.0, 3.0], (Ti([1.0, 3.0, 2.0]),)), [(1.0, 2.0)])
 
     ints = Timed([1, 2, 3], times[1:3])
     @test isequal(parent(tmask(ints, 1.0, 2.0)), [NaN, NaN, 3.0])

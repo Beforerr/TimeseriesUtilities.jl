@@ -47,10 +47,8 @@ function _selectors(A, d, selector)
     return ntuple(i -> i == d ? selector : Colon(), ndims(A))
 end
 
-function _search_range(keys, tr)
-    issorted(keys) || throw(ArgumentError("axis keys must be sorted before clipping"))
-    return _range_indices(keys, tr)
-end
+_search_range(keys, tr) = _range_indices(_checksorted(keys), tr)
+_checksorted(keys) = issorted(keys) ? keys : throw(ArgumentError("axis keys must be sorted ascending"))
 
 _range_indices(keys, (t0, t1)) = searchsortedfirst(keys, t0):searchsortedlast(keys, t1)
 
@@ -65,10 +63,10 @@ tmask!(A, t0, t1; dim = nothing) = tmask!(A, ((t0, t1),); dim)
 
 function tmask!(A, trs; dim = nothing)
     d = resolve_dim(A, dim)
-    data, keys = unwrap(A), axiskeys(A, d)
+    data, keys = unwrap(A), _checksorted(axiskeys(A, d))
     _check_holds_nan(data, :tmask)
     for tr in trs
-        view(data, _selectors(data, d, _search_range(keys, tr))...) .= eltype(data)(NaN)
+        view(data, _selectors(data, d, _range_indices(keys, tr))...) .= eltype(data)(NaN)
     end
     return A
 end
