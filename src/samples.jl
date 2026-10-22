@@ -48,10 +48,17 @@ _dropdim(sz, ::Val{d}) where {d} = ntuple(i -> sz[i < d ? i : i + 1], Val(length
 function _check_sample_axis(x, ::Val{dx}, A, ::Val{d}, ::Val{i}) where {dx, d, i}
     ix, ia = i < dx ? i : i + 1, i < d ? i : i + 1
     kx, ka = axiskeys(x, ix), axiskeys(A, ia)
-    isnothing(kx) || isnothing(ka) || _samekeys(kx, ka) ||
+    isnothing(kx) || isnothing(ka) || _samesamplekeys(_bytime(kx, Val(ix < dx)), _bytime(ka, Val(ia < d))) ||
         throw(DimensionMismatch("argument keys along dimension $ix differ from those of A along dimension $ia"))
     return nothing
 end
+
+# a time-varying key as (time, axis); a vector one is the same at every time
+_bytime(k, _) = k
+_bytime(k::AbstractMatrix, ::Val{true}) = PermutedDimsArray(k, (2, 1))
+_samesamplekeys(a, b) = _samekeys(a, b)
+_samesamplekeys(a::AbstractMatrix, b::AbstractVector) = all(==(b), eachrow(a))
+_samesamplekeys(a::AbstractVector, b::AbstractMatrix) = _samesamplekeys(b, a)
 
 # `f::F` forces specialization for Julia 1.10 which dispatches `f(s...)` dynamically otherwise
 function _stack_samples(f::F, A, ys, ::Val{D}) where {F, D}
