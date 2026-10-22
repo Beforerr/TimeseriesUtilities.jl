@@ -18,27 +18,40 @@ Samples are views; for small vectors, converting them to `SVector`s avoids per-s
 _mapsamples(_, _, _, _, d, ::Val{0}) = throw(ArgumentError("dim = $d is out of range"))
 
 function _mapsamples(f, A, args, dim, D::Val{d}) where {d}
-    keys = axiskeys(A, d)
-    ys = map(x -> _samples(x, dim, D, size(A, d), keys), args)
+    ys = map(x -> _samples(x, dim, D, A), args)
     return _rebuild_samples(A, _stack_samples(f, unwrap(A), ys, D), D)
 end
 
 # per-sample iterator over argument `x`, sliced along its own time dim
-@inline function _samples(x, dim, D, n, keys)
+@inline function _samples(x, dim, D::Val{d}, A) where {d}
     bt = Base.broadcastable(unwrap(x))
     N = length(axes(bt))  # `ndims` is undefined for tuples
     N == 0 && return Iterators.repeated(bt[])
     # an integer `dim` applies to every argument, so reuse the static dim of `A`
     dx = N == 1 ? Val(1) : dim isa Integer ? D : Val(resolve_dim(x, dim))
-    m = length(axes(bt)[_valof(dx)])
+    m, n = length(axes(bt)[_valof(dx)]), size(A, d)
     m == n || throw(DimensionMismatch("argument has $m samples along dimension $(_valof(dx)); A has $n"))
+    keys = axiskeys(A, d)
     kx = isnothing(keys) ? nothing : axiskeys(x, _valof(dx))
     isnothing(kx) || _samekeys(kx, keys) ||
         throw(DimensionMismatch("argument time keys differ from those of A; align with `tinterp` or `tsync` first"))
-    return N == 1 ? bt : eachslice(bt; dims = _valof(dx))
+    N == 1 && return bt
+    _dropdim(size(bt), dx) == _dropdim(size(A), D) && map(i -> _check_sample_axis(x, dx, A, D, i), ntuple(Val, Val(N - 1)))
+    return eachslice(bt; dims = _valof(dx))
 end
 
 _samekeys(a, b) = a === b || a == b
+
+_dropdim(sz, ::Val{d}) where {d} = ntuple(i -> sz[i < d ? i : i + 1], Val(length(sz) - 1))
+
+# sample axis `i` is axis `ix` of `x` and `ia` of `A`
+function _check_sample_axis(x, ::Val{dx}, A, ::Val{d}, ::Val{i}) where {dx, d, i}
+    ix, ia = i < dx ? i : i + 1, i < d ? i : i + 1
+    kx, ka = axiskeys(x, ix), axiskeys(A, ia)
+    isnothing(kx) || isnothing(ka) || _samekeys(kx, ka) ||
+        throw(DimensionMismatch("argument keys along dimension $ix differ from those of A along dimension $ia"))
+    return nothing
+end
 
 # `f::F` forces specialization for Julia 1.10 which dispatches `f(s...)` dynamically otherwise
 function _stack_samples(f::F, A, ys, ::Val{D}) where {F, D}

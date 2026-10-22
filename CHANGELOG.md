@@ -6,6 +6,7 @@
 
 - **Breaking**: a dimension without coordinates has `axiskeys` `nothing` (plain arrays included); `times` throws for one.
 - **Breaking**: backends' `rebuild` receives `nothing` keys for a dimension without coordinates, e.g. those `mapsamples` adds for each sample's result; never for a dimension of `x` that has them.
+- **Breaking**: `mapsamples` throws `DimensionMismatch` when an argument whose samples have the shape of those of `A` has different coordinates on a sample axis.
 
 ## v0.3.0
 
