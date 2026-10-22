@@ -51,3 +51,22 @@ end
     @test_throws MethodError collect(x)
     @test TimeseriesUtilities.tdimnum(TimeseriesUtilities.rebuild(x, A', (Val(2), Val(1)))) == 1
 end
+
+@testitem "Timed keys varying in time" begin
+    using TimeseriesUtilities: axiskeys, rebuild, rekey, unwrap
+    data = reshape(1.0:12.0, 4, 3)
+    t = 10:10:40
+    E = [10.0 20 30; 11 21 31; 12 22 32; 13 23 33]  # (time, energy)
+    x = Timed{1}(data, (t, E))
+    xt = Timed{2}(permutedims(data), (permutedims(E), t))
+    @test_throws DimensionMismatch Timed{1}(data, (t, permutedims(E)))
+
+    @test axiskeys(x[2:3, 1:2], 2) == E[2:3, 1:2]
+    @test axiskeys(xt[1:2, 2:3], 1) == permutedims(E)[1:2, 2:3]
+    @test isnothing(axiskeys(rekey(x, 1, 1:4), 2))
+    @test axiskeys(rebuild(x, permutedims(data), (Val(2), Val(1))), 1) == permutedims(E)
+
+    @test unwrap(mapsamples(+, x, xt)) == 2data
+    @test unwrap(mapsamples(+, rekey(x, 2, repeat(E[1:1, :], 4)), rekey(xt, 1, E[1, :]))) == 2data
+    @test_throws DimensionMismatch mapsamples(+, x, rekey(xt, 1, E[1, :]))
+end

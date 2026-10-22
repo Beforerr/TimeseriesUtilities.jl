@@ -35,6 +35,7 @@ end
     axiskeys(x, dim::Integer)
 
 Coordinate values along dimension `dim` of `x`, or `nothing` without them (plain arrays, axes without coordinates).
+Coordinates that vary in time are a matrix along `dim` and the time dimension, in the order of the dimensions of `x`.
 """
 axiskeys(_, _) = nothing
 

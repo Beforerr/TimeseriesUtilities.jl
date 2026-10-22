@@ -13,8 +13,8 @@ struct Timed{D, A, K <: Tuple}
         length(keys) == ndims(data) || throw(DimensionMismatch("$(length(keys)) keys for $(ndims(data)) dimensions"))
         isnothing(keys[D]) && throw(ArgumentError("time dimension $D has no times"))
         for (i, k) in enumerate(keys)
-            isnothing(k) || length(k) == size(data, i) ||
-                throw(DimensionMismatch("$(length(k)) keys for dimension $i of size $(size(data, i))"))
+            isnothing(k) || _fitskey(k, data, i, D) ||
+                throw(DimensionMismatch("$(summary(k)) keys do not fit dimension $i of data of size $(size(data))"))
         end
         return new{D, A, K}(data, keys)
     end
@@ -39,8 +39,18 @@ unwrap(x::Timed) = x.data
 tdimnum(::Timed{D}) where {D} = D
 axiskeys(x::Timed, d::Integer) = x.keys[d]
 
+_fitskey(k, data, i, D) = length(k) == size(data, i)
+_fitskey(k::AbstractMatrix, data, i, D) = i != D && size(k) == (size(data, min(i, D)), size(data, max(i, D)))
+
 rebuild(x::Timed{D}, data, dims::Tuple) where {D} =
-    _timed(_findval(Val(D), map(_axis, dims)), data, map(d -> _axiskeys(x, d), dims))
+    _timed(_findval(Val(D), map(_axis, dims)), data, map(d -> _newkey(x, d, dims), dims))
+
+_newkey(_, d::Pair, _) = last(d)
+_newkey(x::Timed{D}, ::Val{i}, dims) where {D, i} = _movekey(x.keys[i], Val(i < D), _findval(Val(i), dims), _findval(Val(D), dims))
+_movekey(k, _, _, _) = k
+# without the time axis as it was, a time-varying key no longer fits
+_movekey(::AbstractMatrix, _, _, ::Nothing) = nothing
+_movekey(k::AbstractMatrix, ::Val{before}, ::Val{j}, ::Val{p}) where {before, j, p} = before == (j < p) ? k : permutedims(k)
 
 Base.:(==)(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && x.keys == y.keys && x.data == y.data
 Base.isequal(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && isequal(x.keys, y.keys) && isequal(x.data, y.data)
@@ -80,10 +90,11 @@ function _index(f, x::Timed{D}, I) where {D}
     data = f(x.data, I...)
     I[D] isa Integer && return data
     # filtered by type so the keys infer: positions `j` would index `x.keys` at runtime
-    keys = filter(!(k -> k isa _Dropped), map((k, i) -> i isa Integer ? _Dropped() : _slicekey(f, k, i), x.keys, I))
+    keys = filter(!(k -> k isa _Dropped), map((k, i, j) -> i isa Integer ? _Dropped() : _slicekey(f, k, i, j, I, Val(D)), x.keys, I, ntuple(Val, Val(length(I)))))
     return Timed{D - count(i -> i isa Integer, I[1:(D - 1)])}(data, keys)
 end
 
 struct _Dropped end
-_slicekey(f, k, i) = f(k, i)
-_slicekey(_, ::Nothing, _) = nothing
+_slicekey(f, k, i, _...) = f(k, i)
+_slicekey(_, ::Nothing, _...) = nothing
+_slicekey(f, k::AbstractMatrix, _, ::Val{j}, I, ::Val{D}) where {j, D} = f(k, I[min(j, D)], I[max(j, D)])
