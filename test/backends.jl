@@ -72,6 +72,8 @@ end
         @test_throws DimensionMismatch mapsamples(+, z, rekey(z, 2, [300, 400]); dim = 2)
         @test unwrap(mapsamples(+, x, data; dim = 1)) == 2data
         @test_throws DimensionMismatch mapsamples(+, x, rekey(x, 1, 1:4))
+        @test_throws DimensionMismatch mapsamples(+, rekey(x, 2, 1:3), rekey(x, 2, 4:6))
+        @test unwrap(mapsamples((a, _) -> a, x, z)) == data
     end
     @test_throws ArgumentError rekey(first(backends), 1, nothing)
 
