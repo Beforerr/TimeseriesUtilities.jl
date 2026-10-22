@@ -20,7 +20,7 @@ Short-time Fourier power spectrum of `A` with `DSP.spectrogram`, with axes
 """
 function pspectrum(A; dim = nothing, freqdim = :frequency, kwargs...)
     d = resolve_dim(A, dim)
-    spec = _pspectrum(unwrap(A), axiskeys(A, d), d; kwargs...)
+    spec = _pspectrum(unwrap(A), times(A, d), d; kwargs...)
     odims = other_dims(A, d)
     return rebuild(A, spec.power, (freqdim => spec.freq, Val(d) => spec.time, map(Val, odims)...))
 end

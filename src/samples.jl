@@ -2,7 +2,7 @@
     mapsamples(f, A, args...; dim=nothing)
 
 Apply `f` to each sample of `A` and the matching samples of `args`, and stack results along time.
-Each argument is sliced along its own time dimension, and keyed ones must share the time keys of `A`; arguments without axes (scalars, `Ref(v)`) are passed whole to every call.
+Each argument is sliced along its own time dimension. When selected axes have coordinates, their keys must match; otherwise samples are paired by position. Arguments without axes (scalars, `Ref(v)`) are passed whole to every call.
 
 Time sits at position `dim` of the result, clamped to last when results have too few axes.
 Results the size of a sample keep the other axes of `A`; other results get anonymous axes.
@@ -18,7 +18,7 @@ Samples are views; for small vectors, converting them to `SVector`s avoids per-s
 _mapsamples(_, _, _, _, d, ::Val{0}) = throw(ArgumentError("dim = $d is out of range"))
 
 function _mapsamples(f, A, args, dim, D::Val{d}) where {d}
-    keys = _haskeys(A) ? axiskeys(A, d) : nothing
+    keys = axiskeys(A, d)
     ys = map(x -> _samples(x, dim, D, size(A, d), keys), args)
     return _rebuild_samples(A, _stack_samples(f, unwrap(A), ys, D), D)
 end
@@ -32,7 +32,8 @@ end
     dx = N == 1 ? Val(1) : dim isa Integer ? D : Val(resolve_dim(x, dim))
     m = length(axes(bt)[_valof(dx)])
     m == n || throw(DimensionMismatch("argument has $m samples along dimension $(_valof(dx)); A has $n"))
-    isnothing(keys) || !_haskeys(x) || _samekeys(axiskeys(x, _valof(dx)), keys) ||
+    kx = isnothing(keys) ? nothing : axiskeys(x, _valof(dx))
+    isnothing(kx) || _samekeys(kx, keys) ||
         throw(DimensionMismatch("argument time keys differ from those of A; align with `tinterp` or `tsync` first"))
     return N == 1 ? bt : eachslice(bt; dims = _valof(dx))
 end
@@ -116,8 +117,8 @@ function _setsample!(out, k, y, ::Val{P}) where {P}
 end
 
 function _rebuild_samples(A, data, ::Val{D}) where {D}
-    _haskeys(A) || return data
+    _iscontainer(A) || return data
     size(data) == size(A) && return rebuild(A, data)
     p = _timepos(D, ndims(data) - 1)
-    return rebuild(A, data, Base.setindex(map(ax -> nothing => ax, axes(data)), Val(D), p))
+    return rebuild(A, data, Base.setindex(map(_ -> nothing => nothing, axes(data)), Val(D), p))
 end

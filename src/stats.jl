@@ -21,13 +21,14 @@ end
 
 function tstat(f, x, every; period = every, start_by = :window, dim = nothing)
     d = resolve_dim(x, dim)
-    data, t = unwrap(x), axiskeys(x, d)
-    windows = _tgrid_windows(t, every, period, start_by)
+    data = unwrap(x)
+    k, t, windows = _grid_windows(x, d, every, period, start_by)
     # index ranges of the windows, searched once for all channels
     ranges = collect(WindowedView{1}(axes(data, d), t, windows))
     A3 = _as3d(data, d)
     cols = [_map(r -> f(view(A3, p, r, q)), ranges) for q in axes(A3, 3) for p in axes(A3, 1)]
-    return rebuild(x, _stack_channels(data, d, cols), d, windows.coords)
+    # window starts in samples are not times
+    return rebuild(x, _stack_channels(data, d, cols), d, isnothing(k) ? nothing : windows.coords)
 end
 
 tstat_doc(sym, desc = sym, note = "") = """

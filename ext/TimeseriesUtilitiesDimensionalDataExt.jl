@@ -31,9 +31,11 @@ unwrap(x::Dimension) = (l = lookup(x); l isa DD.Lookup ? parent(l) : l)
 dimnum(x::AbstractDimLike, dim::DD.Dimensions.DimOrDimType) = DD.dimnum(x, dim)
 _dimnum(x, dim) = DD.hasdim(x, dim) ? DD.dimnum(x, dim) : nothing
 tdimnum(x::AbstractDimLike) = @something _dimnum(x, TimeDim) _dimnum(x, DD.Dim{:time}) Some(nothing)
-@inline axiskeys(x::AbstractDimLike, dim) = parent(lookup(DD.dims(x, dim)))
+@inline axiskeys(x::AbstractDimLike, dim) = _keys(lookup(DD.dims(x, dim)))
 # `DD.dims(x, ::Int)` does not fold a constant index when inferred nested
-@inline axiskeys(x::AbstractDimLike, dim::Integer) = parent(lookup(dims(x)[dim]))
+@inline axiskeys(x::AbstractDimLike, dim::Integer) = _keys(lookup(dims(x)[dim]))
+_keys(::DD.NoLookup) = nothing
+_keys(l) = parent(l)
 
 _ordered_lookup(lookup::DD.Sampled, ::Val{false}) = DD.rebuild(lookup; order = DD.ForwardOrdered())
 _ordered_lookup(lookup::DD.Sampled, ::Val{true}) = DD.rebuild(lookup; order = DD.ReverseOrdered())
@@ -59,14 +61,25 @@ _span(keys::AbstractRange) = DD.Regular(step(keys))
 _span(keys) = DD.Irregular((nothing, nothing))
 _rekey(l::DD.Sampled, keys) = DD.rebuild(l; data = keys, span = _span(keys))
 _rekey(l, keys) = DD.rebuild(l; data = keys)
-_newdim(x, ::Val{i}) where {i} = dims(x)[i]
-_newdim(x, (d, keys)::Pair) = _newdim(x, d, keys)
-_newdim(x, ::Val{i}, keys) where {i} = _newdim(x, dims(x)[i], keys)
-_newdim(_, dim::Dimension, keys) = DD.rebuild(dim, _rekey(lookup(dim), keys))
-_newdim(_, name::Symbol, keys) = DD.format(DD.Dim{name}(keys), axes(keys, 1))
-_newdim(_, ::Nothing, keys) = DD.format(DD.AnonDim(keys), axes(keys, 1))
+_basedim(x, ::Val{i}) where {i} = dims(x)[i]
+_basedim(_, name::Symbol) = DD.Dim{name}(DD.NoLookup())
+_basedim(_, ::Nothing) = DD.AnonDim(DD.NoLookup())
 
-rebuild(x::AbstractDimArray, data, newdims::Tuple) = DD.rebuild(x, data, map(d -> _newdim(x, d), newdims))
+_newdim(x, d::Val, _) = _basedim(x, d)
+function _newdim(x, (d, keys)::Pair, ax)
+    dim = _basedim(x, d)
+    l = lookup(dim)
+    if isnothing(keys)
+        return DD.rebuild(dim, DD.NoLookup(ax))
+    elseif l isa DD.NoLookup
+        return DD.format(DD.rebuild(dim, keys), ax)
+    else
+        return DD.rebuild(dim, _rekey(l, keys))
+    end
+end
+
+rebuild(x::AbstractDimArray, data, newdims::Tuple) =
+    DD.rebuild(x, data, map((d, ax) -> _newdim(x, d, ax), newdims, axes(data)))
 
 """
     dropna(ds::AbstractDimStack; dim=nothing)

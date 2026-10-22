@@ -27,7 +27,7 @@ Rules shared by all functions:
 - Missing data is `NaN`: statistics skip it; `despike`, `tmask` and `tfill_gaps` write it.
 - Time ranges `t0, t1` select the closed `[t0, t1]` or an IntervalSets interval; windows are half-open `[start, start + period)`.
 - Selection and windows need sorted times (`tsort`).
-- Operations that need times throw `ArgumentError` on a plain array; wrap it with `Timed`.
+- Operations that need times throw `ArgumentError` on an axis without coordinates; wrap it with `Timed`.
 
 ## Walkthrough
 
@@ -121,8 +121,9 @@ xd = DimArray(A, (Ti(t), Dim{:component}([:x, :y, :z])))
 tmean(xd, Minute(30))                          # DimArray over (Ti, component)
 ```
 
-Plain arrays work where no times are needed, with `dim` unless a vector: statistics over all samples,
-`mapsamples`, `tsmooth`, `tsubtract`, `outlier_mask` and `despike`, whose `window` then counts samples (`despike(v, 16)`).
+Plain arrays work where no times are needed, with `dim`: statistics, `twindows`, 
+`mapsamples`, `tsmooth`, `tsubtract`, `outlier_mask` and `despike`, whose `every` and `window` then count samples (windows start at the first sample)
+and `targmin`/`targmax` return indices. So does a container axis without coordinates (e.g. `DimArray(A, (Ti(), Y(1:3)))`).
 Other array types become containers by implementing the hooks in `src/api.jl`.
 
 ## Optional integrations

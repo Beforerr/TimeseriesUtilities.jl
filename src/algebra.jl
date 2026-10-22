@@ -42,7 +42,7 @@ Forward-difference time derivative of `A`, keyed by the left time of each pair;
     # not `_ontime`: `lazy` would not fold inside closure, so result type would be a `Union`
     d = resolve_dim(A, dim)
     f = lazy ? DiffQ : _tderiv
-    t = axiskeys(A, d)
+    t = times(A, d)
     return rebuild(A, f(unwrap(A), t; dim = d), d, @view t[1:(end - 1)])
 end
 
