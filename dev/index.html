@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · TimeseriesUtilities.jl</title><meta name="title" content="Home · TimeseriesUtilities.jl"/><meta property="og:title" content="Home · TimeseriesUtilities.jl"/><meta property="twitter:title" content="Home · TimeseriesUtilities.jl"/><meta name="description" content="Documentation for TimeseriesUtilities.jl."/><meta property="og:description" content="Documentation for TimeseriesUtilities.jl."/><meta property="twitter:description" content="Documentation for TimeseriesUtilities.jl."/><meta property="og:url" content="https://Beforerr.github.io/TimeseriesUtilities.jl/"/><meta property="twitter:url" content="https://Beforerr.github.io/TimeseriesUtilities.jl/"/><link rel="canonical" href="https://Beforerr.github.io/TimeseriesUtilities.jl/"/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>TimeseriesUtilities.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Home</a><ul class="internal"><li><a class="tocitem" href="#Data-model"><span>Data model</span></a></li><li><a class="tocitem" href="#Walkthrough"><span>Walkthrough</span></a></li><li><a class="tocitem" href="#Optional-integrations"><span>Optional integrations</span></a></li><li><a class="tocitem" href="#Index"><span>Index</span></a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="outliers/">Remove spikes from signal</a></li><li><a class="tocitem" href="cadence/">Sampling cadence</a></li></ul></li><li><a class="tocitem" href="api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Home</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/Beforerr/TimeseriesUtilities.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/Beforerr/TimeseriesUtilities.jl/blob/main/README.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="TimeseriesUtilities"><a class="docs-heading-anchor" href="#TimeseriesUtilities">TimeseriesUtilities</a><a id="TimeseriesUtilities-1"></a><a class="docs-heading-anchor-permalink" href="#TimeseriesUtilities" title="Permalink"></a></h1><p><a href="https://doi.org/10.5281/zenodo.18634508"><img src="https://zenodo.org/badge/1007934281.svg" alt="DOI"/></a> <a href="https://juliahub.com/ui/Packages/General/TimeseriesUtilities"><img src="https://juliahub.com/docs/General/TimeseriesUtilities/stable/version.svg" alt="version"/></a></p><p>Time series operations on arrays with time coordinates: selection, resampling, gap filling, windowed statistics, derivatives, despiking, filtering and spectra.</p><pre><code class="language-julia hljs">using Pkg; Pkg.add(&quot;TimeseriesUtilities&quot;)</code></pre><h2 id="Data-model"><a class="docs-heading-anchor" href="#Data-model">Data model</a><a id="Data-model-1"></a><a class="docs-heading-anchor-permalink" href="#Data-model" title="Permalink"></a></h2><p>Every operation takes a container that carries its times and returns the same kind of container:</p><ul><li><code>Timed(data, t; dim)</code>: a plain array with times <code>t</code> along dimension <code>dim</code> (optional for vectors). It is not an <code>AbstractArray</code>, so array code outside this package throws instead of silently dropping times. Take it apart with <code>data, t = x</code> (or <code>parent(x)</code>, <code>times(x)</code>).</li><li><code>DimArray</code> (DimensionalData.jl): time is the <code>Ti</code> dimension (any <code>TimeDim</code>) or <code>Dim{:time}</code>.</li><li><code>KeyedArray</code> (AxisKeys.jl): time is the dimension named <code>:time</code>.</li></ul><p>Rules shared by all functions:</p><ul><li>They act along the time dimension, or along the <code>dim</code> keyword: an index, a <code>KeyedArray</code> name <code>Symbol</code>, or a <code>DimArray</code> dimension.</li><li>Times are <code>DateTime</code>/<code>Date</code> or numbers. Durations (<code>dt</code>, <code>every</code>, <code>window</code>) are <code>Dates.Period</code>s for date times, numbers for numeric times.</li><li>Missing data is <code>NaN</code>: statistics skip it; <code>despike</code>, <code>tmask</code> and <code>tfill_gaps</code> write it.</li><li>Time ranges <code>t0, t1</code> select the closed <code>[t0, t1]</code> or an IntervalSets interval; windows are half-open <code>[start, start + period)</code>.</li><li>Selection and windows need sorted times (<code>tsort</code>).</li><li>Operations that need times throw <code>ArgumentError</code> on an axis without coordinates; wrap it with <code>Timed</code>.</li></ul><h2 id="Walkthrough"><a class="docs-heading-anchor" href="#Walkthrough">Walkthrough</a><a id="Walkthrough-1"></a><a class="docs-heading-anchor-permalink" href="#Walkthrough" title="Permalink"></a></h2><p>The data: one hour of a 3-channel signal at 1 s cadence, with two spikes and a 1-minute dropout.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using TimeseriesUtilities, Dates, Random, Statistics, LinearAlgebra</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; τ = 0:3599                                   # seconds</code><code class="nohighlight hljs ansi" style="display:block;">0:3599</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; data = [sin.(2π .* τ ./ 300) cos.(2π .* τ ./ 300) τ ./ 3600] .+ 0.01 .* randn(Xoshiro(0), 3600, 3);</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; data[[500, 2000], 1] .= 8;                   # spikes</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; keep = setdiff(1:3600, 1201:1260);           # dropout 00:20:00–00:20:59</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; x = Timed(data[keep, :], DateTime(2024) .+ Second.(τ[keep]); dim = 1)</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3540 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3540×3 Matrix{Float64}:
+ -0.00231909  0.993261   0.000628294
+  0.0303463   1.01696   -0.00442579
+  0.0478433   1.00752   -0.0028981
+  0.0827688   0.98941   -0.0120998
+  ⋮
+ -0.0763606   1.00746    0.991602
+ -0.0713201   0.99597    1.02843
+ -0.0120467   1.00177    1.00096</code></pre><h3 id="Inspect-and-select"><a class="docs-heading-anchor" href="#Inspect-and-select">Inspect and select</a><a id="Inspect-and-select-1"></a><a class="docs-heading-anchor-permalink" href="#Inspect-and-select" title="Permalink"></a></h3><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; A, t = x[1:end, :]                           # indexing along time keeps the times</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3540 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3540×3 Matrix{Float64}:
+ -0.00231909  0.993261   0.000628294
+  0.0303463   1.01696   -0.00442579
+  0.0478433   1.00752   -0.0028981
+  0.0827688   0.98941   -0.0120998
+  ⋮
+ -0.0763606   1.00746    0.991602
+ -0.0713201   0.99597    1.02843
+ -0.0120467   1.00177    1.00096</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; x[1, :]                                      # one sample: plain vector</code><code class="nohighlight hljs ansi" style="display:block;">3-element Vector{Float64}:
+ -0.0023190906957695134
+  0.9932612814515688
+  0.0006282940056921465</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; trange(x)                                    # (2024-01-01T00:00:00, 2024-01-01T00:59:59)</code><code class="nohighlight hljs ansi" style="display:block;">(Dates.DateTime(&quot;2024-01-01T00:00:00&quot;), Dates.DateTime(&quot;2024-01-01T00:59:59&quot;))</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; cadence(t)                                   # Millisecond(1000), robust to gaps and jitter; warns about the gap</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr33"><span class="sgr1">┌ Warning: </span></span>Time resolution is not approximately constant (1 gap(s))
+<span class="sgr33"><span class="sgr1">└ </span></span><span class="sgr90">@ TimeseriesUtilities ~/work/TimeseriesUtilities.jl/TimeseriesUtilities.jl/src/coords.jl:112</span>
+1000 milliseconds</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; find_continuous_timeranges(t, Second(1))     # [(00:00:00, 00:19:59), (00:21:00, 00:59:59)]</code><code class="nohighlight hljs ansi" style="display:block;">2-element Vector{Tuple{Dates.DateTime, Dates.DateTime}}:
+ (Dates.DateTime(&quot;2024-01-01T00:00:00&quot;), Dates.DateTime(&quot;2024-01-01T00:19:59&quot;))
+ (Dates.DateTime(&quot;2024-01-01T00:21:00&quot;), Dates.DateTime(&quot;2024-01-01T00:59:59&quot;))</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tclip(x, DateTime(2024, 1, 1, 0, 10), DateTime(2024, 1, 1, 0, 20))   # copy of the samples in [t0, t1]</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 600 times 2024-01-01T00:10:00 … 2024-01-01T00:19:59
+600×3 Matrix{Float64}:
+ -0.0071328   1.00547   0.169682
+  0.0150038   0.997433  0.165251
+  0.0403139   0.98115   0.163831
+  0.0597413   0.989689  0.15533
+  ⋮
+ -0.0633015   1.0018    0.324399
+ -0.0232097   0.992592  0.345563
+ -0.00998731  0.996895  0.333575</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tselect(x, DateTime(2024, 1, 1, 0, 30))                  # nearest sample</code><code class="nohighlight hljs ansi" style="display:block;">3-element Vector{Float64}:
+ -0.007566722249459512
+  0.9823061005863227
+  0.505463062901047</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tselect(x, DateTime(2024, 1, 1, 0, 20, 30), Second(5))   # missing: no sample within ±5 s</code><code class="nohighlight hljs ansi" style="display:block;">missing</code></pre><h3 id="Clean"><a class="docs-heading-anchor" href="#Clean">Clean</a><a id="Clean-1"></a><a class="docs-heading-anchor-permalink" href="#Clean" title="Permalink"></a></h3><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; y = despike(x, Minute(5))    # NaN where &gt; 3 scaled MADs from the 5-minute moving median: the 2 spikes</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3540 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3540×3 Matrix{Float64}:
+ -0.00231909  0.993261   0.000628294
+  0.0303463   1.01696   -0.00442579
+  0.0478433   1.00752   -0.0028981
+  0.0827688   0.98941   -0.0120998
+  ⋮
+ -0.0763606   1.00746    0.991602
+ -0.0713201   0.99597    1.02843
+ -0.0120467   1.00177    1.00096</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; y = tfill_gaps(y)            # insert the 60 missing times on the cadence grid, as NaN</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3600 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3600×3 Matrix{Float64}:
+ -0.00231909  0.993261   0.000628294
+  0.0303463   1.01696   -0.00442579
+  0.0478433   1.00752   -0.0028981
+  0.0827688   0.98941   -0.0120998
+  ⋮
+ -0.0763606   1.00746    0.991602
+ -0.0713201   0.99597    1.02843
+ -0.0120467   1.00177    1.00096</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; y = tinterp_na(y)            # interpolate every NaN from its neighbors: 3600×3, no NaN</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3600 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3600×3 Matrix{Float64}:
+ -0.00231909  0.993261   0.000628294
+  0.0303463   1.01696   -0.00442579
+  0.0478433   1.00752   -0.0028981
+  0.0827688   0.98941   -0.0120998
+  ⋮
+ -0.0763606   1.00746    0.991602
+ -0.0713201   0.99597    1.02843
+ -0.0120467   1.00177    1.00096</code></pre><p><code>outlier_mask(x, window)</code> returns the mask instead; <code>dropna(x)</code> drops samples containing NaN; <code>tmask(x, t0, t1)</code> blanks a known-bad interval. Without <code>window</code>, <code>despike</code> and <code>outlier_mask</code> use the global median, which misses spikes riding on slow variations.</p><h3 id="Resample-and-align"><a class="docs-heading-anchor" href="#Resample-and-align">Resample and align</a><a id="Resample-and-align-1"></a><a class="docs-heading-anchor-permalink" href="#Resample-and-align" title="Permalink"></a></h3><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; tresample(y, Second(10))                             # linear interpolation onto a 10 s grid: 360×3</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 360 times 2024-01-01T00:00:00 … 2024-01-01T00:59:50
+360×3 Matrix{Float64}:
+ -0.00231909  0.993261   0.000628294
+  0.205213    0.989447   0.000741895
+  0.395991    0.917265   0.00774957
+  0.604995    0.824646  -0.00271515
+  ⋮
+ -0.597616    0.803715   1.00846
+ -0.41333     0.914108   0.981707
+ -0.222819    0.97349    1.01239</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tinterp(y, DateTime(2024, 1, 1, 0, 30, 0, 500))      # one time: plain vector</code><code class="nohighlight hljs ansi" style="display:block;">3-element Vector{Float64}:
+ 0.005304422838655916
+ 0.9932519633154531
+ 0.49710858687755455</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; v = Timed(randn(Xoshiro(1), 750, 3), DateTime(2024, 1, 1, 0, 5) .+ Second.(2:4:2998); dim = 1)  # 4 s cadence</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 750 times 2024-01-01T00:05:02 … 2024-01-01T00:54:58
+750×3 Matrix{Float64}:
+  0.0619327  -1.2325    0.574709
+  0.278406   -1.73224   0.775939
+ -0.595824    0.668906  0.563359
+  0.0466594  -0.384858  0.00831808
+  ⋮
+ -1.00857    -0.653839  1.58144
+  0.295973   -0.642265  0.972024
+ -0.341724    0.691     1.54641</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ys, vs = tsync(y, v)          # y clipped to the common time range, v interpolated onto its times</code><code class="nohighlight hljs ansi" style="display:block;">(Timed(2997×3 Matrix{Float64}, 2997 times 2024-01-01T00:05:02 … 2024-01-01T00:54:58; dim = 1), Timed(2997×3 Matrix{Float64}, 2997 times 2024-01-01T00:05:02 … 2024-01-01T00:54:58; dim = 1))</code></pre><p>Interpolating outside the data&#39;s time range throws a <code>DomainError</code> unless <code>extrapolation = true</code>. <code>interp</code> swaps the interpolator, e.g. <code>tinterp(y, t_new; interp = DataInterpolations.CubicSpline)</code>.</p><h3 id="Statistics"><a class="docs-heading-anchor" href="#Statistics">Statistics</a><a id="Statistics-1"></a><a class="docs-heading-anchor-permalink" href="#Statistics" title="Permalink"></a></h3><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; tmean(y)                                       # per channel: plain vector</code><code class="nohighlight hljs ansi" style="display:block;">3-element Vector{Float64}:
+ -0.0010971635164613192
+ -0.0017637021137036745
+  0.4999025466696878</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tmean(y, Minute(1))                            # 60×3, keyed by window start: [00:00, 00:01), [00:01, 00:02), …</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 60 times 2024-01-01T00:00:00 … 2024-01-01T00:59:00
+60×3 Matrix{Float64}:
+  0.541848    0.763253  0.00945773
+  0.893939   -0.280979  0.0243607
+  0.0110034  -0.933826  0.041586
+ -0.884342   -0.297166  0.057602
+  ⋮
+  0.0103837  -0.935981  0.959285
+ -0.886121   -0.298956  0.975258
+ -0.558958    0.749323  0.992144</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tstat(c -&gt; quantile(c, 0.9), y, Minute(5); period = Minute(10))  # any f, 10-minute windows every 5 minutes</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 12 times 2024-01-01T00:00:00 … 2024-01-01T00:55:00
+12×3 Matrix{Float64}:
+ 0.946248  0.952203  0.151277
+ 0.951913  0.950973  0.23248
+ 0.948635  0.950345  0.317394
+ 0.95174   0.924434  0.401971
+ ⋮
+ 0.948494  0.951912  0.900694
+ 0.943813  0.947706  0.98243
+ 0.943813  0.943007  0.993047</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tsmooth(y, Minute(1))                          # 1-minute moving mean, same size as y</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3600 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3600×3 Matrix{Float64}:
+  0.293237  0.940933  0.00357353
+  0.303294  0.937182  0.00337067
+  0.3125    0.932658  0.00352139
+  0.321931  0.927638  0.00369659
+  ⋮
+ -0.345296  0.916566  0.997567
+ -0.335819  0.921885  0.997578
+ -0.326283  0.926527  0.998187</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tsubtract(median, y, Minute(10))               # subtract the 10-minute moving median</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3600 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3600×3 Matrix{Float64}:
+ -0.00169173  0.997865  -0.0406668
+  0.0292819   1.01859   -0.0457245
+  0.0401597   1.00039   -0.0444235
+  0.068466    0.973519  -0.053852
+  ⋮
+ -0.0668846   0.996327   0.0344645
+ -0.0628126   0.984968   0.0709687
+ -0.0045077   0.990904   0.0431877</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; targmax(y)                                     # time of each channel&#39;s maximum</code><code class="nohighlight hljs ansi" style="display:block;">3-element Vector{Union{Missing, Dates.DateTime}}:
+ 2024-01-01T00:56:17
+ 2024-01-01T00:00:01
+ 2024-01-01T00:59:58</code></pre><p><code>f</code> receives one channel&#39;s samples in a window as a vector. Window starts are the first time floored to <code>every</code>, then every <code>every</code> (<code>start_by = :datapoint</code> starts at the first time instead); empty windows are kept, so <code>tmean</code> gives NaN over a dropout.</p><h3 id="Per-sample-operations"><a class="docs-heading-anchor" href="#Per-sample-operations">Per-sample operations</a><a id="Per-sample-operations-1"></a><a class="docs-heading-anchor-permalink" href="#Per-sample-operations" title="Permalink"></a></h3><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; mapsamples(norm, y)                            # |y| per time: Timed vector</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3600 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3600-element Vector{Float64}:
+ 0.9932641874978808
+ 1.0174271317025707
+ 1.0086610055052725
+ 0.9929392710353696
+ ⋮
+ 1.4156562503708785
+ 1.4334234488095703
+ 1.4162014221358354</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; mapsamples((a, b) -&gt; cross(a, b), vs, ys)      # pairs samples by time: arguments need the same times (tsync first)</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 2997 times 2024-01-01T00:05:02 … 2024-01-01T00:54:58
+2997×3 Matrix{Float64}:
+ -0.654075   0.0281454   0.130845
+ -0.719848   0.0224158   0.182343
+ -0.804951   0.0394788   0.289491
+ -0.844989   0.0493433   0.370477
+  ⋮
+ -1.22345   -0.0868353  -0.020545
+ -1.07547    0.0571381  -0.15433
+ -0.926169   0.245511   -0.314368</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; mapsamples(dot, y, Ref([0, 0, 1]))             # Ref passes a value whole to every call</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3600 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3600-element Vector{Float64}:
+  0.0006282940056921465
+ -0.004425787303316683
+ -0.0028981013572774747
+ -0.012099805967727507
+  ⋮
+  0.9916021793033168
+  1.0284256396832554
+  1.000963795215296</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tderiv(y)                                      # forward difference per second: 3599×3, keyed by the left time</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3599 times 2024-01-01T00:00:00 … 2024-01-01T00:59:58
+3599×3 Matrix{Float64}:
+ 0.0326654     0.0237036   -0.00505408
+ 0.0174969    -0.0094433    0.00152769
+ 0.0349255    -0.018112    -0.0092017
+ 0.000393464   0.0040007    0.0210863
+ ⋮
+ 0.0126678     0.0129212   -0.00139123
+ 0.00504051   -0.0114902    0.0368235
+ 0.0592733     0.00580449  -0.0274618</code></pre><h3 id="Frequency-domain"><a class="docs-heading-anchor" href="#Frequency-domain">Frequency domain</a><a id="Frequency-domain-1"></a><a class="docs-heading-anchor-permalink" href="#Frequency-domain" title="Permalink"></a></h3><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using DSP</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tfilter(y, 1 / 600, 1 / 60)                    # zero-phase band-pass between 1/600 and 1/60 Hz</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 1, 3600 times 2024-01-01T00:00:00 … 2024-01-01T00:59:59
+3600×3 Matrix{Float64}:
+ -0.0811175  0.489223   -0.00604766
+ -0.0633078  0.491777   -0.00585245
+ -0.0451012  0.494129   -0.00566158
+ -0.0265394  0.496259   -0.00547548
+  ⋮
+ -0.0433455  0.0281404   0.000270928
+ -0.0359466  0.0235546   0.000231562
+ -0.029274   0.0193538   0.00019452</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; pspectrum(y; nfft = 512)                       # spectrogram power: Timed 257×13×3, (frequency, time, channel)</code><code class="nohighlight hljs ansi" style="display:block;">Timed along dimension 2, 13 times 2024-01-01T00:04:16 … 2024-01-01T00:55:28
+257×13×3 Array{Float64, 3}:
+[:, :, 1] =
+   0.463775       0.705931      0.10797      …    0.759432       0.219374
+  82.5174        82.9893       82.4819           83.1918        82.6393
+ 162.828        161.849       164.838           161.8          164.316
+   9.25776        9.59668       8.85623           9.58605        8.90174
+   ⋮                                         ⋱
+   5.92215e-5     4.7118e-5     0.000128873       0.000311325    1.43634e-5
+   0.000186513    3.43338e-6    0.0007466    …    0.000121489    0.000138629
+   5.79656e-7     1.93218e-5    0.000210302       2.68374e-5     2.23191e-6
+
+[:, :, 2] =
+   0.292801       0.0568163      0.658373     …    0.00286092    0.523934
+  82.9922        82.6457        82.8976           82.4456       82.8398
+ 164.181        165.462        162.157           165.408       162.66
+   8.92325        8.68434        9.49634           8.64768       9.30428
+   ⋮                                          ⋱
+   0.000312166    8.07261e-5     5.68907e-5        0.00045169    0.000186915
+   0.00044802     0.000624902    0.000508371  …    0.00014189    0.000184018
+   0.00090908     6.29474e-5     9.69693e-5        2.57461e-6    4.53723e-5
+
+[:, :, 3] =
+ 1.88274      7.62541      17.0601       …  273.5          320.85
+ 0.928763     3.04232       6.43196          99.939        117.272
+ 0.00226151   0.00390584    0.00231532        0.0021008      0.00167606
+ 0.000183359  0.000403229   0.000162546       0.000533752    1.70938e-6
+ ⋮                                       ⋱
+ 0.000387591  0.000120242   0.000309321       0.000273226    0.000138428
+ 0.000519943  0.000304436   6.35185e-5   …    0.000104693    5.47597e-5
+ 0.000218095  3.21393e-5    1.0792e-5         3.42923e-5     1.10781e-6</code></pre><h3 id="Other-containers"><a class="docs-heading-anchor" href="#Other-containers">Other containers</a><a id="Other-containers-1"></a><a class="docs-heading-anchor-permalink" href="#Other-containers" title="Permalink"></a></h3><p>The same calls work on <code>DimArray</code> and <code>KeyedArray</code>, and return them:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using DimensionalData</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; xd = DimArray(A, (Ti(t), Dim{:component}([:x, :y, :z])))</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr90">┌ </span><span class="sgr38_5" style="color:#ff875f">3540</span>×<span class="sgr38_5" style="color:#0087d7">3</span> DimArray{Float64, 2}<span class="sgr90"> ┐</span>
+<span class="sgr90">├─────────────────────────────┴────────────────────────────────────────── dims ┐</span>
+  <span class="sgr38_5" style="color:#ff875f">↓ Ti</span> Sampled{Dates.DateTime} <span class="sgr38_5" style="color:#ff875f">[Dates.DateTime(&quot;2024-01-01T00:00:00&quot;), …, Dates.DateTime(&quot;2024-01-01T00:59:59&quot;)]</span> <span class="sgr38_5" style="color:#808080">ForwardOrdered</span> <span class="sgr38_5" style="color:#808080">Irregular</span> <span class="sgr38_5" style="color:#808080">Points</span>,
+  <span class="sgr38_5" style="color:#0087d7">→ component</span> Categorical{Symbol} <span class="sgr38_5" style="color:#0087d7">[:x, …, :z]</span> <span class="sgr38_5" style="color:#808080">ForwardOrdered</span>
+<span class="sgr90">└──────────────────────────────────────────────────────────────────────────────┘</span>
+ ⋮      ⋱</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tmean(xd, Minute(30))                          # DimArray over (Ti, component)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr90">┌ </span><span class="sgr38_5" style="color:#ff875f">2</span>×<span class="sgr38_5" style="color:#0087d7">3</span> DimArray{Float64, 2}<span class="sgr90"> ┐</span>
+<span class="sgr90">├──────────────────────────┴───────────────────────────────────────────── dims ┐</span>
+  <span class="sgr38_5" style="color:#ff875f">↓ Ti</span> Sampled{Dates.DateTime} <span class="sgr38_5" style="color:#ff875f">Dates.DateTime(&quot;2024-01-01T00:00:00&quot;):Dates.Minute(30):Dates.DateTime(&quot;2024-01-01T00:30:00&quot;)</span> <span class="sgr38_5" style="color:#808080">ForwardOrdered</span> <span class="sgr38_5" style="color:#808080">Regular</span> <span class="sgr38_5" style="color:#808080">Points</span>,
+  <span class="sgr38_5" style="color:#0087d7">→ component</span> Categorical{Symbol} <span class="sgr38_5" style="color:#0087d7">[:x, …, :z]</span> <span class="sgr38_5" style="color:#808080">ForwardOrdered</span>
+<span class="sgr90">└──────────────────────────────────────────────────────────────────────────────┘</span>
+ ⋮      ⋱</code></pre><p>Plain arrays work where no times are needed, with <code>dim</code>: statistics, <code>twindows</code>,  <code>mapsamples</code>, <code>tsmooth</code>, <code>tsubtract</code>, <code>outlier_mask</code> and <code>despike</code>, whose <code>every</code> and <code>window</code> then count samples (windows start at the first sample) and <code>targmin</code>/<code>targmax</code> return indices. So does a container axis without coordinates (e.g. <code>DimArray(A, (Ti(), Y(1:3)))</code>). Other array types become containers by implementing the hooks in <code>src/api.jl</code>.</p><h2 id="Optional-integrations"><a class="docs-heading-anchor" href="#Optional-integrations">Optional integrations</a><a id="Optional-integrations-1"></a><a class="docs-heading-anchor-permalink" href="#Optional-integrations" title="Permalink"></a></h2><p>Loading a package enables:</p><ul><li>AxisKeys.jl, DimensionalData.jl: the containers above.</li><li>DataInterpolations.jl, FastInterpolations.jl: <code>interp</code> constructors.</li><li>Unitful.jl: <code>tresample(x, 0.1u&quot;Hz&quot;)</code> or <code>tresample(x, 10u&quot;s&quot;)</code>.</li><li>DSP.jl: <code>tfilter</code> and <code>pspectrum</code>.</li></ul><h2 id="Index"><a class="docs-heading-anchor" href="#Index">Index</a><a id="Index-1"></a><a class="docs-heading-anchor-permalink" href="#Index" title="Permalink"></a></h2><ul><li>Time coordinates: <code>times</code>, <code>trange</code>, <code>cadence</code>, <code>samplingrate</code>, <code>find_continuous_timeranges</code>, <code>ContinuousTimeRanges</code>, <code>tsplit</code>, <code>IntervalRange</code>, <code>tshift</code></li><li>Selection: <code>tclip</code>, <code>tview</code>, <code>tselect</code>, <code>tsort</code>, <code>tmask</code>, <code>tmask!</code>, <code>dropna</code></li><li>Resampling and gaps: <code>tinterp</code>, <code>tresample</code>, <code>tsync</code>, <code>tfill_gaps</code>, <code>tinterp_na</code></li><li>Statistics: <code>tstat</code>, <code>tmean</code>, <code>tmedian</code>, <code>tsum</code>, <code>tvar</code>, <code>tstd</code>, <code>tsem</code>, <code>tminimum</code>, <code>tmaximum</code>, <code>targmin</code>, <code>targmax</code>, <code>twindows</code>, <code>tsmooth</code>, <code>tsubtract</code></li><li>Cleaning: <code>outlier_mask</code>, <code>despike</code>, <code>despike!</code></li><li>Per sample: <code>mapsamples</code>, <code>tderiv</code></li><li>Frequency domain: <code>tfilter</code>, <code>pspectrum</code></li></ul><p>Full docstrings: <code>?name</code> in the REPL, or the <a href="https://Beforerr.github.io/TimeseriesUtilities.jl/dev/">documentation</a>.</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="outliers/">Remove spikes from signal »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Friday 23 October 2026 16:50">Friday 23 October 2026</span>. Using Julia version 1.13.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
