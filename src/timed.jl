@@ -11,8 +11,9 @@ struct Timed{D, A, K <: Tuple}
     function Timed{D}(data::A, keys::K) where {D, A, K <: Tuple}
         D isa Int && 1 <= D <= ndims(data) || throw(ArgumentError("time dimension $D is out of range"))
         length(keys) == ndims(data) || throw(DimensionMismatch("$(length(keys)) keys for $(ndims(data)) dimensions"))
+        isnothing(keys[D]) && throw(ArgumentError("time dimension $D has no times"))
         for (i, k) in enumerate(keys)
-            length(k) == size(data, i) ||
+            isnothing(k) || length(k) == size(data, i) ||
                 throw(DimensionMismatch("$(length(k)) keys for dimension $i of size $(size(data, i))"))
         end
         return new{D, A, K}(data, keys)
@@ -21,7 +22,7 @@ end
 
 function Timed(data, t; dim = nothing)
     d = resolve_dim(data, dim)
-    return Timed{Int(d)}(data, ntuple(i -> i == d ? t : axes(data, i), ndims(data)))
+    return Timed{Int(d)}(data, ntuple(i -> i == d ? t : nothing, ndims(data)))
 end
 
 # `data, t = x` lowers to `indexed_iterate`; defining `iterate` instead would make `Timed` a collection.
@@ -78,6 +79,11 @@ function _index(f, x::Timed{D}, I) where {D}
     length(I) == ndims(x) || throw(ArgumentError("index a `Timed` with one index per dimension"))
     data = f(x.data, I...)
     I[D] isa Integer && return data
-    keys = filter(!isnothing, map((k, i) -> i isa Integer ? nothing : f(k, i), x.keys, I))
+    # filtered by type so the keys infer: positions `j` would index `x.keys` at runtime
+    keys = filter(!(k -> k isa _Dropped), map((k, i) -> i isa Integer ? _Dropped() : _slicekey(f, k, i), x.keys, I))
     return Timed{D - count(i -> i isa Integer, I[1:(D - 1)])}(data, keys)
 end
+
+struct _Dropped end
+_slicekey(f, k, i) = f(k, i)
+_slicekey(_, ::Nothing, _) = nothing

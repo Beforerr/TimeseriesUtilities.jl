@@ -5,7 +5,7 @@ Sort `A` along dimension `dim`.
 """
 function tsort(A; dim = nothing, rev = false)
     d = resolve_dim(A, dim)
-    keys = axiskeys(A, d)
+    keys = times(A, d)
     return issorted(keys; rev) ? A : begin
             sorted = A[_selectors(A, d, sortperm(keys; rev))...]
             sorted_axis(sorted, d; rev)
@@ -25,7 +25,7 @@ tclip(A, t0, t1; dim = nothing) = tclip(A, (t0, t1); dim)
 
 function tclip(A, tr; dim = nothing)
     d = resolve_dim(A, dim)
-    idx = _search_range(axiskeys(A, d), tr)
+    idx = _search_range(times(A, d), tr)
     return A[_selectors(A, d, idx)...]
 end
 
@@ -39,7 +39,7 @@ tview(A, t0, t1; dim = nothing) = tview(A, (t0, t1); dim)
 
 function tview(A, tr; dim = nothing)
     d = resolve_dim(A, dim)
-    idx = _search_range(axiskeys(A, d), tr)
+    idx = _search_range(times(A, d), tr)
     return @view A[_selectors(A, d, idx)...]
 end
 
@@ -63,7 +63,7 @@ tmask!(A, t0, t1; dim = nothing) = tmask!(A, ((t0, t1),); dim)
 
 function tmask!(A, trs; dim = nothing)
     d = resolve_dim(A, dim)
-    data, keys = unwrap(A), _checksorted(axiskeys(A, d))
+    data, keys = unwrap(A), _checksorted(times(A, d))
     _check_holds_nan(data, :tmask)
     for tr in trs
         view(data, _selectors(data, d, _range_indices(keys, tr))...) .= eltype(data)(NaN)
@@ -80,7 +80,7 @@ tmask(A, args...; kwargs...) = tmask!(_float_copy(A), args...; kwargs...)
 
 function tselect(A, t; dim = nothing)
     d = resolve_dim(A, dim)
-    keys = axiskeys(A, d)
+    keys = times(A, d)
     i = if issorted(keys)
         searchsortednearest(keys, t)
     else
@@ -110,7 +110,6 @@ Shift the `dim` of `x` by `t0`.
 """
 function tshift(x, t0 = nothing; dim = nothing)
     d = resolve_dim(x, dim)
-    times = axiskeys(x, d)
-    times′ = times .- (@something t0 first(times))
-    return rekey(x, d, times′)
+    t = times(x, d)
+    return rekey(x, d, t .- (@something t0 first(t)))
 end

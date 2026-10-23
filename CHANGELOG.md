@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Breaking**: a dimension without coordinates has `axiskeys` `nothing` (plain arrays included); `times` throws for one.
+- **Breaking**: backends' `rebuild` receives `nothing` keys for a dimension without coordinates, e.g. those `mapsamples` adds for each sample's result; never for a dimension of `x` that has them.
+
 ## v0.3.0
 
 Every operation now takes a container that carries its times (`KeyedArray`, `DimArray`, or the new `Timed`) and returns the same kind of container.

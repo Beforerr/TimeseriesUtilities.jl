@@ -7,7 +7,6 @@
         offsets = Millisecond.(0:9)
         ts = t0 .+ offsets
         @test tmean(ts) == t0 + Microsecond(4500)
-        @test_throws ArgumentError tmean([1.0, 2.0, 3.0], 1.0)
 
         using Durations: Timestamp
         tn = Timestamp{Nanosecond}(t0) .+ Nanosecond.([0, 1, 2, 3, 10])

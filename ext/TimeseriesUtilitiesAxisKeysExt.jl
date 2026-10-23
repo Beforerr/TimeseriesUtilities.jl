@@ -22,6 +22,9 @@ _name(_, ::Nothing) = :_
 # `NamedDimsArray` accepts repeated `:_` names, keyword construction does not
 @inline _keyed(data, names, keys) = KeyedArray(AxisKeys.NamedDims.NamedDimsArray(data, names), keys)
 
-rebuild(x::KeyedArray, data, dims::Tuple) = _keyed(data, map(d -> _name(x, _axis(d)), dims), map(d -> _axiskeys(x, d), dims))
+function rebuild(x::KeyedArray, data, dims::Tuple)
+    keys = map(d -> _axiskeys(x, d), dims)
+    return _keyed(data, map(d -> _name(x, _axis(d)), dims), map(something, keys, axes(data)))
+end
 
 end

@@ -15,7 +15,8 @@ end
 @testitem "api" begin
     using TimeseriesUtilities: axiskeys, rebuild, resolve_dim, tdimnum, unwrap
     using DimensionalData: Ti
-    @test_throws ArgumentError axiskeys([1, 2, 3], 1)
+    @test isnothing(axiskeys([1, 2, 3], 1))
+    @test_throws ArgumentError times([1, 2, 3])
     @test isnothing(tdimnum([1, 2])) && resolve_dim([1, 2], nothing) == 1
     @test_throws ArgumentError times(rand(2, 5))
     @test rebuild([1, 2, 3], 2:4, 1, 1:3) == 2:4

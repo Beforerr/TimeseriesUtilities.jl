@@ -54,9 +54,14 @@ on the grid of [`tstat`](@ref); empty windows are kept as empty views.
 """
 function twindows(x, every; period = every, start_by = :window, dim = nothing)
     d = resolve_dim(x, dim)
-    t = axiskeys(x, d)
-    windows = _tgrid_windows(t, every, period, start_by)
+    _, t, windows = _grid_windows(x, d, every, period, start_by)
     return WindowedView{Int(d)}(x, t, windows), windows.coords
+end
+
+@inline function _grid_windows(x, d, every, period, start_by)
+    k = axiskeys(x, d)
+    t = @something k axes(x, d)
+    return k, t, _tgrid_windows(t, every, period, isnothing(k) ? :datapoint : start_by)
 end
 
 # Windows `[start, start + period)` with starts a range `every` apart.
@@ -92,7 +97,7 @@ function tsmooth(f, x, window; dim = nothing)
 end
 
 function _point_windows(x, d, window)
-    coords = _haskeys(x) ? axiskeys(x, d) : axes(x, d)
+    coords = _keys_or_indices(x, d)
     issorted(coords) || throw(ArgumentError("coordinates must be sorted"))
     return PointWindows(coords, _window_offsets(window, eltype(coords))...)
 end
