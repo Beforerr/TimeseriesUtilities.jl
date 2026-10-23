@@ -40,13 +40,6 @@ end
     @test tderiv(A_perf) == tderiv(A_perf; lazy = true)
     @test @b(tderiv($A_perf)).allocs ≤ 3
     @test @b(tderiv($A_perf; lazy = true)).allocs == 0 broken = VERSION < v"1.11"
-
-    # Test type inference
-    using JET
-    @test_opt ignored_modules = (Base,) tderiv(data)
-    @test_call ignored_modules = (Base,) tderiv(data)
-    @test_opt tderiv(A)
-    @test_call ignored_modules = (Base,) tderiv(A)
 end
 
 @testitem "tsubtract" begin

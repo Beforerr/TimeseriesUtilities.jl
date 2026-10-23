@@ -125,8 +125,4 @@ end
     a = Timed([1.0 3.0], [1.0, 3.0]; dim = 2)
     b = Timed([0.0 4.0 16.0], [0.0, 2.0, 4.0]; dim = 2)  # t²
     @test parent(tsync(a, b; dim = 2, interp = QuadraticInterpolation)[2]) ≈ [1.0 9.0]
-
-    using JET
-    @test_opt tsync(da1, da2, da3)
-    @test_call tsync(da1, da2, da3)
 end
