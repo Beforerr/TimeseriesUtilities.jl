@@ -52,6 +52,9 @@ _movekey(k, _, _, _) = k
 _movekey(::AbstractMatrix, _, _, ::Nothing) = nothing
 _movekey(k::AbstractMatrix, ::Val{before}, ::Val{j}, ::Val{p}) where {before, j, p} = before == (j < p) ? k : permutedims(k)
 
+# same samples relabeled, so keys varying in time still fit, where `rebuild` assumes new samples and drops them
+@inline rekey(x::Timed{D}, dim, keys) where {D} = Timed{D}(x.data, Base.setindex(x.keys, keys, dim))
+
 Base.:(==)(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && x.keys == y.keys && x.data == y.data
 Base.isequal(x::Timed, y::Timed) = tdimnum(x) == tdimnum(y) && isequal(x.keys, y.keys) && isequal(x.data, y.data)
 Base.hash(x::Timed, h::UInt) = hash(x.data, hash(x.keys, hash(tdimnum(x), hash(Timed, h))))
