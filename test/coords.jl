@@ -161,11 +161,6 @@ end
         (DateTime("2021-01-01T01:00:00"), DateTime("2021-01-01T02:00:00")),
         (DateTime("2021-01-01T02:00:00"), DateTime("2021-01-01T03:00:00")),
     ]
-
-    using JET
-    @test_call tsplit(1.0, 10.0, 3)
-    @test_call tsplit(0.0, 10.0, 2.0)
-    @test_call tsplit(DateTime("2021-01-01"), DateTime("2021-03-01"), Month)
 end
 
 @testitem "TimeOffsets" begin

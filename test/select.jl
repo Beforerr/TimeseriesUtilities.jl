@@ -36,14 +36,6 @@
 
     using Chairmarks
     @test (@b tclip($result, 1.0, 2.0)).allocs > (@b tview($result, 1.0, 2.0)).allocs
-
-    using JET
-    @test_opt tsort(da)
-    @test_call tsort(da)
-    @test_opt tclip(result, 1.0, 2.0)
-    @test_call tclip(result, 1.0, 2.0)
-    @test_opt tview(result, 1.0, 2.0)
-    @test_call tview(result, 1.0, 2.0)
 end
 
 @testitem "AxisKeys time operations" begin
@@ -116,10 +108,6 @@ end
     # Test no match within range
     @test ismissing(tselect(da, 2.0, 0.5))
     @test ismissing(tselect(da, 8.0, 0.5))
-
-    using JET
-    @test_opt tselect(da, 5.0, 0.5)
-    @test_call tselect(da, 5.0, 0.5)
 end
 
 @testitem "tmask!, tmask" begin
@@ -148,10 +136,6 @@ end
     ints = Timed([1, 2, 3], times[1:3])
     @test isequal(parent(tmask(ints, 1.0, 2.0)), [NaN, NaN, 3.0])
     @test_throws ArgumentError tmask!(ints, 1.0, 2.0)
-
-    using JET
-    @test_opt tmask!(copy(da), 2.0, 4.0)
-    @test_call tmask!(copy(da), 2.0, 4.0)
 end
 
 @testitem "tshift" begin

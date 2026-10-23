@@ -1,6 +1,7 @@
 using TestItems, TestItemRunner
 
-@run_package_tests
+# JET refuses to load on Julia prereleases
+@run_package_tests filter = ti -> isempty(VERSION.prerelease) || !(:jet in ti.tags)
 
 @testitem "Aqua" begin
     using Aqua
