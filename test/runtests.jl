@@ -63,7 +63,8 @@ end
 
     @test axiskeys(x[2:3, 1:2], 2) == E[2:3, 1:2]
     @test axiskeys(xt[1:2, 2:3], 1) == permutedims(E)[1:2, 2:3]
-    @test isnothing(axiskeys(rekey(x, 1, 1:4), 2))
+    @test axiskeys(tshift(x), 2) === E
+    @test isnothing(axiskeys(rebuild(x, data, 1, 1:4), 2))
     @test axiskeys(rebuild(x, permutedims(data), (Val(2), Val(1))), 1) == permutedims(E)
 
     @test unwrap(mapsamples(+, x, xt)) == 2data
