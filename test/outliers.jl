@@ -41,5 +41,7 @@ end
         t = cumsum(rand(1:8, n)) # uneven spacing, empty windows, samples on window edges
         window = (rand(0:12), rand(0:12))
         @test parent(outlier_mask(Timed(x, t), window)) == brute(x, t, window)
+        # float rounding selects the same samples as the integer grid
+        @test parent(outlier_mask(Timed(x, t .* 0.1), window .* 0.1)) == brute(x, t, window)
     end
 end

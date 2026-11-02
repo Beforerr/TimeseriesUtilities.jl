@@ -22,6 +22,29 @@ end
     @test parent(tsum(y, 0.1; period = 0.2, start_by = :datapoint)) == [2, 2, 2, 2, 1]
 end
 
+@testitem "float rounding does not move samples between windows" begin
+    using Unitful
+
+    for t in (-0.1 .+ (0:10) .* 0.1, Float32.(0:0.1:1))
+        @test parent(tsum(Timed(ones(11), t), 0.1; start_by = :datapoint)) == ones(11)
+    end
+    # a sample at the rounding allowance of a stop on a later start
+    t = [0.1, 0.2, prevfloat(0.3, 4), 0.4, 0.5]
+    @test parent(tsum(Timed(ones(5), t), 0.1; period = 0.2, start_by = :datapoint)) == [2, 2, 2, 2, 1]
+    # `mod` of a sample on the grid returns almost a whole step
+    @test parent(tsum(Timed(ones(3), 0.7:0.1:0.9), 0.1)) == ones(3)
+    # the last sample rounds to just below the end of the starts' range
+    @test parent(tsum(Timed(ones(2), 0.3 .+ (0:1) .* 0.1), 0.1; start_by = :datapoint)) == ones(2)
+    @test parent(tsum(Timed(ones(101), (0:0.1:10) .* u"s"), 0.1 * u"s")) == ones(101)
+end
+
+@testitem "rounding allowance leaves exact and infinite edges alone" begin
+    # expanding window
+    @test parent(tsmooth(sum, Timed(1.0:3.0, 0.0:2.0), (Inf, 0.5))) == [1.0, 3.0, 6.0]
+    # integer epoch nanoseconds, beyond Float64 resolution
+    @test first(twindows(Timed(ones(2), 1_700_000_000_000_000_123 .+ (0:1)), 1000)[2]) === 1_700_000_000_000_000_000
+end
+
 @testitem "tsmooth" begin
     using Dates
     using DimensionalData
