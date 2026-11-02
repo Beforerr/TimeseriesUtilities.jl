@@ -142,15 +142,15 @@ function _ingap(t, x, i, extrapolating, max_gap)
 end
 
 # Fast one pass over all channels per query point
-@inline _tinterp_nd(::Type{<:LinearInterpolation}, A, old_times, new_times, d; extrapolation = false) =
-    _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
+@inline _tinterp_nd(::Type{<:LinearInterpolation}, A, old_times, new_times, d; extrapolation = false, check = true) =
+    _tinterp_linear_nd(A, old_times, new_times, d, extrapolation, check)
 
-function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
+function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation, check)
     old_times, new_times = _commontimes(old_times, new_times)
     out_sz = ntuple(i -> i == d ? length(new_times) : size(A, i), ndims(A))
     out = similar(A, float(eltype(A)), out_sz)
     old_times == new_times && return copyto!(out, A)
-    check_interp_args(axes(A, d), old_times)
+    check && check_interp_args(axes(A, d), old_times)
     _tinterp_linear!(_samples(out, d), _samples(A, d), old_times, new_times, extrapolation)
     return out
 end
