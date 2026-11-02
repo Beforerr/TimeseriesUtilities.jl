@@ -7,6 +7,6 @@ TimeseriesUtilities = "31d49243-0742-49c1-b8d2-db113b74581e"
 
 [compat]
 CairoMakie = "0.15"
-DSP = "0.7, 0.8"
+DSP = "0.8"
 DimensionalData = "0.29, 0.30"
 Documenter = "1"

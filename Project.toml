@@ -32,7 +32,7 @@ TimeseriesUtilitiesUnitfulExt = "Unitful"
 
 [compat]
 AxisKeys = "0.2"
-DSP = "0.7, 0.8"
+DSP = "0.8"
 DataInterpolations = "7, 8, 9, 10"
 Dates = "1"
 DimensionalData = "0.29, 0.30"
