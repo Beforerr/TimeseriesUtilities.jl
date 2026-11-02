@@ -24,6 +24,7 @@ for (period, unit) in (
     @eval _2dates(::typeof($unit)) = $period
 end
 
-_2dates(x::Unitful.Quantity) = _2dates(Unitful.unit(x))(x)
+_2dates(x::Unitful.Quantity{<:Integer}) = _2dates(Unitful.unit(x))(x)
+_2dates(x::Unitful.Quantity) = round(Nanosecond, x)
 
 end

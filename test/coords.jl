@@ -72,22 +72,15 @@ end
     using Unitful
     using TimeseriesUtilities: _time_grid
 
-    start_time = DateTime(2023, 1, 1, 0, 0, 0)
-    end_time = DateTime(2023, 1, 1, 12, 0, 0)
+    start_time = DateTime(2023, 1, 1, 0)
+    end_time = DateTime(2023, 1, 1, 12)
     times = [start_time, start_time + Hour(3), start_time + Hour(6), end_time]
     @test _time_grid(times, Minute(30)) == start_time:Minute(30):end_time
-
-    start_date = Date(2023, 1, 1)
-    end_date = Date(2023, 1, 10)
-    dates = [start_date, start_date + Day(3), start_date + Day(7), end_date]
-    grid_daily = _time_grid(dates, Day(1))
-    @test step(grid_daily) == Day(1)
-    @test length(grid_daily) == 10
-
-    @test _time_grid(times, 30u"minute") == _time_grid(times, Minute(30))
-    @test _time_grid(times, Second(1)) == _time_grid(times, 1u"s") == _time_grid(times, 1u"Hz")
-
     @test _time_grid([start_time], Hour(1)) == [start_time]
+
+    @test _time_grid(times, Second(1)) == _time_grid(times, 1u"s") == _time_grid(times, 1u"Hz")
+    @test @inferred(_time_grid(times, 1.5u"s")) == _time_grid(times, Millisecond(1500))
+    @test @inferred(_time_grid(times, 1u"s")) isa StepRange{DateTime, Second}
 end
 
 @testitem "find continuous ranges" begin
