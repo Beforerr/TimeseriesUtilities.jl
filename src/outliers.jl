@@ -50,11 +50,12 @@ function _rolling_outlier_mask!(m, x, windows, k, sorted)
     c = windows.coords
     lo, hi = 1, 0
     for (i, (t_start, t_stop)) in enumerate(windows)
-        while hi < length(c) && c[hi + 1] < t_stop
+        start, stop = _rounded_edge(c, t_start), _rounded_edge(c, t_stop)
+        while hi < length(c) && c[hi + 1] < stop
             hi += 1
             isnan(x[hi]) || insert!(sorted, searchsortedfirst(sorted, x[hi]), x[hi])
         end
-        while lo <= hi && c[lo] < t_start
+        while lo <= hi && c[lo] < start
             isnan(x[lo]) || deleteat!(sorted, searchsortedfirst(sorted, x[lo]))
             lo += 1
         end

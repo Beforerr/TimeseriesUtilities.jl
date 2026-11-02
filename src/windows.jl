@@ -38,6 +38,7 @@ function _stop(starts::StepRangeLen, i, period)
     return abs(r - n) <= 4eps(r) && n <= length(starts) ? Base.unsafe_getindex(starts, i + Int(n)) : starts[i] + period
 end
 
+_next_start(starts) = _stop(starts, length(starts), step(starts))
 
 """
     WindowedView{dim}(data, coords, windows)
@@ -63,10 +64,23 @@ end
 Base.size(wv::WindowedView) = (length(wv.windows),)
 
 function Base.getindex(wv::WindowedView{dim}, i::Int) where {dim}
-    t_start, t_stop = wv.windows[i]
-    lo = searchsortedfirst(wv.coords, t_start)
-    hi = searchsortedfirst(wv.coords, t_stop) - 1
-    return _dim_view(wv.data, Val(dim), lo:hi)
+    return _dim_view(wv.data, Val(dim), _window_indices(wv.coords, wv.windows[i]))
+end
+
+_window_indices(coords, (t_start, t_stop)) = _edge_index(coords, t_start):(_edge_index(coords, t_stop) - 1)
+
+# First sample at or after `edge`, counting samples within rounding of it as on it.
+_edge_index(coords, edge) = searchsortedfirst(coords, _rounded_edge(coords, edge))
+_rounded_edge(coords, edge) = edge - _rounding(first(coords), edge)
+
+# Edges and float samples are computed by different arithmetic, so one meant to coincide lands ulps apart.
+# Scaled to the origin `x0` too, as `x0 + k * every` near 0 keeps the rounding error of `x0`.
+# Samples closer together than this are not told apart at an edge.
+_rounding(x0, edge) = zero(edge - edge)
+function _rounding(x0::Number, edge)
+    float(x0) isa typeof(x0) || return zero(edge - edge)
+    tol = 4eps(oftype(x0, max(abs(x0), abs(edge))))
+    return isfinite(tol) ? tol : zero(tol)
 end
 
 """
@@ -92,11 +106,17 @@ function _tgrid_windows(t, every, period, start_by)
     issorted(t) || throw(ArgumentError("times must be sorted"))
     start_by in (:window, :datapoint) || throw(ArgumentError("start_by must be :window or :datapoint, got $(repr(start_by))"))
     t0 = start_by == :window ? _floor(first(t), every) : first(t)
-    return GridWindows(t0:every:last(t), period)
+    starts = t0:every:last(t)
+    next = _next_start(starts)
+    # rounding can end the range short of the start the last sample counts as on, which the last window's stop would then exclude
+    return GridWindows(_edge_index(t, next) > length(t) ? starts : t0:every:(next + _rounding(first(t), next)), period)
 end
 
 _floor(t, dt) = floor(t, dt)
-_floor(i::Number, di) = i - mod(i, di)
+function _floor(i::Number, di)
+    m = mod(i, di)
+    return i - (di - m <= _rounding(i, di) ? zero(m) : m)
+end
 
 """
     tsmooth([f=nanmean], x, window; dim=nothing)
