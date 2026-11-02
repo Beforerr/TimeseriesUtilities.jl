@@ -81,11 +81,8 @@ end
 end
 
 function (interp::LinearInterpolation)(x)
-    if length(interp.t) == 1
-        (x == only(interp.t) || interp.extrapolation) && return only(interp.u)
-        throw(DomainError(x, "interpolation point is outside the time range"))
-    end
     i = _interp_segment(interp.t, x, interp.extrapolation)
+    length(interp.t) == 1 && return only(interp.u)
     t0 = interp.t[i]
     t1 = interp.t[i + 1]
     u0 = interp.u[i]
@@ -140,7 +137,7 @@ function _tinterp_linear3!(out3, A3, old_times, new_times, extrapolation)
     hint = 0
     @inbounds for (j, x) in enumerate(new_times)
         i = hint = _interp_segment(old_times, x, extrapolation, hint)
-        k = x == old_times[i] ? i : x == old_times[i + 1] ? i + 1 : 0
+        k = length(old_times) == 1 || x == old_times[i] ? i : x == old_times[i + 1] ? i + 1 : 0
         if k > 0
             _foreach_pq(A3) do p, q
                 @inbounds out3[p, j, q] = A3[p, k, q]

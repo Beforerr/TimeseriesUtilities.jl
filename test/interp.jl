@@ -46,6 +46,12 @@ end
     @test parent(tinterp(da3, [DateTime(2020, 1, 2, 12)]; interp = CubicSpline)) ≈ [2.5 5.0 7.5]
 end
 
+@testitem "linear tinterp from a single knot" begin
+    x = Timed([5.0 50.0], [1.0]; dim = 1)
+    @test tinterp(x, [2.0, 3.0]; extrapolation = true).data == [5.0 50.0; 5.0 50.0]
+    @test_throws DomainError tinterp(x, [2.0])
+end
+
 @testitem "linear search hint" begin
     using TimeseriesUtilities: tinterp, LinearInterpolation
     # Repeated, backward and endpoint queries after a sorted run; nonlinear data so a
