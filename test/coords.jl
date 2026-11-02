@@ -108,17 +108,18 @@ end
     using Dates
     using Chairmarks
 
-    # Test tsplit with integer n
-    result = tsplit(1.0, 10, 3)
-    @test collect(result) == [(1.0, 4.0), (4.0, 7.0), (7.0, 10.0)]
-
-    result = tsplit(Date("2020-02-29"), Date("2022-03-01"), 4)
-    @test result == [
+    @test tsplit(1.0, 10; length = 3) == [(1.0, 4.0), (4.0, 7.0), (7.0, 10.0)]
+    @test tsplit(Date("2020-02-29"), Date("2022-03-01"); length = 4) == [
         (Date("2020-02-29"), Date("2020-08-30")),
         (Date("2020-08-30"), Date("2021-03-01")),
         (Date("2021-03-01"), Date("2021-08-31")),
         (Date("2021-08-31"), Date("2022-03-01")),
     ]
+    # a rounded step would change the number of parts, and `t0 + span` can fall short of `t1`
+    @test tsplit(0, 10; length = 6) == [(0, 2), (2, 4), (4, 5), (5, 7), (7, 9), (9, 10)]
+    parts = tsplit(0.3, 0.9; length = 107)
+    @test length(parts) == 107 && last(parts)[2] == 0.9
+    @test issorted(tsplit(0, 365 * 86400 * 10^9; length = 1000))
 
     # Test tsplit with step size dt
     result = tsplit(0.0, 10.0, 2.0)
