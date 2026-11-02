@@ -10,29 +10,22 @@ Remove slices containing NaN values along dimension `dim`.
 end
 
 """
-    tinterp_na(A; dim = nothing, kwargs...)
+    tinterp_na(A; dim = nothing, interp = LinearInterpolation, kws...)
 
-Interpolate only the NaN values in `A` along dimension `dim`.
+Interpolate only the NaN values in `A` along dimension `dim`; `interp` and `kws` as in [`tinterp`](@ref).
 """
 tinterp_na(A; dim = nothing, kwargs...) = _ontime(A, dim) do data, t, d
-    x = rawview(t)
     out = mapslices(data; dims = d) do slice
-        interpolate_nans!(slice, x; kwargs...)
+        interpolate_nans!(slice, t; kwargs...)
     end
     return out, t
 end
 
-# Interpolate only the NaN values in `u` along `t`.
-function interpolate_nans!(u, t; interp = LinearInterpolation)
-    # For 1D arrays, directly interpolate the NaN values
-    nan_indices = findall(isnan, u)
-    if !isempty(nan_indices) && length(nan_indices) < length(u)
-        valid_indices = findall(!isnan, u)
-        interp_obj = @views interp(u[valid_indices], t[valid_indices])
-        for idx in nan_indices
-            u[idx] = interp_obj(t[idx])
-        end
-    end
+function interpolate_nans!(u, t; interp = LinearInterpolation, kws...)
+    gaps = findall(isnan, u)
+    isempty(gaps) && return u
+    valid = findall(!isnan, u)
+    isempty(valid) || (u[gaps] = _tinterp_nd(interp, view(u, valid), view(t, valid), view(t, gaps), 1; kws...))
     return u
 end
 
