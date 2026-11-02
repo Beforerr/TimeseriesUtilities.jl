@@ -89,6 +89,11 @@ end
     @test times(tsum(x, 2.0; start_by = :datapoint)) == 0.0:2.0:6.0
     @test times(tsum(Timed([1.0, 2.0], [0.5, 3.5]), 2.0; start_by = :datapoint)) == 0.5:2.0:2.5
     @test_throws ArgumentError tsum(x, 2.0; start_by = :start)
+
+    uninferable = Ref{Any}(v -> isempty(v) || isnan(first(v)) ? missing : sum(v))
+    mixed = tstat(v -> uninferable[](v), Timed([1.0 NaN; 2.0 3.0; 4.0 5.0; 6.0 7.0], [0.0, 1.0, 2.0, 3.0]; dim = 1), 2.0)
+    @test isequal(parent(mixed), [3.0 missing; 10.0 12.0])
+
     # `f` sees one channel and may return anything
     @test parent(tstat(extrema, x, 4.0))[:, 1] == [(1.0, 3.0), (9.0, 9.0)]
     @test tstat(length, x) == [4, 4]

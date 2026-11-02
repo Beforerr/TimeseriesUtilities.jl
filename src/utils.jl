@@ -27,13 +27,16 @@ other_dims(A, d) = ntuple(i -> i < d ? i : i + 1, Val(ndims(A) - 1))
 
 # Assemble per-channel results (ordered as `vec` of the non-time dims) into `A`'s layout.
 function _stack_channels(A, d, cols)
-    out = similar(A, eltype(first(cols)), ntuple(i -> i == d ? length(first(cols)) : size(A, i), ndims(A)))
+    out = similar(A, _cols_eltype(cols), ntuple(i -> i == d ? length(first(cols)) : size(A, i), ndims(A)))
     out3 = _as3d(out, d)
     for (k, I) in enumerate(CartesianIndices((axes(out3, 1), axes(out3, 3))))
         out3[I[1], :, I[2]] = cols[k]
     end
     return out
 end
+
+_cols_eltype(cols) = mapreduce(eltype, promote_type, cols)
+_cols_eltype(::AbstractVector{<:AbstractArray{T}}) where {T} = T
 
 # View `A` as (dims before `d`, `d`, dims after `d`): kernels then compile once per
 # array type instead of once per (type, d).
