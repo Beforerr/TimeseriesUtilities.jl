@@ -52,9 +52,7 @@ struct WindowedView{dim, T, D, C, W} <: AbstractVector{T}
     windows::W
 end
 
-_dim_view(data, ::Val{dim}, i) where {dim} =
-    view(data, ntuple(k -> k == dim ? i : Colon(), ndims(data))...)
-_dim_view(data::AbstractVector, ::Val{1}, i) = view(data, i)
+_dim_view(data, ::Val{dim}, i) where {dim} = view(data, _selectors(data, dim, i)...)
 
 function WindowedView{dim}(data::D, coords::C, windows::W) where {dim, D, C, W}
     T = Base.promote_op(_dim_view, D, Val{dim}, UnitRange{Int})

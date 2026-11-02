@@ -10,7 +10,7 @@ using Dates
 using Dates: AbstractTime
 using LinearAlgebra
 using NaNStatistics
-using Statistics: mean, median, median!, quantile, middle
+using Statistics: mean, median, middle
 
 export cadence, samplingrate
 export Timed
