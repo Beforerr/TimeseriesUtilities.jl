@@ -105,9 +105,9 @@ function dropna(ds::AbstractDimStack; dim = nothing)
 end
 
 function tstat(f, ds::AbstractDimStack, args...; dim = nothing, kw...)
-    d = resolve_dim(ds, dim)
+    tdim = basetypeof(dims(ds, resolve_dim(ds, dim)))
     return maplayers(ds) do layer
-        tstat(f, layer, args...; dim = d, kw...)
+        DD.hasdim(layer, tdim) ? tstat(f, layer, args...; dim = tdim, kw...) : layer
     end
 end
 
