@@ -10,9 +10,15 @@ Starts begin at the first time floored to a multiple of `every` (`start_by=:wind
 (`start_by=:datapoint`).
 """
 function tstat(f, x; dim = nothing)
-    d = resolve_dim(x, dim)
+    return _mapslices((v, _) -> f(v), x, resolve_dim(x, dim))
+end
+
+# `f(slice, I)` of each slice of `x` along `d`, `I` indexing the other dimensions.
+@inline function _mapslices(f::F, x, d) where {F}
     data = unwrap(x)
-    return ndims(data) == 1 ? f(data) : _dropdim(x, _map(f, eachslice(data; dims = other_dims(data, d))), d)
+    ndims(data) == 1 && return f(data, ())
+    slices = eachslice(data; dims = other_dims(data, d))
+    return _dropdim(x, _map(I -> f(slices[I], Tuple(I)), CartesianIndices(slices)), d)
 end
 
 function tstat(f, x, every; period = every, start_by = :window, dim = nothing)

@@ -48,6 +48,16 @@ end
     @test isequal(targmax(x), [30, 20, missing])
     @test isequal(targmin(x), [10, 30, missing])
     @test ismissing(targmax(Timed(Float64[], Int[])))
+    @test targmax(Timed([1.0, 1.0], [10, 20])) == 10
+
+    # keys varying in time: each time looks up its own row of keys
+    t = 10:10:40
+    E = [10.0 20 30; 11 21 31; 12 22 32; 13 23 33]
+    A = [1.0 9 2; 1 2 9; 9 1 2; NaN NaN NaN]
+    peak = [20.0, 31.0, 12.0, missing]
+    A3 = cat(A, -A; dims = 3)  # (time, energy, channel)
+    @test isequal(parent(targmin(Timed{3}(permutedims(A3, (3, 2, 1)), (nothing, permutedims(E), t)); dim = 2))[2, :], peak)
+    @test isequal(parent(targmin(Timed{2}(permutedims(A3, (3, 1, 2)), (nothing, t, E)); dim = 3))[2, :], peak)
     @test isequal(tmaximum(x, 20), Timed([1.0 NaN NaN; 3.0 5.0 NaN], 0:20:20; dim = 1))
 
     t = Ti(1:10000)

@@ -118,18 +118,36 @@ end
     targmin(x; dim=nothing)
     targmax(x; dim=nothing)
 
-Time of the minimum (maximum) of each channel of `x`, ignoring NaNs; `missing` for an all-NaN channel.
+Coordinate along time (or `dim`) of the minimum (maximum) of each channel of `x`, ignoring NaNs; the first one
+on ties, `missing` for an all-NaN channel.
 """
-targmin(x; dim = nothing) = _targ(nanargmin, x, dim)
-targmax(x; dim = nothing) = _targ(nanargmax, x, dim)
+targmin(x; dim = nothing) = _targ(<, x, dim)
+targmax(x; dim = nothing) = _targ(>, x, dim)
 
-function _targ(argf::F, x, dim) where {F}
-    t = _keys_or_indices(x, resolve_dim(x, dim))
-    # `nanargmax` returns 1 for an empty or all-NaN slice
-    return tstat(x; dim) do v
-        i = isempty(v) ? 0 : argf(v)
-        i == 0 || isnan(v[i]) ? missing : t[i]
+function _targ(better::F, x, dim) where {F}
+    d = resolve_dim(x, dim)
+    k = _keys_or_indices(x, d)
+    return _mapslices(x, d) do v, I
+        i = _argbest(better, v)
+        isnothing(i) ? missing : _keyat(k, i, x, d, I)
     end
+end
+
+function _argbest(better::F, v) where {F}
+    none = firstindex(v) - 1
+    best = none
+    @inbounds for i in eachindex(v)
+        vi = v[i]
+        vi == vi && (best == none || better(vi, v[best])) && (best = i)
+    end
+    return best == none ? nothing : best
+end
+
+# `I` indexes the dimensions other than `d`
+_keyat(k, i, _...) = k[i]
+function _keyat(k::AbstractMatrix, i, x, d, I)
+    D = tdimnum(x)
+    return d < D ? k[i, I[D - 1]] : k[I[D], i]
 end
 
 """
