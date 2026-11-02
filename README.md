@@ -61,7 +61,7 @@ tselect(x, DateTime(2024, 1, 1, 0, 20, 30), Second(5))   # missing: no sample wi
 ```julia
 y = despike(x, Minute(5))    # NaN where > 3 scaled MADs from the 5-minute moving median: the 2 spikes
 y = tfill_gaps(y)            # insert the 60 missing times on the cadence grid, as NaN
-y = tinterp_na(y)            # interpolate every NaN from its neighbors: 3600×3, no NaN
+y = tinterp_na(y)            # interpolate the NaNs between valid samples
 ```
 
 `outlier_mask(x, window)` returns the mask instead; `dropna(x)` drops samples containing NaN; `tmask(x, t0, t1)` blanks a known-bad interval.

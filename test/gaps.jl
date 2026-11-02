@@ -74,6 +74,9 @@ end
     @test dims(result2, Ti).val == times
     @test dims(result2, Y).val == [:a, :b]
     @test isnan(data2[2, 1])
+    edges = Timed([NaN 1.0; 1.0 NaN; 3.0 NaN; NaN NaN], 1.0:4.0; dim = 1)
+    @test isequal(parent(tinterp_na(edges)), [NaN 1.0; 1.0 NaN; 3.0 NaN; NaN NaN])
+    @test all(isnan, parent(tinterp_na(Timed([NaN, NaN], [1.0, 2.0]))))
 
     constant(u, t) = x -> u[searchsortedlast(t, x)]
     @test parent(tinterp_na(Timed([1.0, NaN, 5.0], [1.0, 2.0, 3.0]); interp = constant)) == [1.0, 1.0, 5.0]
