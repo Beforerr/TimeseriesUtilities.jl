@@ -52,6 +52,12 @@ end
     @test_throws DomainError tinterp(x, [2.0])
 end
 
+@testitem "linear tinterp checks its times" begin
+    unsorted = Timed([0.0, 10.0, 20.0, 40.0], [3.0, 1.0, 2.0, 4.0])
+    @test_throws ArgumentError tinterp(unsorted, [3.5])
+    @test parent(tinterp(unsorted, times(unsorted))) == parent(unsorted)
+end
+
 @testitem "linear search hint" begin
     using TimeseriesUtilities: tinterp, LinearInterpolation
     # Repeated, backward and endpoint queries after a sorted run; nonlinear data so a
