@@ -1,7 +1,3 @@
-# Reference:
-# - https://github.com/brenhinkeller/NaNStatistics.jl
-# - https://github.com/JuliaSIMD/VectorizedStatistics.jl
-
 """
     tstat(f, x; dim=nothing)
     tstat(f, x, every; period=every, start_by=:window, dim=nothing)

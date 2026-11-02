@@ -7,7 +7,6 @@
 # - https://www.mathworks.com/help/signal/ref/hampel.html
 # - https://github.com/melizalab/quickspikes
 # - https://halleysfifthinc.github.io/Peaks.jl/stable/
-# - https://pyspedas.readthedocs.io/en/latest/_modules/pytplot/tplot_math/clean_spikes.html
 # - https://stackoverflow.com/questions/37556487/remove-spikes-from-signal-in-python
 # - https://medium.com/towards-data-science/removing-spikes-from-raman-spectra-a-step-by-step-guide-with-python-b6fd90e8ea77
 
