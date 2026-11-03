@@ -1,11 +1,15 @@
 using TestItems, TestItemRunner
 
-# JET refuses to load on Julia prereleases
-@run_package_tests filter = ti -> isempty(VERSION.prerelease) || !(:jet in ti.tags)
+@run_package_tests
 
 @testitem "Aqua" begin
     using Aqua
     Aqua.test_all(TimeseriesUtilities)
+end
+
+@testitem "JET" begin
+    using JET
+    (!isdefined(JET, :JET_AVAILABLE) || JET.JET_AVAILABLE) && include("jet.jl")
 end
 
 @testitem "README covers exports" begin
