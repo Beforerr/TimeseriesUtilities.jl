@@ -31,8 +31,8 @@ end
 
 function _outlier_mask!(M3, A3, windows, k)
     sorted = Vector{float(eltype(A3))}()
-    _foreach_pq(A3) do p, q
-        x, m = view(A3, p, :, q), view(M3, p, :, q)
+    _foreach_channel(A3) do p, q
+        x, m = view(A3, p..., :, q...), view(M3, p..., :, q...)
         if isnothing(windows)
             sort!(filter!(!isnan, copyto!(resize!(sorted, length(x)), x)))
             med, σ = _median_mad(sorted)

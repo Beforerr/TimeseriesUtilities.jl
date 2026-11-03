@@ -89,19 +89,19 @@ function _tfill_gaps(A::AbstractArray, t_old, d, dt; fill = NaN, max_gap = nothi
     sz = ntuple(i -> i == d ? n_new : size(A, i), ndims(A))
     out = similar(A, _fill_eltype(eltype(A), fill), sz)
     Base.fill!(out, fill)
-    _copy_spread!(_as3d(out, d), _as3d(A, d), fillers)
+    _copy_spread!(_samples(out, d), _samples(A, d), size(A, d), fillers)
     return out, t_new
 end
 
-# Copy slice `i` of `A3` to slice `i + sum(fillers[1:i-1])` of `out3`.
-function _copy_spread!(out3, A3, fillers)
+# Copy sample `i` of `A` to sample `i + sum(fillers[1:i-1])` of `out`.
+function _copy_spread!(out, A, n, fillers)
     offset = 0
-    for i in axes(A3, 2)
+    for i in 1:n
         j = i + offset
-        _foreach_pq(A3) do p, q
-            @inbounds out3[p, j, q] = A3[p, i, q]
+        _foreach_channel(A) do p, q
+            @inbounds out[p..., j, q...] = A[p..., i, q...]
         end
         i <= length(fillers) && (offset += fillers[i])
     end
-    return out3
+    return out
 end

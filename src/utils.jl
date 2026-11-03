@@ -42,21 +42,26 @@ end
 # array type instead of once per (type, d).
 _as3d(A, d) = reshape(A, prod(i -> size(A, i), 1:(d - 1); init = 1), size(A, d), :)
 
-# Call `f(p, q)` over the non-time indices of an `_as3d` array. Time on the first/last dim
-# leaves a length-1 loop whose overhead dominates few-channel data (e.g. 3-vectors);
-@inline function _foreach_pq(f, A3)
+_samples(A, d) = _as3d(A, d)
+# indexing through `_as3d`'s costs stride arithmetic compiler cannot drop
+_samples(A::AbstractVector, d) = reshape(A, length(A))
+
+# Call `f(p, q)` per channel of a `_samples` array, with `p`/`q` the index tuples before/after
+# time: `A[p..., j, q...]` is sample `j`.
+@inline _foreach_channel(f, A::AbstractVector) = (f((), ()); nothing)
+@inline function _foreach_channel(f, A3)
     P, Q = size(A3, 1), size(A3, 3)
     if P == 1
         for q in 1:Q
-            f(1, q)
+            f((1,), (q,))
         end
     elseif Q == 1
         for p in 1:P
-            f(p, 1)
+            f((p,), (1,))
         end
     else
         for q in 1:Q, p in 1:P
-            f(p, q)
+            f((p,), (q,))
         end
     end
     return

@@ -132,28 +132,28 @@ function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
     out = similar(A, float(eltype(A)), out_sz)
     old_times == new_times && return copyto!(out, A)
     check_interp_args(axes(A, d), old_times)
-    _tinterp_linear3!(_as3d(out, d), _as3d(A, d), old_times, new_times, extrapolation)
+    _tinterp_linear!(_samples(out, d), _samples(A, d), old_times, new_times, extrapolation)
     return out
 end
 
-function _tinterp_linear3!(out3, A3, old_times, new_times, extrapolation)
+function _tinterp_linear!(out, A, old_times, new_times, extrapolation)
     hint = 0
     @inbounds for (j, x) in enumerate(new_times)
         i = hint = _interp_segment(old_times, x, extrapolation, hint)
         k = length(old_times) == 1 || x == old_times[i] ? i : x == old_times[i + 1] ? i + 1 : 0
         if k > 0
-            _foreach_pq(A3) do p, q
-                @inbounds out3[p, j, q] = A3[p, k, q]
+            _foreach_channel(A) do p, q
+                @inbounds out[p..., j, q...] = A[p..., k, q...]
             end
             continue
         end
         α = (x - old_times[i]) / (old_times[i + 1] - old_times[i])
         β = 1 - α
-        _foreach_pq(A3) do p, q
-            @inbounds out3[p, j, q] = β * A3[p, i, q] + α * A3[p, i + 1, q]
+        _foreach_channel(A) do p, q
+            @inbounds out[p..., j, q...] = β * A[p..., i, q...] + α * A[p..., i + 1, q...]
         end
     end
-    return out3
+    return out
 end
 
 # General fallback for external interpolators (DataInterpolations.jl etc.): one scalar

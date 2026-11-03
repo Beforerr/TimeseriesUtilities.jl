@@ -11,13 +11,11 @@ Random.seed!(42)
 
 const SUITE = BenchmarkGroup()
 
-const da_bench = DimArray(rand(1000, 3), (Ti(1:1000), Y(1:3)))
-const t_bench = rand(1:1000, 32)
-
-SUITE["tinterp"] = BenchmarkGroup()
-SUITE["tinterp"]["internal_linear"] = @benchmarkable tinterp($da_bench, $t_bench; interp = TimeseriesUtilities.LinearInterpolation)
-SUITE["tinterp"]["internal_linear_sorted_dense"] = @benchmarkable tinterp($da_bench, $(1.5:0.25:999.5))
-SUITE["tinterp"]["data_interpolations_linear"] = @benchmarkable tinterp($da_bench, $t_bench; interp = DataInterpolations.LinearInterpolation)
+let g = SUITE["tinterp"], x = DimArray(rand(1000, 3), (Ti(1:1000), Y(1:3))), t = rand(1:1000, 32)
+    g["internal_linear"] = @benchmarkable tinterp($x, $t; interp = TimeseriesUtilities.LinearInterpolation)
+    g["internal_linear_sorted_dense"] = @benchmarkable tinterp($x, $(1.5:0.25:999.5))
+    g["data_interpolations_linear"] = @benchmarkable tinterp($x, $t; interp = DataInterpolations.LinearInterpolation)
+end
 
 const interp_nans_dimarray_bench = let data = rand(1000, 3)
     data[250:250:750, :] .= NaN
