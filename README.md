@@ -83,6 +83,8 @@ ys, vs = tsync(y, v)          # y clipped to the common time range, v interpolat
 - `max_gap` gives NaN at times neither a sample nor between samples at most `max_gap` apart, outside the range too; `extrapolation = true` still reaches `max_gap` past it.
 - `interp` swaps the interpolator, e.g. `tinterp(y, t_new; interp = DataInterpolations.CubicSpline)`.
 
+For angles, interpolate the shorter way around, then wrap: `mod.(parent(tinterp(unwrap_periodic(y, 2π), t_new)), 2π)`.
+
 ### Statistics
 
 ```julia

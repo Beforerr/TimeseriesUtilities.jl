@@ -11,6 +11,39 @@ function tsubtract(f, x, window = nothing; dim = nothing)
     return rebuild(x, data .- reshape(stats, Base.setindex(size(data), 1, d)))
 end
 
+"""
+    unwrap_periodic(x, period; dim = nothing)
+
+Add multiples of `period` to each channel along `dim` so consecutive values differ by at most `period / 2`, skipping over non-finite samples.
+"""
+function unwrap_periodic(x, period; dim = nothing)
+    period > zero(period) || throw(ArgumentError("period must be positive, got $period"))
+    d = resolve_dim(x, dim)
+    data = unwrap(x)
+    out = similar(data, float(eltype(data)))
+    _unwrap_periodic!(_as3d(out, d), _as3d(data, d), period)
+    return rebuild(x, out)
+end
+
+function _unwrap_periodic!(out, A, period)
+    T = eltype(out)
+    p = convert(T, period)
+    for q in axes(A, 3), c in axes(A, 1)
+        wraps = zero(one(T))  # a running offset would accumulate rounding error
+        prev = zero(T) / 0
+        for i in axes(A, 2)
+            v = convert(T, A[c, i, q])
+            if isfinite(v)
+                Δ = v - prev
+                abs(Δ) > p / 2 && (wraps -= round(Δ / p))
+                prev = v
+            end
+            out[c, i, q] = v + wraps * p
+        end
+    end
+    return out
+end
+
 _deriv_tfunc(T1::Type, T2::Type) = identity
 _deriv_tfunc(::Type{T1}, ::Type{T2}) where {T1 <: Real, T2 <: Dates.TimeType} = _seconds
 

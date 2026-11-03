@@ -50,3 +50,13 @@ end
     using Statistics: median
     @test parent(tsubtract(median, Timed([1.0, 2.0, 10.0, 4.0, 5.0], 1:5), 3)) == [-0.5, 0.0, 6.0, -1.0, 0.5]
 end
+
+@testitem "unwrap_periodic" begin
+    # steps beyond one period; the second channel starts over from the first's wraps
+    x = Timed([3.0 -3.0 -3.0; 0.0 10.0 0.0], [0.0, 1.0, 2.0]; dim = 2)
+    @test parent(unwrap_periodic(x, 2π)) ≈ [3.0 -3+2π -3+2π; 0.0 10-4π 0.0]
+    @test isequal(unwrap_periodic([NaN, 3.0, NaN, Inf, -3.0, NaN], 2π), [NaN, 3.0, NaN, Inf, -3.0 + 2π, NaN])
+    @test unwrap_periodic(Int16[-32767, 32767], 65536) == [-32767.0, -32769.0]  # no integer overflow
+    θ = rem2pi.(0.5 .* (1:10^6), RoundNearest)
+    @test maximum(abs, rem.(unwrap_periodic(θ, 2π) .- θ, 2π, RoundNearest)) < 1.0e-9  # no drift over many wraps
+end
