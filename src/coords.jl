@@ -183,6 +183,25 @@ function find_continuous_timeranges(ts, max_dt)
     )
 end
 
+function find_continuous_indexranges(ts, max_dt)
+    _checksorted(ts)
+    out = UnitRange{Int}[]
+    start = firstindex(ts)
+    while start <= lastindex(ts)
+        stop = _run_end(ts, start, max_dt)
+        push!(out, start:stop)
+        start = stop + 1
+    end
+    return out
+end
+
+function _run_end(ts, start, max_dt)
+    for i in (start + 1):lastindex(ts)
+        ts[i] - ts[i - 1] > max_dt && return i - 1
+    end
+    return lastindex(ts)
+end
+
 function _time_grid(ts, dt)
     tmin, tmax = extrema(ts)
     return tmin:dt:tmax
@@ -201,21 +220,11 @@ end
 Base.IteratorSize(::Type{<:ContinuousTimeRanges}) = Base.SizeUnknown()
 Base.eltype(::Type{<:ContinuousTimeRanges{T}}) where {T} = NTuple{2, eltype(T)}
 
-function Base.iterate(iter::ContinuousTimeRanges, start_idx = 1)
+function Base.iterate(iter::ContinuousTimeRanges, start = firstindex(iter.times))
     times = iter.times
-    start_idx > length(times) && return nothing
-
-    range_start = times[start_idx]
-    prev_time = range_start
-
-    for i in (start_idx + 1):length(times)
-        current_time = times[i]
-        if current_time - prev_time > iter.max_dt
-            return (range_start, prev_time), i
-        end
-        prev_time = current_time
-    end
-    return (range_start, last(times)), length(times) + 1
+    start > lastindex(times) && return nothing
+    stop = _run_end(times, start, iter.max_dt)
+    return (times[start], times[stop]), stop + 1
 end
 
 

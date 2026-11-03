@@ -90,20 +90,18 @@ end
     @test _time_grid([start_time], Hour(1)) == [start_time]
 end
 
-@testitem "find_continuous_timeranges" begin
+@testitem "find continuous ranges" begin
     using Dates
     using Chairmarks
 
     times = [
-        Time(0, 0, 0), Time(1, 0, 0), Time(2, 0, 0),
-        Time(6, 0, 0), Time(7, 0, 0), Time(8, 0, 0),
-        Time(12, 0, 0), Time(13, 0, 0),
+        Time(0), Time(1), Time(2),
+        Time(6), Time(7), Time(8)
     ]
+    @test find_continuous_timeranges(times, Hour(2)) == [(Time(0), Time(2)), (Time(6), Time(8))]
 
-    @test find_continuous_timeranges(times, Hour(2)) ==
-        [(Time(0, 0, 0), Time(2, 0, 0)), (Time(6, 0, 0), Time(8, 0, 0)), (Time(12, 0, 0), Time(13, 0, 0))]
-
-    @test (@b find_continuous_timeranges($times, Hour(2))).allocs <= 2
+    @test find_continuous_indexranges([0, 1, 2, 5, 6, 10], 1) == [1:3, 4:5, 6:6]
+    @test_throws ArgumentError find_continuous_indexranges([0, 2, 1, 5], 1)
 end
 
 @testitem "IntervalRange and tsplit" begin

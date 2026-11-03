@@ -51,6 +51,7 @@ x[1, :]                                      # one sample: plain vector
 trange(x)                                    # (2024-01-01T00:00:00, 2024-01-01T00:59:59)
 cadence(t)                                   # Millisecond(1000), robust to gaps and jitter; warns about the gap
 find_continuous_timeranges(t, Second(1))     # [(00:00:00, 00:19:59), (00:21:00, 00:59:59)]
+find_continuous_indexranges(t, Second(1))    # the same as index ranges: [1:1200, 1201:3540]
 tclip(x, DateTime(2024, 1, 1, 0, 10), DateTime(2024, 1, 1, 0, 20))   # copy of the samples in [t0, t1]
 tselect(x, DateTime(2024, 1, 1, 0, 30))                  # nearest sample
 tselect(x, DateTime(2024, 1, 1, 0, 20, 30), Second(5))   # missing: no sample within ±5 s
@@ -143,7 +144,7 @@ Loading a package enables:
 
 ## Index
 
-- Time coordinates: `times`, `trange`, `cadence`, `samplingrate`, `find_continuous_timeranges`, `ContinuousTimeRanges`, `tsplit`, `IntervalRange`, `tshift`
+- Time coordinates: `times`, `trange`, `cadence`, `samplingrate`, `find_continuous_timeranges`, `find_continuous_indexranges`, `ContinuousTimeRanges`, `tsplit`, `IntervalRange`, `tshift`
 - Selection: `tclip`, `tview`, `tselect`, `tsort`, `tmask`, `tmask!`, `dropna`
 - Resampling and gaps: `tinterp`, `tresample`, `tsync`, `tfill_gaps`, `tinterp_na`
 - Statistics: `tstat`, `tmean`, `tmedian`, `tsum`, `tvar`, `tstd`, `tsem`, `tminimum`, `tmaximum`, `targmin`, `targmax`, `twindows`, `tsmooth`, `tsubtract`

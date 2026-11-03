@@ -15,7 +15,7 @@ using Statistics: mean, median, median!, quantile, middle
 export cadence, samplingrate
 export Timed
 export times, targmin, targmax
-export trange, find_continuous_timeranges, ContinuousTimeRanges, tsplit, IntervalRange
+export trange, find_continuous_timeranges, find_continuous_indexranges, ContinuousTimeRanges, tsplit, IntervalRange
 export tselect, tclip, tview, tmask, tmask!, tsort, tshift
 export mapsamples, tsmooth, twindows
 export tstat, tsum, tmean, tmedian, tstd, tsem, tvar, tmaximum, tminimum
