@@ -46,6 +46,7 @@
     uninferred = (
         x -> tinterp(x, [0.5, 4.5]),
         x -> tinterp(x, [0.5, 4.5]; interp = QuadraticInterpolation),
+        x -> tmean(x, [(1.0, 2.0), (4.0, 5.0)]),
     )
     @testset "uninferred op $i on $name" for (i, op) in enumerate(uninferred), (name, x) in pairs(backends)
         r, ref = op(x), op(Timed(A, t; dim = 1))
