@@ -141,8 +141,8 @@ function _ingap(t, x, i, extrapolating, max_gap)
     return length(t) > 1 && x != t[i] && x != t[i + 1] && t[i + 1] - t[i] > max_gap
 end
 
-# Fast path for built-in LinearInterpolation: one pass over all channels per query point.
-@inline _tinterp_nd(::Type{<:LinearInterpolation}, A, old_times, new_times, d; extrapolation = false, kws...) =
+# Fast one pass over all channels per query point
+@inline _tinterp_nd(::Type{<:LinearInterpolation}, A, old_times, new_times, d; extrapolation = false) =
     _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
 
 function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation)
