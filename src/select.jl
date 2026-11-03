@@ -111,5 +111,5 @@ Shift the `dim` of `x` by `t0`.
 function tshift(x, t0 = nothing; dim = nothing)
     d = resolve_dim(x, dim)
     t = times(x, d)
-    return rekey(x, d, t .- (@something t0 first(t)))
+    return _rekey_ordered(x, d, t .- (@something t0 first(t)))
 end

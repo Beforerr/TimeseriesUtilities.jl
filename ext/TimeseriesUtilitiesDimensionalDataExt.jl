@@ -22,7 +22,9 @@ import TimeseriesUtilities:
     sorted_axis,
     tdimnum,
     tstat,
-    unwrap
+    unwrap,
+    _rebuild_ordered,
+    _rekey_ordered
 
 const AbstractDimLike = Union{AbstractDimArray, AbstractDimStack}
 
@@ -59,14 +61,16 @@ end
 
 _span(keys::AbstractRange) = DD.Regular(step(keys))
 _span(keys) = DD.Irregular((nothing, nothing))
-_rekey(l::DD.Sampled, keys) = DD.rebuild(l; data = keys, span = _span(keys))
-_rekey(l, keys) = DD.rebuild(l; data = keys)
+_keeporder(l::DD.Sampled, keys) = DD.rebuild(l; data = keys, span = _span(keys))
+_keeporder(l, keys) = DD.rebuild(l; data = keys)
+_rekey(l::DD.Lookups.Aligned, keys) = DD.rebuild(_keeporder(l, keys); order = DD.Lookups.orderof(keys))
+_rekey(l, keys) = _keeporder(l, keys)
 _basedim(x, ::Val{i}) where {i} = dims(x)[i]
 _basedim(_, name::Symbol) = DD.Dim{name}(DD.NoLookup())
 _basedim(_, ::Nothing) = DD.AnonDim(DD.NoLookup())
 
-_newdim(x, d::Val, _) = _basedim(x, d)
-function _newdim(x, (d, keys)::Pair, ax)
+_newdim(_, x, d::Val, _) = _basedim(x, d)
+function _newdim(rekey::F, x, (d, keys)::Pair, ax) where {F}
     dim = _basedim(x, d)
     l = lookup(dim)
     if isnothing(keys)
@@ -74,12 +78,16 @@ function _newdim(x, (d, keys)::Pair, ax)
     elseif l isa DD.NoLookup
         return DD.format(DD.rebuild(dim, keys), ax)
     else
-        return DD.rebuild(dim, _rekey(l, keys))
+        return DD.rebuild(dim, rekey(l, keys))
     end
 end
 
-rebuild(x::AbstractDimArray, data, newdims::Tuple) =
-    DD.rebuild(x, data, map((d, ax) -> _newdim(x, d, ax), newdims, axes(data)))
+_rebuild(rekey::F, x, data, newdims) where {F} =
+    DD.rebuild(x, data, map((d, ax) -> _newdim(rekey, x, d, ax), newdims, axes(data)))
+rebuild(x::AbstractDimArray, data, newdims::Tuple) = _rebuild(_rekey, x, data, newdims)
+@inline _rebuild_ordered(x::AbstractDimArray, data, dim, keys) =
+    _rebuild(_keeporder, x, data, Base.setindex(ntuple(Val, Val(ndims(x))), Val(dim) => keys, dim))
+@inline _rekey_ordered(x::AbstractDimArray, dim, keys) = _rebuild_ordered(x, parent(x), dim, keys)
 
 """
     dropna(ds::AbstractDimStack; dim=nothing)

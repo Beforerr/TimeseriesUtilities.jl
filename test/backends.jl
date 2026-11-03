@@ -21,8 +21,6 @@
         tderiv,
         x -> tsubtract(first, x),
         x -> tsubtract(maximum, x, 2.0),
-        x -> tinterp(x, [0.5, 4.5]),
-        x -> tinterp(x, [0.5, 4.5]; interp = QuadraticInterpolation),
         x -> tresample(x, 0.5),
         x -> tfill_gaps(x, 1.0),
         tinterp_na,
@@ -42,6 +40,15 @@
         r = run(op, x)
         @test isequal(unwrap(r), unwrap(ref))
         ref isa Timed && @test times(r) == times(ref)
+    end
+    # Not inferred on DimArray: its lookup order depends on the caller's keys.
+    uninferred = (
+        x -> tinterp(x, [0.5, 4.5]),
+        x -> tinterp(x, [0.5, 4.5]; interp = QuadraticInterpolation),
+    )
+    @testset "uninferred op $i on $name" for (i, op) in enumerate(uninferred), (name, x) in pairs(backends)
+        r, ref = op(x), op(Timed(A, t; dim = 1))
+        @test isequal(unwrap(r), unwrap(ref)) && times(r) == times(ref)
     end
 end
 

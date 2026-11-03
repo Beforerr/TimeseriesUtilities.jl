@@ -1,7 +1,6 @@
 # Backend interface. A container backend (an extension, or `Timed` for plain arrays) implements
 # `tdimnum`, `dimnum` for its dimension-name types, `axiskeys`, `unwrap` and `rebuild`,
 # plus indexing (`getindex`/`view` with one index per dimension) that keeps the keys of the kept axes.
-# Backends whose lookups record sort order also implement `sorted_axis`.
 
 """
     tdimnum(x)
@@ -82,6 +81,9 @@ _axiskeys(_, d::Pair) = last(d)
 # Hook for backends whose lookups record sort order (DimensionalData).
 sorted_axis(sorted, dim; rev = false) = sorted
 
+@inline _rebuild_ordered(x, data, dim, keys) = rebuild(x, data, dim, keys)
+@inline _rekey_ordered(x, dim, keys) = rekey(x, dim, keys)
+
 """
     times(x, dim=nothing)
 
@@ -99,7 +101,7 @@ end
 @inline function _ontime(f::F, A, dim) where {F}
     d = resolve_dim(A, dim)
     out, t = f(unwrap(A), times(A, d), d)
-    return rebuild(A, out, d, t)
+    return _rebuild_ordered(A, out, d, t)
 end
 
 _valof(::Val{D}) where {D} = D
