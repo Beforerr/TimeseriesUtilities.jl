@@ -90,21 +90,20 @@ end
 end
 
 @testitem "linear search hint" begin
-    using TimeseriesUtilities: tinterp, LinearInterpolation
-    # Repeated, backward and endpoint queries after a sorted run; nonlinear data so a
-    # wrong segment changes the value. Reference: scalar path, which never uses the hint.
+    # Repeated, backward and endpoint queries after a sorted run; nonlinear data so a wrong
+    # segment changes the value. Reference: scalar queries start without a hint.
     t = cumsum(rand(50) .+ 0.1)
     u = sin.(t)
     q = [t[1]; sort(t[1] .+ (t[end] - t[1]) .* rand(200)); t[end]; t[3]; t[3]; t[20]]
-    @test parent(tinterp(Timed(u, t), q)) ≈ LinearInterpolation(u, t).(q)
+    x = Timed(u, t)
+    @test parent(tinterp(x, q)) ≈ [tinterp(x, qi) for qi in q]
 end
 
 @testitem "exact knots keep their sample next to NaN" begin
-    using TimeseriesUtilities: Timed, tinterp, LinearInterpolation
     t = [0.0, 1.0, 2.0, 3.0]
     A = [1.0 2.0; NaN NaN; 3.0 4.0; NaN NaN]
-    @test isequal(parent(tinterp(Timed(A, t; dim = 1), t)), A)
-    @test isequal(LinearInterpolation(A[:, 1], t).(t), A[:, 1])
+    q = [0.0, 2.0, 3.0, 1.0]
+    @test isequal(parent(tinterp(Timed(A, t; dim = 1), q)), A[[1, 3, 4, 2], :])
 end
 
 @testitem "FastInterpolations extension" begin

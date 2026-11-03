@@ -22,21 +22,12 @@ _astime(::Type{T}, x) where {T <: AbstractTime} = eltype(x) <: T ? x : convert.(
 # Numeric interpolators (DataInterpolations.jl, FastInterpolations.jl) cannot take `Dates` times
 _rawtimes(t, tq) = map(rawview, _commontimes(t, tq))
 
-struct LinearInterpolation{U, T, E}
-    u::U
-    t::T
-    extrapolation::E
-end
+struct LinearInterpolation end
 
-function check_interp_args(u, t)
+function check_interp_times(t)
     issorted(t) || throw(ArgumentError("t must be sorted"))
-    length(u) == length(t) || throw(DimensionMismatch("u and t must have the same length"))
-    return !isempty(t) || throw(ArgumentError("at least one interpolation point is required"))
-end
-
-function LinearInterpolation(u, t; extrapolation = false, check = true)
-    check && check_interp_args(u, t)
-    return LinearInterpolation(u, t, extrapolation)
+    isempty(t) && throw(ArgumentError("at least one interpolation point is required"))
+    return nothing
 end
 
 function _interp_segment(t, x, extrapolation)
@@ -80,30 +71,17 @@ end
     return _interp_segment(t, x, extrapolation)
 end
 
-function (interp::LinearInterpolation)(x)
-    i = _interp_segment(interp.t, x, interp.extrapolation)
-    length(interp.t) == 1 && return only(interp.u)
-    t0 = interp.t[i]
-    t1 = interp.t[i + 1]
-    u0 = interp.u[i]
-    u1 = interp.u[i + 1]
-    # exact knots return their sample, so NaN neighbors do not leak in
-    x == t0 && return u0
-    x == t1 && return u1
-    return u0 + (x - t0) / (t1 - t0) * (u1 - u0)
-end
-
 """
     tinterp(A, t; interp=LinearInterpolation, dim=nothing, kws...)
 
 Interpolate `A` at time `t`, dropping dimension `dim`, or at each of times `t`, keyed by `t`.
 
-`interp(u, t; kws...)` must return a callable; `kws` go to it.
+Any other `interp(u, t; kws...)` must return a callable; `kws` go to it.
 """
 tinterp(A, t; kws...) = _tinterp(rebuild, A, t; kws...)
 
 function _tinterp(rebuild::F, A, t; interp = LinearInterpolation, dim = nothing, kws...) where {F}
-    # not `_ontime`: a closure would capture `interp` (a type, by default) as `UnionAll`, so the `_tinterp_nd` call would not infer
+    # not `_ontime`: a closure would capture `interp` (a type, by default) as `DataType`, so the `_tinterp_nd` call would not infer
     d = resolve_dim(A, dim)
     data, t0 = unwrap(A), times(A, d)
     t isa AbstractArray && return rebuild(A, _interpolate(interp, data, t0, t, d; kws...), d, t)
@@ -142,7 +120,7 @@ function _ingap(t, x, i, extrapolating, max_gap)
 end
 
 # Fast one pass over all channels per query point
-@inline _tinterp_nd(::Type{<:LinearInterpolation}, A, old_times, new_times, d; extrapolation = false, check = true) =
+@inline _tinterp_nd(::Type{LinearInterpolation}, A, old_times, new_times, d; extrapolation = false, check = true) =
     _tinterp_linear_nd(A, old_times, new_times, d, extrapolation, check)
 
 function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation, check)
@@ -150,7 +128,7 @@ function _tinterp_linear_nd(A, old_times, new_times, d, extrapolation, check)
     out_sz = ntuple(i -> i == d ? length(new_times) : size(A, i), ndims(A))
     out = similar(A, float(eltype(A)), out_sz)
     old_times == new_times && return copyto!(out, A)
-    check && check_interp_args(axes(A, d), old_times)
+    check && check_interp_times(old_times)
     _tinterp_linear!(_samples(out, d), _samples(A, d), old_times, new_times, extrapolation)
     return out
 end
