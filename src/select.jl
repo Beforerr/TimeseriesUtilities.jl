@@ -17,7 +17,7 @@ end
     tclip(A, tr; dim=nothing)
 
 Clip `A` to time range `[t0, t1]`, or to `tr`, along dimension `dim`.
-`tr` is a `(t0, t1)` tuple or an interval such as `IntervalSets.Interval{:closed, :open}(t0, t1)`.
+`tr` is a `(t0, t1)`, or an interval such as `IntervalSets.Interval{:closed, :open}(t0, t1)`.
 
 `dim` should be sorted before clipping (see [`tsort`](@ref)).
 """
@@ -50,7 +50,16 @@ end
 _search_range(keys, tr) = _range_indices(_checksorted(keys), tr)
 _checksorted(keys) = issorted(keys) ? keys : throw(ArgumentError("axis keys must be sorted ascending"))
 
-_range_indices(keys, (t0, t1)) = searchsortedfirst(keys, t0):searchsortedlast(keys, t1)
+function _range_indices(keys, tr)
+    t0, t1 = _bounds(tr)
+    return searchsortedfirst(keys, t0):searchsortedlast(keys, t1)
+end
+
+function _bounds(tr)
+    length(tr) == 2 || throw(ArgumentError("a time range has two bounds, got $(repr(tr))"))
+    t0, t1 = tr
+    return t0, t1
+end
 
 
 """

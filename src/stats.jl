@@ -1,9 +1,10 @@
 """
     tstat(f, x; dim=nothing)
     tstat(f, x, every; period=every, start_by=:window, dim=nothing)
+    tstat(f, x, windows; dim=nothing)
 
-Statistic `f` of each channel of `x` along time (or `dim`): over all samples, or over each window
-`[start, start + period)` with starts `every` apart, keyed by window start.
+Statistic `f` of each channel of `x` along time (or `dim`): over all samples, over each window
+`[start, start + period)` with starts `every` apart, or over each of the given time ranges `windows`. Results are keyed by window start.
 
 `f` receives one channel's samples as a vector, empty for windows without samples.
 Starts begin at the first time floored to a multiple of `every` (`start_by=:window`) or at the first time
@@ -21,16 +22,26 @@ end
     return _dropdim(x, _map(I -> f(slices[I], Tuple(I)), CartesianIndices(slices)), d)
 end
 
-function tstat(f, x, every; period = every, start_by = :window, dim = nothing)
-    d = resolve_dim(x, dim)
-    data = unwrap(x)
+# Single entry point: avoid ambiguous methods with the `AbstractDimStack`
+tstat(f, x, w; dim = nothing, kw...) = _tstat(f, x, w, resolve_dim(x, dim); kw...)
+
+@inline function _tstat(f, x, every::Union{Number, AbstractTime}, d; period = every, start_by = :window)
     k, t, windows = _grid_windows(x, d, every, period, start_by)
-    # index ranges of the windows, searched once for all channels
-    ranges = collect(WindowedView{1}(axes(data, d), t, windows))
+    # index ranges, searched once for all channels
+    ranges = collect(WindowedView{1}(axes(unwrap(x), d), t, windows))
+    return _rebuild_ordered(x, _rangestat(f, unwrap(x), d, ranges), d, isnothing(k) ? nothing : windows.coords)
+end
+
+@inline function _tstat(f, x, windows, d)
+    t = _checksorted(times(x, d))
+    ranges = [_range_indices(t, w) for w in windows]
+    return rebuild(x, _rangestat(f, unwrap(x), d, ranges), d, first.(_bounds.(windows)))
+end
+
+@inline function _rangestat(f::F, data, d, ranges) where {F}
     A3 = _as3d(data, d)
     cols = [_map(r -> f(view(A3, p, r, q)), ranges) for q in axes(A3, 3) for p in axes(A3, 1)]
-    # window starts in samples are not times
-    return _rebuild_ordered(x, _stack_channels(data, d, cols), d, isnothing(k) ? nothing : windows.coords)
+    return _stack_channels(data, d, cols)
 end
 
 tstat_doc(sym, desc = sym, note = "") = """

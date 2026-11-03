@@ -105,3 +105,23 @@ end
     t = DateTime(2020) .+ Minute.([1, 2, 5])
     @test times(tmedian(Timed([1.0, 2.0, 3.0], t), Minute(2))) == DateTime(2020):Minute(2):DateTime(2020, 1, 1, 0, 4)
 end
+
+@testitem "tstat over given windows" begin
+    using DimensionalData, IntervalSets
+    t = collect(1.0:10.0)
+    M = [t 10 .* t]
+    x = Timed(M, t; dim = 1)
+    w = [(2.0, 4.0), (1.0, 10.0), (20.0, 30.0)]   # unordered, overlapping, empty
+    r = tmean(x, w)
+    @test isequal(parent(r), [3.0 30; 5.5 55; NaN NaN])
+    @test times(r) == first.(w)
+    @test_throws ArgumentError tmean(Timed([1.0, 2.0], [2.0, 1.0]), w)
+    for ws in ((v for v in w), collect.(w))
+        rs = tmean(x, ws)
+        @test isequal(parent(rs), parent(r)) && times(rs) == times(r)
+    end
+    @test times(tmean(x, [OpenInterval(2.0, 4.0), Interval(3.0, 1.0)])) == [2.0, 3.0]
+    @test parent(tmean(x, [Interval{:closed, :open}(2.0, 4.0)])) == [2.5 25.0]
+    @test tmean(DimArray(M, (Ti(t), Y(1:2))), w)[Ti(At(2.0)), Y(At(2))] == 30
+    @test isequal(parent(tmean(DimStack((; a = DimArray(t, Ti(t)))), w).a), [3.0, 5.5, NaN])
+end

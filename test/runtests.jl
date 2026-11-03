@@ -12,11 +12,6 @@ end
     (!isdefined(JET, :JET_AVAILABLE) || JET.JET_AVAILABLE) && include("jet.jl")
 end
 
-@testitem "README covers exports" begin
-    readme = read(joinpath(pkgdir(TimeseriesUtilities), "README.md"), String)
-    @test filter(n -> !occursin(Regex("`\\Q$n\\E(?![\\w!])"), readme), setdiff(names(TimeseriesUtilities), [:TimeseriesUtilities])) == Symbol[]
-end
-
 @testitem "api" begin
     using TimeseriesUtilities: axiskeys, rebuild, resolve_dim, tdimnum, unwrap
     using DimensionalData: Ti

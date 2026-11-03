@@ -91,6 +91,7 @@ For angles, interpolate the shorter way around, then wrap: `mod.(parent(tinterp(
 ```julia
 tmean(y)                                       # per channel: plain vector
 tmean(y, Minute(1))                            # 60×3, keyed by window start: [00:00, 00:01), [00:01, 00:02), …
+tmedian(y, [(t[1], t[60]), (t[100], t[200])])  # 2×3 over given closed time ranges, e.g. an event table
 tstat(c -> quantile(c, 0.9), y, Minute(5); period = Minute(10))  # any f, 10-minute windows every 5 minutes
 tsmooth(y, Minute(1))                          # 1-minute moving mean, same size as y
 tsubtract(median, y, Minute(10))               # subtract the 10-minute moving median
