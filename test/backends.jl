@@ -21,6 +21,7 @@
         tderiv,
         x -> tsubtract(first, x),
         x -> tsubtract(maximum, x, 2.0),
+        x -> unwrap_periodic(x, 2π),
         x -> tresample(x, 0.5),
         x -> tfill_gaps(x, 1.0),
         tinterp_na,

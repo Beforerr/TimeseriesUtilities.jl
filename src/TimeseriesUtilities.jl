@@ -19,7 +19,7 @@ export trange, find_continuous_timeranges, ContinuousTimeRanges, tsplit, Interva
 export tselect, tclip, tview, tmask, tmask!, tsort, tshift
 export mapsamples, tsmooth, twindows
 export tstat, tsum, tmean, tmedian, tstd, tsem, tvar, tmaximum, tminimum
-export tderiv, tsubtract
+export tderiv, tsubtract, unwrap_periodic
 export tinterp, tsync, tresample
 export tinterp_na, tfill_gaps, dropna
 export outlier_mask, despike, despike!
