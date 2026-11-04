@@ -111,7 +111,9 @@ new_times = DateTime("2023-01-01"):Hour(1):DateTime("2023-01-02")
 tinterp(time_series, new_times; interp = CubicSpline)
 ```
 """
-function tinterp(A, t; interp = LinearInterpolation, dim = nothing, kws...)
+tinterp(A, t; kws...) = _tinterp(rebuild, A, t; kws...)
+
+function _tinterp(rebuild::F, A, t; interp = LinearInterpolation, dim = nothing, kws...) where {F}
     # not `_ontime`: a closure would capture `interp` (a type, by default) as `UnionAll`, so the `_tinterp_nd` call would not infer
     d = resolve_dim(A, dim)
     data, t0 = unwrap(A), times(A, d)
@@ -182,7 +184,7 @@ Interpolate `A` onto the regular time grid of step `dt` spanning its times.
 See also: [`tinterp`](@ref)
 """
 function tresample(A, dt; dim = nothing, kws...)
-    return tinterp(A, _time_grid(times(A, dim), dt); dim, kws...)
+    return _tinterp(_rebuild_ordered, A, _time_grid(times(A, dim), dt); dim, kws...)
 end
 
 
@@ -208,7 +210,7 @@ function tsync(A, Bs...; dim = nothing, kws...)
     A_tsync = tclip(A, tr; dim)
     tstamps = times(A_tsync, dim)
     Bs_syncs = map(Bs) do B
-        tinterp(B, tstamps; dim, kws...)
+        _tinterp(_rebuild_ordered, B, tstamps; dim, kws...)
     end
     return A_tsync, Bs_syncs...
 end

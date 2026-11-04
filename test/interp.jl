@@ -58,6 +58,18 @@ end
     @test parent(tinterp(unsorted, times(unsorted))) == parent(unsorted)
 end
 
+@testitem "selectors find new keys in any order" begin
+    using DimensionalData
+    using DimensionalData.Lookups: ForwardOrdered, ReverseOrdered, order
+    using TimeseriesUtilities: rekey
+    forward = DimArray([1.0, 2.0, 3.0], (Ti(1.0:3.0),))
+    for t in ([2.0, 3.0, 1.0], [3.0, 1.0])
+        y = tinterp(forward, t)
+        @test [y[Ti(At(k))] for k in t] == t
+    end
+    @test order(dims(tinterp(forward, [1.5, 2.5]), Ti)) isa ForwardOrdered
+end
+
 @testitem "linear search hint" begin
     using TimeseriesUtilities: tinterp, LinearInterpolation
     # Repeated, backward and endpoint queries after a sorted run; nonlinear data so a

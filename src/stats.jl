@@ -30,7 +30,7 @@ function tstat(f, x, every; period = every, start_by = :window, dim = nothing)
     A3 = _as3d(data, d)
     cols = [_map(r -> f(view(A3, p, r, q)), ranges) for q in axes(A3, 3) for p in axes(A3, 1)]
     # window starts in samples are not times
-    return rebuild(x, _stack_channels(data, d, cols), d, isnothing(k) ? nothing : windows.coords)
+    return _rebuild_ordered(x, _stack_channels(data, d, cols), d, isnothing(k) ? nothing : windows.coords)
 end
 
 tstat_doc(sym, desc = sym, note = "") = """

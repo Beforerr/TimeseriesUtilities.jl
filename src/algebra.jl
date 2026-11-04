@@ -43,7 +43,7 @@ Forward-difference time derivative of `A`, keyed by the left time of each pair;
     d = resolve_dim(A, dim)
     f = lazy ? DiffQ : _tderiv
     t = times(A, d)
-    return rebuild(A, f(unwrap(A), t; dim = d), d, @view t[1:(end - 1)])
+    return _rebuild_ordered(A, f(unwrap(A), t; dim = d), d, @view t[1:(end - 1)])
 end
 
 # Vector projection, rejection and scalar projection of `a` on `b`.
