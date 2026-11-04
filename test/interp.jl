@@ -70,6 +70,25 @@ end
     @test order(dims(tinterp(forward, [1.5, 2.5]), Ti)) isa ForwardOrdered
 end
 
+@testitem "tinterp max_gap" begin
+    using Dates
+    import DataInterpolations as DI
+    f(A, q; kws...) = parent(tinterp(A, q; max_gap = 1.0, kws...))
+    t = [0.0, 1.0, 2.0, 10.0]
+    u = t .^ 2
+    x = Timed(u, t)
+    # A gap of exactly `max_gap` interpolates and samples at gap edges survive
+    q = [-1.0, 0.5, 2.0, 5.0, 10.0, 12.0]
+    y = [NaN, 0.5, 4.0, NaN, 100.0, NaN]
+    @test isequal(f(x, q), y)
+    @test isequal(f(x, q; interp = DI.LinearInterpolation), y)
+    @test isequal(f(Timed([u 10u]', t; dim = 2), q), [y 10y]')
+    @test isequal(f(x, [-1.5, -1.0, 11.0, 11.5]; extrapolation = true), [NaN, -1.0, 112.0, NaN])
+    @test isequal(f(Timed(Float64[], Float64[]), [1.0]; interp = DI.CubicSpline), [NaN])
+    s = DateTime(2024) .+ Second.([0, 1, 5])
+    @test isequal(f(Timed([0.0, 1.0, 5.0], s), s[1] .+ Millisecond.([500, 3000]); max_gap = Second(1)), [0.5, NaN])
+end
+
 @testitem "linear search hint" begin
     using TimeseriesUtilities: tinterp, LinearInterpolation
     # Repeated, backward and endpoint queries after a sorted run; nonlinear data so a

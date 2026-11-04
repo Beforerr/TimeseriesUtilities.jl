@@ -12,7 +12,7 @@ end
 """
     tinterp_na(A; dim = nothing, interp = LinearInterpolation, kws...)
 
-Interpolate the NaN values between each channel's valid samples along dimension `dim`. `interp` and `kws` as in [`tinterp`](@ref).
+Interpolate the NaN values between each channel's valid samples along dimension `dim`.
 """
 tinterp_na(A; dim = nothing, kwargs...) = _ontime(A, dim) do data, t, d
     out = mapslices(data; dims = d) do slice
@@ -27,7 +27,7 @@ function interpolate_nans!(u, t; interp = LinearInterpolation, kws...)
     valid = findall(!isnan, u)
     isempty(valid) && return u
     filter!(i -> first(valid) < i < last(valid), gaps)
-    isempty(gaps) || (u[gaps] = _tinterp_nd(interp, view(u, valid), view(t, valid), view(t, gaps), 1; kws...))
+    isempty(gaps) || (u[gaps] = _interpolate(interp, view(u, valid), view(t, valid), view(t, gaps), 1; kws...))
     return u
 end
 

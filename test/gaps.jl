@@ -80,4 +80,5 @@ end
 
     constant(u, t) = x -> u[searchsortedlast(t, x)]
     @test parent(tinterp_na(Timed([1.0, NaN, 5.0], [1.0, 2.0, 3.0]); interp = constant)) == [1.0, 1.0, 5.0]
+    @test isequal(parent(tinterp_na(Timed([1.0, NaN, 3.0, NaN, NaN, 6.0], 1.0:6.0); max_gap = 2.0)), [1.0, 2.0, 3.0, NaN, NaN, 6.0])
 end

@@ -71,13 +71,17 @@ Without `window`, `despike` and `outlier_mask` use the global median, which miss
 
 ```julia
 tresample(y, Second(10))                             # linear interpolation onto a 10 s grid: 360×3
+tresample(x, Second(10); max_gap = Second(5))        # NaN at the 6 grid times inside x's dropout
 tinterp(y, DateTime(2024, 1, 1, 0, 30, 0, 500))      # one time: plain vector
 v = Timed(randn(Xoshiro(1), 750, 3), DateTime(2024, 1, 1, 0, 5) .+ Second.(2:4:2998); dim = 1)  # 4 s cadence
 ys, vs = tsync(y, v)          # y clipped to the common time range, v interpolated onto its times
 ```
 
-Interpolating outside the data's time range throws a `DomainError` unless `extrapolation = true`.
-`interp` swaps the interpolator, e.g. `tinterp(y, t_new; interp = DataInterpolations.CubicSpline)`.
+`tinterp`, `tresample`, `tsync` and `tinterp_na` share keywords:
+
+- `extrapolation = true` allows times outside the data's range, which otherwise throw a `DomainError`.
+- `max_gap` gives NaN at times neither a sample nor between samples at most `max_gap` apart, outside the range too; `extrapolation = true` still reaches `max_gap` past it.
+- `interp` swaps the interpolator, e.g. `tinterp(y, t_new; interp = DataInterpolations.CubicSpline)`.
 
 ### Statistics
 

@@ -96,20 +96,9 @@ end
 """
     tinterp(A, t; interp=LinearInterpolation, dim=nothing, kws...)
 
-Interpolate `A` at time `t`, or at each of times `t` (keyed by `t`).
+Interpolate `A` at time `t`, dropping dimension `dim`, or at each of times `t`, keyed by `t`.
 
-The `interp` constructor must accept `(u, t; kws...)` and return a callable object.
-
-# Examples
-
-```julia
-# Interpolate at a single time point
-tinterp(time_series, DateTime("2023-01-01T12:00:00"))
-
-# Interpolate at multiple time points using cubic spline interpolation
-new_times = DateTime("2023-01-01"):Hour(1):DateTime("2023-01-02")
-tinterp(time_series, new_times; interp = CubicSpline)
-```
+`interp(u, t; kws...)` must return a callable; `kws` go to it.
 """
 tinterp(A, t; kws...) = _tinterp(rebuild, A, t; kws...)
 
@@ -117,9 +106,39 @@ function _tinterp(rebuild::F, A, t; interp = LinearInterpolation, dim = nothing,
     # not `_ontime`: a closure would capture `interp` (a type, by default) as `UnionAll`, so the `_tinterp_nd` call would not infer
     d = resolve_dim(A, dim)
     data, t0 = unwrap(A), times(A, d)
-    t isa AbstractArray && return rebuild(A, _tinterp_nd(interp, data, t0, t, d; kws...), d, t)
-    out = _tinterp_nd(interp, data, t0, [t], d; kws...)
+    t isa AbstractArray && return rebuild(A, _interpolate(interp, data, t0, t, d; kws...), d, t)
+    out = _interpolate(interp, data, t0, [t], d; kws...)
     return ndims(out) == 1 ? only(out) : _dropdim(A, dropdims(out; dims = d), d)
+end
+
+_interpolate(interp, A, t, tq, d; max_gap = nothing, kws...) =
+    isnothing(max_gap) ? _tinterp_nd(interp, A, t, tq, d; kws...) : _tinterp_gapped(interp, A, t, tq, d, max_gap; kws...)
+
+function _tinterp_gapped(interp, A, t, tq, d, max_gap; kws...)
+    t, tq = _commontimes(t, tq)
+    extrapolating = get(kws, :extrapolation, false) !== false
+    gaps = Int[]
+    hint = 0
+    for (j, x) in enumerate(tq)
+        i = hint = _interp_segment(t, x, true, hint)
+        _ingap(t, x, i, extrapolating, max_gap) && push!(gaps, j)
+    end
+    if length(gaps) == length(tq) # no interpolator: some reject empty or too few samples
+        T = float(eltype(A))
+        return fill!(similar(A, T, ntuple(i -> i == d ? length(tq) : size(A, i), ndims(A))), zero(T) / 0)
+    end
+    qs = collect(promote_type(eltype(t), eltype(tq)), tq)
+    qs[gaps] .= clamp.(view(qs, gaps), first(t), last(t))
+    out = float(_tinterp_nd(interp, A, t, qs, d; kws...))
+    _as3d(out, d)[:, gaps, :] .= zero(eltype(out)) / 0
+    return out
+end
+
+function _ingap(t, x, i, extrapolating, max_gap)
+    isempty(t) && return true
+    x < first(t) && return !extrapolating || first(t) - x > max_gap
+    x > last(t) && return !extrapolating || x - last(t) > max_gap
+    return length(t) > 1 && x != t[i] && x != t[i + 1] && t[i + 1] - t[i] > max_gap
 end
 
 # Fast path for built-in LinearInterpolation: one pass over all channels per query point.
@@ -179,9 +198,7 @@ _callable(f) = f
 """
     tresample(A, dt; dim=nothing, kws...)
 
-Interpolate `A` onto the regular time grid of step `dt` spanning its times.
-
-See also: [`tinterp`](@ref)
+Interpolate `A` onto `tmin:dt:tmax` of its times.
 """
 function tresample(A, dt; dim = nothing, kws...)
     return _tinterp(_rebuild_ordered, A, _time_grid(times(A, dim), dt); dim, kws...)
@@ -191,19 +208,8 @@ end
 """
     tsync(A, Bs...; dim=nothing, kws...)
 
-Synchronize multiple time series to have the same time points.
-
-This function aligns time series `Bs...` to match time points of `A` by:
-
- 1. Finding common time range between all time series
- 2. Extracting subset of `A` within common range
- 3. Interpolating each series in `Bs...` to match the time points of the subset of `A`, with [`tinterp`](@ref)`(B, t; kws...)`
-
-# Examples
-
-```julia
-A_sync, B_sync, C_sync = tsync(A, B, C)
-```
+Clip `A` to the time range common to all series and interpolate each of `Bs` onto its times.
+Throws `ArgumentError` if the ranges do not overlap.
 """
 function tsync(A, Bs...; dim = nothing, kws...)
     tr = @something trange(A, Bs...; dim) throw(ArgumentError("No common time range found"))
