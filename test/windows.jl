@@ -5,9 +5,21 @@
     ws, starts = twindows(x, 2.0; period = 3.0)
     @test starts === 0.0:2.0:6.0
     @test collect(TimeseriesUtilities.PointWindows(1:2, 0.5, 0.5)) == [(0.5, 1.5), (1.5, 2.5)]
+    @test @inferred(TimeseriesUtilities.GridWindows(0.0f0:1.0f0:2.0f0, 1.0)[1]) === (0.0f0, 1.0)
     @test lookup(ws[2], Ti) == [2.5] && isempty(ws[3])
     # same windows as `tstat`
     @test reduce(vcat, [sum(parent(w); dims = 1) for w in ws]) == parent(tsum(x, 2.0; period = 3.0))
+end
+
+@testitem "window stops land on later starts" begin
+    using Dates
+
+    # from Jan 31, starts clamp to Feb 29, Mar 31, Apr 30
+    x = Timed(ones(91), DateTime(2024, 1, 31) .+ Day.(0:90))
+    @test parent(tsum(x, Month(1); period = Month(2), start_by = :datapoint))[2] == 61
+    # `0.1 + 0.2` rounds above the start at 0.3
+    y = Timed(ones(5), [0.1, 0.2, 0.3, 0.4, 0.5])
+    @test parent(tsum(y, 0.1; period = 0.2, start_by = :datapoint)) == [2, 2, 2, 2, 1]
 end
 
 @testitem "tsmooth" begin

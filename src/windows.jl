@@ -15,6 +15,29 @@ _point_window(t, before, after) = (t - before, t + after)
 Base.size(pw::PointWindows) = (length(pw.coords),)
 Base.getindex(pw::PointWindows, i::Int) = _point_window(pw.coords[i], pw.before, pw.after)
 
+# `[coords[i], stop)` over a range of starts. A stop on a later start must be exactly that start, for a sample there to fall in
+# as many windows as any other: `coords[i] + period` misses it when months clamp or floats round.
+struct GridWindows{T, C, P} <: AbstractVector{T}
+    coords::C
+    period::P
+end
+
+function GridWindows(coords::C, period::P) where {C, P}
+    T = Tuple{eltype(C), Base.promote_op(+, eltype(C), P)}
+    return GridWindows{T, C, P}(coords, period)
+end
+
+Base.size(w::GridWindows) = size(w.coords)
+Base.getindex(w::GridWindows{Tuple{A, B}}, i::Int) where {A, B} = (w.coords[i], convert(B, _stop(w.coords, i, w.period)))
+
+_stop(starts, i, period) = first(starts) + ((i - 1) * step(starts) + period)
+function _stop(starts::StepRangeLen, i, period)
+    r = period / step(starts)
+    n = round(r)
+    # `unsafe_getindex` as the start can be past the end
+    return abs(r - n) <= 4eps(r) && n <= length(starts) ? Base.unsafe_getindex(starts, i + Int(n)) : starts[i] + period
+end
+
 
 """
     WindowedView{dim}(data, coords, windows)
@@ -64,13 +87,12 @@ end
     return k, t, _tgrid_windows(t, every, period, isnothing(k) ? :datapoint : start_by)
 end
 
-# Windows `[start, start + period)` with starts a range `every` apart.
 function _tgrid_windows(t, every, period, start_by)
     isempty(t) && throw(ArgumentError("no samples to window"))
     issorted(t) || throw(ArgumentError("times must be sorted"))
     start_by in (:window, :datapoint) || throw(ArgumentError("start_by must be :window or :datapoint, got $(repr(start_by))"))
     t0 = start_by == :window ? _floor(first(t), every) : first(t)
-    return PointWindows(t0:every:last(t), zero(period), period)
+    return GridWindows(t0:every:last(t), period)
 end
 
 _floor(t, dt) = floor(t, dt)
