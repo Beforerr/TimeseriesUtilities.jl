@@ -8,7 +8,7 @@ A = DimArray([i^2 for i in 1:5, j in 1:3], (Ti(1.0:5.0), Y(1:3)))
 @test_opt tderiv(A)
 @test_call ignored_modules = (Base,) tderiv(A)
 
-@test_call tsplit(1.0, 10.0, 3)
+@test_call tsplit(1.0, 10.0; length = 3)
 @test_call tsplit(0.0, 10.0, 2.0)
 @test_call tsplit(DateTime("2021-01-01"), DateTime("2021-03-01"), Month)
 

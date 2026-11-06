@@ -1,6 +1,3 @@
-/ₜ(x, n) = x / n
-/ₜ(x::P, n) where {P <: Dates.AbstractTime} = P(cld(Dates.value(x), n))
-
 # https://github.com/JuliaStats/Statistics.jl/issues/203
 @inline function _quantile_sorted(v, p::Real)
     n = length(v)

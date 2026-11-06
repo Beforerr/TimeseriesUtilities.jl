@@ -249,10 +249,7 @@ function IntervalRange(t0::T1, t1::T2, dt::D) where {T1, T2, D}
     T = promote_type(T1, T2)
     return IntervalRange(T(t0), T(t1), dt)
 end
-function IntervalRange(t0::T1, t1::T2, n::Int) where {T1, T2}
-    @assert n > 0
-    return IntervalRange(t0, t1, (t1 - t0) /ₜ n)
-end
+@deprecate IntervalRange(t0::T1, t1::T2, n::Int) where {T1, T2} tsplit(t0, t1; length = n)
 
 
 Base.eltype(::Type{<:IntervalRange{T}}) where {T} = NTuple{2, T}
@@ -302,11 +299,27 @@ function Base.getindex(to::TimeOffsets, i::Int)
 end
 
 """
-    tsplit(t0, t1, n::Int)
     tsplit(t0, t1, dt)
     tsplit(t0, t1, dtType::Type{<:Period})
+    tsplit(t0, t1; length)
 
-Split the range from `t0` to `t1` into `n` parts, `dt`-sized parts, or by period type (e.g., Month, Day).
+Split the range from `t0` to `t1` into `dt`-sized parts, by period type (e.g., Month, Day), or into `length` parts.
+Edges of `length` parts round to the resolution of the input type, so `Date` parts can differ by a day and parts are empty when the span has fewer units than `length`.
 """
 tsplit(t0, t1, dt) = collect(IntervalRange(t0, t1, dt))
-tsplit((t0, t1), arg) = tsplit(t0, t1, arg)
+function tsplit(t0, t1; length::Integer)
+    @assert length > 0
+    a, b = promote(t0, t1)
+    edge(i) = i == length ? b : a + _part(b - a, i, length)
+    return [(edge(i - 1), edge(i)) for i in 1:(a < b ? length : 0)]
+end
+_part(span, i, n) = span * i / n
+function _part(span::Integer, i, n)
+    q, r = divrem(span, n)
+    return q * i + cld(r * i, n)
+end
+_part(span::P, i, n) where {P <: Dates.AbstractTime} = P(_part(Dates.value(span), i, n))
+tsplit((t0, t1)::Tuple, arg) = tsplit(t0, t1, arg)
+tsplit((t0, t1)::Tuple; length) = tsplit(t0, t1; length)
+
+@deprecate tsplit(t0, t1, n::Integer) tsplit(t0, t1; length = n)
