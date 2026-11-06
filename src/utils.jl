@@ -1,3 +1,18 @@
+# Base `issorted` exits per element => never vectorizes
+# Unlike Base, any NaN makes it false.
+_issorted(t) = issorted(t)
+function _issorted(t::AbstractVector{<:Union{Real, AbstractTime}})
+    t isa AbstractRange && return issorted(t)
+    @inbounds for i0 in firstindex(t):64:(lastindex(t) - 1)
+        sorted = true
+        @simd for i in i0:min(i0 + 63, lastindex(t) - 1)
+            sorted &= t[i] <= t[i + 1]
+        end
+        sorted || return false
+    end
+    return true
+end
+
 # https://github.com/JuliaStats/Statistics.jl/issues/203
 @inline function _quantile_sorted(v, p::Real)
     n = length(v)

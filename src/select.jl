@@ -48,7 +48,7 @@ function _selectors(A, d, selector)
 end
 
 _search_range(keys, tr) = _range_indices(_checksorted(keys), tr)
-_checksorted(keys) = issorted(keys) ? keys : throw(ArgumentError("axis keys must be sorted ascending"))
+_checksorted(keys) = _issorted(keys) ? keys : throw(ArgumentError("axis keys must be sorted ascending"))
 
 function _range_indices(keys, tr)
     t0, t1 = _bounds(tr)
@@ -90,7 +90,7 @@ tmask(A, args...; kwargs...) = tmask!(_float_copy(A), args...; kwargs...)
 function tselect(A, t; dim = nothing)
     d = resolve_dim(A, dim)
     keys = times(A, d)
-    i = if issorted(keys)
+    i = if _issorted(keys)
         searchsortednearest(keys, t)
     else
         order = sortperm(keys)

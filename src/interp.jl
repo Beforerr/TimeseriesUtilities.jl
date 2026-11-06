@@ -25,12 +25,12 @@ _rawtimes(t, tq) = map(rawview, _commontimes(t, tq))
 struct LinearInterpolation end
 
 function check_interp_times(t)
-    issorted(t) || throw(ArgumentError("t must be sorted"))
+    _issorted(t) || throw(ArgumentError("t must be sorted"))
     isempty(t) && throw(ArgumentError("at least one interpolation point is required"))
     return nothing
 end
 
-function _interp_segment(t, x, extrapolation)
+@inline function _interp_segment(t, x, extrapolation)
     n = length(t)
     if n == 1
         (x == only(t) || extrapolation) && return 1

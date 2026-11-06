@@ -101,7 +101,7 @@ end
 
 function _tgrid_windows(t, every, period, start_by)
     isempty(t) && throw(ArgumentError("no samples to window"))
-    issorted(t) || throw(ArgumentError("times must be sorted"))
+    _issorted(t) || throw(ArgumentError("times must be sorted"))
     start_by in (:window, :datapoint) || throw(ArgumentError("start_by must be :window or :datapoint, got $(repr(start_by))"))
     t0 = start_by == :window ? _floor(first(t), every) : first(t)
     starts = t0:every:last(t)
@@ -138,7 +138,7 @@ end
 
 function _point_windows(x, d, window)
     coords = _keys_or_indices(x, d)
-    issorted(coords) || throw(ArgumentError("coordinates must be sorted"))
+    _issorted(coords) || throw(ArgumentError("coordinates must be sorted"))
     return PointWindows(coords, _window_offsets(window, eltype(coords))...)
 end
 

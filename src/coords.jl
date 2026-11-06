@@ -177,7 +177,7 @@ Find continuous time ranges in times `ts`, where `max_dt` is the maximum time ga
 """
 function find_continuous_timeranges(ts, max_dt)
     return collect(
-        issorted(ts) ?
+        _issorted(ts) ?
             ContinuousTimeRanges(ts, max_dt) :
             ContinuousTimeRanges(sort(ts), max_dt)
     )
