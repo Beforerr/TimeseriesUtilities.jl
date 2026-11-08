@@ -1,13 +1,13 @@
 """
-    tfilter(A, Wn1, Wn2=nothing; dim=nothing, designmethod=Butterworth(2))
+    tfilter(A, Wn1, Wn2=nothing; dim=nothing, designmethod=Butterworth(2), max_gap=0)
 
-Zero-phase bandpass filter `A` between `Wn1` and `Wn2` hertz; the upper cutoff defaults to just below Nyquist.
-Requires DSP.jl.
+Apply a zero-phase bandpass filter between `Wn1` and `Wn2` hertz using DSP.jl.
+The upper cutoff defaults to just below Nyquist.
 
-References
-- https://docs.juliadsp.org/stable/filters/
-- https://www.mathworks.com/help/signal/ref/filtfilt.html
-- https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.filtfilt.html
+NaNs and omitted timestamps split the signal into runs filtered independently.
+To bridge a gap by linear interpolation, set `max_gap` to the maximum time
+between bracketing observations (seconds or a time period), or `nothing` for
+no limit. The output retains the original timestamps and NaNs.
 """
 tfilter(A, Wn1, Wn2 = nothing; dim = nothing, kw...) =
     _ontime((data, t, d) -> (_tfilter(data, t, d, Wn1, Wn2; kw...), t), A, dim)
