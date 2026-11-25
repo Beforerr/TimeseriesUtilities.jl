@@ -46,6 +46,8 @@ function fill_times(t, dt = cadence(t; check = false); max_gap = nothing)
     return _fill_timestamps(t, fillers, n_new, dt)
 end
 
+_missing_steps(gap_s, dt_s) = max(0, round(Int, gap_s / dt_s) - 1)
+
 # Counting first and writing into exactly-sized buffers beats a single push!-pass.
 function _gap_fillers(t, dt, max_gap)
     dt_s = _seconds(dt)
@@ -56,7 +58,7 @@ function _gap_fillers(t, dt, max_gap)
     n_new = n_old
     @inbounds for i in 1:(n_old - 1)
         gap_s = _seconds(t[i + 1] - t[i])
-        n = gap_s > max_gap_s ? 0 : max(0, round(Int, gap_s / dt_s) - 1)
+        n = gap_s > max_gap_s ? 0 : _missing_steps(gap_s, dt_s)
         fillers[i] = n
         n_new += n
     end

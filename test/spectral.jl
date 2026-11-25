@@ -15,6 +15,29 @@
     @test maximum(abs.(multi_result[1, interior] .- signal[interior])) < 0.05
 end
 
+@testitem "tfilter gap duration" begin
+    using Dates, DSP
+
+    t = DateTime(2020) .+ Second.(0:99)
+    signal = sin.(2π .* (0:99) ./ 5)
+    observed = trues(100)
+    observed[[20; 51:70]] .= false
+    x = copy(signal)
+    x[.!observed] .= NaN
+    f = digitalfilter(Bandpass(0.1, 0.4), Butterworth(2); fs = 1)
+    split = parent(tfilter(Timed(x, t), 0.1, 0.4))
+    @test split[1:19] ≈ filtfilt(f, signal[1:19])
+
+    signal[20] = (signal[19] + signal[21]) / 2
+    expected = [filtfilt(f, signal[1:50]); fill(NaN, 20); filtfilt(f, signal[71:100])]
+    expected[20] = NaN
+    for rows in (eachindex(t), findall(observed))
+        y = tfilter(Timed(x[rows], t[rows]), 0.1, 0.4; max_gap = Second(2))
+        @test times(y) == t[rows]
+        @test isapprox(parent(y), expected[rows]; nans = true)
+    end
+end
+
 @testitem "tfilter axis containers" begin
     using AxisKeys
     using DimensionalData

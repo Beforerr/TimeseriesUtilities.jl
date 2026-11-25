@@ -1,4 +1,5 @@
 @testitem "backends agree" begin
+    using DSP
     using AxisKeys: KeyedArray
     using DimensionalData: DimArray, Ti, Y
     using DataInterpolations: QuadraticInterpolation
@@ -42,8 +43,9 @@
         @test isequal(unwrap(r), unwrap(ref))
         ref isa Timed && @test times(r) == times(ref)
     end
-    # Not inferred on DimArray: its lookup order depends on the caller's keys.
     uninferred = (
+        x -> tfilter(x, 0.1, 0.4; max_gap = 2),
+        # DimArray lookup order depends on the caller's keys.
         x -> tinterp(x, [0.5, 4.5]),
         x -> tinterp(x, [0.5, 4.5]; interp = QuadraticInterpolation),
         x -> tmean(x, [(1.0, 2.0), (4.0, 5.0)]),
